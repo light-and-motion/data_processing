@@ -46,7 +46,7 @@ def process_data(wb, ws, df, new_titles, num_inputs, title_inputs, outputs):
     
     return wb
 def create_chart(wb, ws, title_inputs, outputs, outputs_data_df, axis, new_titles, graph_title): 
-    cs = output_data_wb.create_chartsheet()
+    cs = wb.create_chartsheet()
     chart = ScatterChart()
     
     # Assume number of rows will be same throughout dataframe 
@@ -95,6 +95,7 @@ def create_chart(wb, ws, title_inputs, outputs, outputs_data_df, axis, new_title
         chart.title = graph_title.loc[0]
     cs.add_chart(chart)
 
+
 ############################# END FUNCTIONS #####################################################################
 ####################################################### MAIN ###############################################################################  
 # Retrieve the raw data file and store the data in the dataframe. Skip line 0, as it contains the title. 
@@ -110,7 +111,7 @@ for row in dataframe_to_rows(raw_data_df, index = False, header = True):
     ws.append(row)
 raw_data_wb.save("Lumensphere Raw Data.xlsx")
  
-    
+  
 # Reuse raw data dataframe and store the contents of the Excel file (which was copied from the CSV file)
 # Store the column names of the raw data (in Excel)
 
@@ -121,10 +122,10 @@ col_names = raw_data_df.columns
 
 
 # QUESTION: Why is loc/iloc interchangeable sometimes and not interchangeable at other times. 
-'''
-Remember that loc/iloc can be used to access columns AND rows. In series, where there is only 1 column,
-loc will be used to access rows only. Rows are always accessed by row numbers (integers).
-'''
+
+#Remember that loc/iloc can be used to access columns AND rows. In series, where there is only 1 column,
+#loc will be used to access rows only. Rows are always accessed by row numbers (integers).
+
 
 # 0pen the Lumensphere configuration file and store the contents of Input, Output, and Axis Title 
 # into different series (not dataframe)! 
@@ -147,21 +148,26 @@ graph_title = config_df['Graph Title']
 
 
 
+
 # ########################## Could be converted into functions 
 # Convert the letter elements of inputs into integers and Strings and outputs into integers 
 # so we can later use them as indices in different ways. 
+
+# EDIT: Used replace function to change values! 
 for i in range(0, num_inputs.size): 
-    num_inputs.loc[i] = letter2int(num_inputs.loc[i])
-    title_inputs.loc[i] = letter2title(title_inputs.loc[i], col_names)
-    outputs.loc[i] = letter2int(outputs.loc[i])
-    
-    
+    num_inputs.replace(num_inputs.loc[i], letter2int(num_inputs.loc[i]), inplace = True)
+    title_inputs.replace(title_inputs.loc[i],letter2title(title_inputs.loc[i], col_names), inplace = True)
+    outputs.replace(outputs.loc[i], letter2int(outputs.loc[i]), inplace = True)
+   
+
+   
 
 # output_data_df will hold all the columns that we want to plot later
 
 # We will use col_titles_inputs as indices to extract from the raw data the columns that we want plotted
 # Note: Even though only one column is being extracted at a time, the column being extracted 
 # is stored in a dataframe as only dataframes, not series!, can combine with other dataframes. 
+
 
 output_data_df = raw_data_df[[title_inputs.loc[0]]]
 
@@ -174,15 +180,6 @@ for i in range(1, num_inputs.size):
 
 output_data_df['Date/Time'] = pd.to_datetime(output_data_df['Date/Time'])
 output_data_df['Date/Time'] = (output_data_df['Date/Time']- output_data_df['Date/Time'].iloc[0]).astype("timedelta64[s]")
-
-
-
-
-
-    
-#output_data_df['Date/Time'] = (output_data_df['Date/Time']- output_data_df['Date/Time'].iloc[0]).astype("timedelta64[s]")
-#output_data_df['Date/Time'] = pd.to_datetime(output_data_df['Date/Time'], unit='s', origin = output_data_df['Date/Time'].iloc[0])
-#print(output_data_df['Date/Time'])
 
 
 # Create a new workbook to hold the plotted data 
