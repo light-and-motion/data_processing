@@ -195,6 +195,8 @@ ws.title = 'Output Data'
 output_data_wb = process_data(output_data_wb, ws, output_data_df, col_titles, num_inputs, title_inputs, outputs)
 
 # Create the chart 
+
+# OPTIMIZATION: Create two functions: make_chart() to determine whether a chart is needed and create_chart() 
 create_chart(output_data_wb, ws, title_inputs, outputs, output_data_df, axis, col_titles, graph_title)
 output_data_wb.save('LumenData.xlsx')
 
