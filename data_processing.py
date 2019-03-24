@@ -46,55 +46,61 @@ def process_data(wb, ws, df, new_titles, num_inputs, title_inputs, outputs):
     
     return wb
 def create_chart(wb, ws, title_inputs, outputs, outputs_data_df, axis, new_titles, graph_title): 
-    cs = wb.create_chartsheet()
-    chart = ScatterChart()
-    
+
     # Assume number of rows will be same throughout dataframe 
     row_size = outputs_data_df[title_inputs.loc[0]].size
     x_axis_row = 0
     y_axis_rows = []
     
-    # Find the x-axis OPTIMIZE 
-    i = 0
-    x = Reference(ws, min_col=outputs.loc[0], min_row = 2, max_row = row_size)
-    for x in axis: 
-        if (not pd.isnull(x) and str(x).upper() == 'X'): 
-            x = Reference(ws, min_col=outputs.loc[i], min_row = 2, max_row = row_size)
-            x_axis_row = i
-            break
-        i += 1
-
-    # Plot as many y-axes as indicated in the configuration file 
-    i = 0
-    for y in axis: 
-        if (not pd.isnull(y) and str(y).upper() == 'Y'): 
-            y = Reference(ws, min_col= outputs.loc[i], min_row=2, max_row= row_size)
-            y_axis_rows.append(i)
-            s = Series(y,x,title=new_titles.loc[i])
-            chart.append(s)
-        i += 1
     
-    chart.x_axis.title = new_titles.loc[x_axis_row]
+    # Extract the value (if any) that will serve as our x-axis 
+    x_axis = axis.loc[(axis == 'x') | (axis == 'X')]
 
-    ### Chart legend 
-    # If there is only 1 y-axis, title the y_axis and delete the legend  
-    if (len(y_axis_rows) == 1): 
-        chart.y_axis.title = new_titles.loc[y_axis_rows[0]]
-        chart.legend = None
-        
-    ### Default chart title: If there is no given chart title then chart title will be: 
-    #   'all y-axis vs x-axis'
-    
-    if (pd.isnull(graph_title.loc[0])): 
-        title = ' '
-        for i in range(len(y_axis_rows)-1): 
-            title += new_titles.loc[y_axis_rows[i]] + ", "
-        title += new_titles.loc[y_axis_rows[len(y_axis_rows)-1]] + " vs " + new_titles.loc[x_axis_row]
-        chart.title = title
+    # If there are no x-axis indicated, then we do not need to create a chart. Return to main
+    if (x_axis.empty): 
+        return 
+
+    # Otherwise, if an x-axis is indicated, then create the chart 
     else: 
-        chart.title = graph_title.loc[0]
-    cs.add_chart(chart)
+        cs = wb.create_chartsheet()
+        chart = ScatterChart()
 
+        # Locate the index location of the x-axis 
+        x_axis_row= x_axis.index[0] 
+
+        # Store the column number where the x_axis is located 
+        x = Reference(ws, min_col=outputs.loc[x_axis_row], min_row = 2, max_row = row_size)
+        # Plot as many y-axes as indicated in the configuration file 
+        i = 0
+        for y in axis: 
+            if (not pd.isnull(y) and str(y).upper() == 'Y'): 
+                y = Reference(ws, min_col= outputs.loc[i], min_row=2, max_row= row_size)
+                y_axis_rows.append(i)
+                s = Series(y,x,title=new_titles.loc[i])
+                chart.append(s)
+            i += 1
+        
+        chart.x_axis.title = new_titles.loc[x_axis_row]
+        
+        ### Chart legend 
+        # If there is only 1 y-axis, title the y_axis and delete the legend  
+        if (len(y_axis_rows) == 1): 
+            chart.y_axis.title = new_titles.loc[y_axis_rows[0]]
+            chart.legend = None
+            
+        ### Default chart title: If there is no given chart title then chart title will be: 
+        #   'all y-axis vs x-axis'
+        
+        if (pd.isnull(graph_title.loc[0])): 
+            title = ' '
+            for i in range(len(y_axis_rows)-1): 
+                title += new_titles.loc[y_axis_rows[i]] + ", "
+            title += new_titles.loc[y_axis_rows[len(y_axis_rows)-1]] + " vs " + new_titles.loc[x_axis_row]
+            chart.title = title
+        else: 
+            chart.title = graph_title.loc[0]
+        cs.add_chart(chart)
+        
 ############################# END FUNCTIONS #####################################################################
 ####################################################### MAIN ###############################################################################  
 # Retrieve the raw data file and store the data in the dataframe. Skip line 0, as it contains the title. 
