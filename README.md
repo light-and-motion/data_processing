@@ -7,4 +7,6 @@ Light & Motion project. Purpose: To read in a CSV data file and output its raw d
     * Columns syntax: Input | Output | Format | Axis | Axis Title | Graph Title
 * LumenData- Excel file of processed data + graph 
 * Lumensphere Raw Data- raw CSV file read into an Excel file 
-* data_processing.ipynb - code 
+* data_processing.py- code
+* data_processing.ipynb - scratch paper 
+
