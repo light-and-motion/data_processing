@@ -1,5 +1,5 @@
 import pandas as pd
-import datetime
+from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -106,7 +106,37 @@ def chart_title(chart, new_titles, graph_title, x_axis_row, y_axis_rows):
     else: 
         chart.title = graph_title.loc[0]
     
+def time_format(date): 
+    start_time_str = date.loc[0]
+    start_list = start_time_str.split()
+    start_time = pd.to_timedelta(start_list[1])
+    
+    
+    for cur_time_str in date: 
 
+        # Split the Date/Time string into a list by a space delimiter 
+        # and store the HH:MM:SS portion into a variable. 
+        cur_time_list = cur_time_str.split() 
+
+        # Store the HH:MM:SS portion into cur_time and convert it to a timedelta object 
+        cur_time = pd.to_timedelta(cur_time_list[1])
+
+        # Find the difference between the current time and the start time. 
+        # Convert the timedelta object into a string and split string into a list
+        # by space delimiter.  
+        difference= str(cur_time-start_time)
+        difference_list = difference.split()
+
+        # Store the HH:MM:SS portion of the elapsed time into elapsed_time 
+        elapsed_time = difference_list[2]
+
+        # Convert elapsed_time to a datetime object and store the result in the date column 
+        dt = datetime.strptime(elapsed_time, "%H:%M:%S").time()
+        date.replace(cur_time_str, dt, inplace = True)
+    return date
+        
+        
+        
     
 ############################# END FUNCTIONS #####################################################################
 ####################################################### MAIN ###############################################################################  
@@ -190,9 +220,8 @@ for i in range(1, num_inputs.size):
 
     
 
-output_data_df['Date/Time'] = pd.to_datetime(output_data_df['Date/Time'])
-output_data_df['Date/Time'] = (output_data_df['Date/Time']- output_data_df['Date/Time'].iloc[0]).astype("timedelta64[s]")
-
+output_data_df['Date/Time'] = time_format(output_data_df['Date/Time']) 
+print(output_data_df['Date/Time'].head())
 
 # Create a new workbook to hold the plotted data 
 output_data_wb = Workbook()
