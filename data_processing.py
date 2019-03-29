@@ -53,11 +53,10 @@ def make_chart(axis):
     x_axis = axis.loc[(axis == 'x') | (axis == 'X')]
     return x_axis
 
-def create_chart(wb, ws, title_inputs, outputs, outputs_data_df, axis, x_axis, new_titles, graph_title): 
+def create_chart(wb, ws, title_inputs, outputs, outputs_data_df, x_axis, y_axis, new_titles, graph_title): 
 
     # Assume number of rows will be same throughout dataframe 
     row_size = outputs_data_df[title_inputs.loc[0]].size
-    y_axis_rows = []
      
     cs = wb.create_chartsheet()
     chart = ScatterChart()
@@ -70,7 +69,6 @@ def create_chart(wb, ws, title_inputs, outputs, outputs_data_df, axis, x_axis, n
     
     # Plot as many y-axes as indicated in the configuration file 
     
-    y_axis = axis.loc[(axis == 'Y') | (axis == 'y')]
     y_axis_rows = y_axis.index
     #print(y_axis_rows)
     
@@ -115,6 +113,7 @@ def chart_title(chart, new_titles, graph_title, x_axis_row, y_axis_rows):
 # Retrieve the raw data file and store the data in the dataframe. Skip line 0, as it contains the title. 
 raw_data_df = pd.read_csv('Derived Data Imjin 800.csv',header = 1, keep_default_na = False)
 
+#raw_data_df = pd.read_csv('Full Runtime 5600K Cree LED Production Stella EL.csv',header = 1, keep_default_na = False)
 # Create a new Workbook and change the title of the active Worksheet 
 raw_data_wb = Workbook()
 ws = raw_data_wb.active
@@ -210,9 +209,10 @@ x_axis = make_chart(axis)
 
 # If the x_axis is not empty, then create a chart 
 if (x_axis.size != 0): 
-    create_chart(output_data_wb, ws, title_inputs, outputs, output_data_df, axis, x_axis, col_titles, graph_title)
+    y_axis = axis.loc[(axis == 'Y') | (axis == 'y')]
+    create_chart(output_data_wb, ws, title_inputs, outputs, output_data_df, x_axis, y_axis, col_titles, graph_title)
 output_data_wb.save('LumenData.xlsx')
-
+#output_data_wb.save('LumenData_Stella.xlsx')
 
 
     
