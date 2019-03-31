@@ -79,6 +79,10 @@ def create_chart(wb, ws, title_inputs, outputs, outputs_data_df, x_axis, y_axis,
         
     
     chart.x_axis.title = new_titles.loc[x_axis_row]
+    # situate x-axis below negative numbers 
+    chart.x_axis.tickLblPos = "low"
+
+    #chart.x_axis.tickLblSkip = 3
     chart_legend(chart, y_axis_rows, new_titles)
     chart_title(chart, new_titles, graph_title, x_axis_row, y_axis_rows)
 
@@ -141,9 +145,10 @@ def time_format(datetime_series):
 ############################# END FUNCTIONS #####################################################################
 ####################################################### MAIN ###############################################################################  
 # Retrieve the raw data file and store the data in the dataframe. Skip line 0, as it contains the title. 
-raw_data_df = pd.read_csv('Derived Data Imjin 800.csv',header = 1, keep_default_na = False)
 
+raw_data_df = pd.read_csv('Derived Data Imjin 800.csv',header = 1, keep_default_na = False)
 #raw_data_df = pd.read_csv('Full Runtime 5600K Cree LED Production Stella EL.csv',header = 1, keep_default_na = False)
+
 # Create a new Workbook and change the title of the active Worksheet 
 raw_data_wb = Workbook()
 ws = raw_data_wb.active
@@ -153,7 +158,7 @@ ws.title = 'Raw Data'
 for row in dataframe_to_rows(raw_data_df, index = False, header = True):
     ws.append(row)
 raw_data_wb.save("Lumensphere Raw Data.xlsx")
- 
+#raw_data_wb.save("Lumensphere Raw Data_ Stella.xlsx")
   
 # Reuse raw data dataframe and store the contents of the Excel file (which was copied from the CSV file)
 # Store the column names of the raw data (in Excel)
