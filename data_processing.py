@@ -1,5 +1,5 @@
 import pandas as pd
-import datetime
+from datetime import datetime
 from openpyxl import Workbook
 from openpyxl.styles import Font
 from openpyxl.utils.dataframe import dataframe_to_rows
@@ -45,60 +45,109 @@ def process_data(wb, ws, df, new_titles, num_inputs, title_inputs, outputs):
     
     
     return wb
-def create_chart(wb, ws, title_inputs, outputs, outputs_data_df, axis, new_titles, graph_title): 
-    cs = wb.create_chartsheet()
-    chart = ScatterChart()
-    
+
+# Effectively determines whether or not a chart will be created. 
+def make_chart(axis):
+
+     # Extract the row index (if any) of the value that will serve as our x-axis 
+    x_axis = axis.loc[(axis == 'x') | (axis == 'X')]
+    return x_axis
+
+def create_chart(wb, ws, title_inputs, outputs, outputs_data_df, x_axis, y_axis, new_titles, graph_title): 
+
     # Assume number of rows will be same throughout dataframe 
     row_size = outputs_data_df[title_inputs.loc[0]].size
-    x_axis_row = 0
-    y_axis_rows = []
-    
-    # Find the x-axis OPTIMIZE 
-    i = 0
-    x = Reference(ws, min_col=outputs.loc[0], min_row = 2, max_row = row_size)
-    for x in axis: 
-        if (not pd.isnull(x) and str(x).upper() == 'X'): 
-            x = Reference(ws, min_col=outputs.loc[i], min_row = 2, max_row = row_size)
-            x_axis_row = i
-            break
-        i += 1
+     
+    cs = wb.create_chartsheet()
+    chart = ScatterChart()
 
+    # Store the index location of the x-axis value 
+    x_axis_row= x_axis.index[0] 
+
+    # Store the column number where the x_axis is located 
+    x = Reference(ws, min_col=outputs.loc[x_axis_row], min_row = 2, max_row = row_size)
+    
     # Plot as many y-axes as indicated in the configuration file 
-    i = 0
-    for y in axis: 
-        if (not pd.isnull(y) and str(y).upper() == 'Y'): 
-            y = Reference(ws, min_col= outputs.loc[i], min_row=2, max_row= row_size)
-            y_axis_rows.append(i)
-            s = Series(y,x,title=new_titles.loc[i])
-            chart.append(s)
-        i += 1
+    
+    y_axis_rows = y_axis.index
+    #print(y_axis_rows)
+    
+    for row in y_axis_rows: 
+        y = Reference(ws, min_col = outputs.loc[row], min_row = 2, max_row = row_size)
+        s = Series(y,x,title=new_titles.loc[row])
+        chart.append(s)
+        
     
     chart.x_axis.title = new_titles.loc[x_axis_row]
+    # situate x-axis below negative numbers 
+    chart.x_axis.tickLblPos = "low"
 
-    ### Chart legend 
-    # If there is only 1 y-axis, title the y_axis and delete the legend  
+    #chart.x_axis.tickLblSkip = 3
+    chart_legend(chart, y_axis_rows, new_titles)
+    chart_title(chart, new_titles, graph_title, x_axis_row, y_axis_rows)
+
+    cs.add_chart(chart)
+
+
+# Determines the need for a chart legend
+#   If there is only 1 y-axis, title the y_axis and delete the legend  
+def chart_legend(chart, y_axis_rows, new_titles):
     if (len(y_axis_rows) == 1): 
         chart.y_axis.title = new_titles.loc[y_axis_rows[0]]
-        chart.legend = None
-        
-    ### Default chart title: If there is no given chart title then chart title will be: 
-    #   'all y-axis vs x-axis'
-    
-    if (pd.isnull(graph_title.loc[0])): 
+        chart.legend = None 
+    return None 
+
+### Default chart title: If there is no given chart title then chart title will be: 
+    #   'All y-axis vs x-axis'
+def chart_title(chart, new_titles, graph_title, x_axis_row, y_axis_rows): 
+    # Note: A column with 'NaNs' is not considered empty. 
+    if (graph_title.dropna().empty): 
         title = ' '
-        for i in range(len(y_axis_rows)-1): 
+        for i in range(y_axis_rows.size-1): 
             title += new_titles.loc[y_axis_rows[i]] + ", "
-        title += new_titles.loc[y_axis_rows[len(y_axis_rows)-1]] + " vs " + new_titles.loc[x_axis_row]
+        title += new_titles.loc[y_axis_rows[y_axis_rows.size-1]] + " vs " + new_titles.loc[x_axis_row]
         chart.title = title
     else: 
         chart.title = graph_title.loc[0]
-    cs.add_chart(chart)
+    
+def time_format(datetime_series): 
+    start_datetime = datetime_series.loc[0]
+    start_list = start_datetime.split()
+    start_time = pd.to_timedelta(start_list[1])
+    
+    
+    for cur_datetime in datetime_series: 
 
+        # Split the datetime string into a list by a space delimiter 
+        # and store the HH:MM:SS portion into a variable. 
+        cur_datetime_list = cur_datetime.split() 
+
+        # Store the time portion into cur_time and convert it to a timedelta object 
+        cur_time = pd.to_timedelta(cur_datetime_list[1])
+
+        # Find the difference between the current time and the start time. 
+        # Convert the timedelta object into a string and split string into a list
+        # by space delimiter.  
+        difference= str(cur_time-start_time)
+        difference_list = difference.split()
+
+        # Store the time portion of the string into elapsed_time
+        elapsed_time = difference_list[2]
+
+        # Convert elapsed_time to a datetime object and store the result in the date column 
+        elapsed_time = datetime.strptime(elapsed_time, "%H:%M:%S").time()
+        datetime_series.replace(cur_datetime, elapsed_time, inplace = True)
+    return datetime_series
+        
+        
+        
+    
 ############################# END FUNCTIONS #####################################################################
 ####################################################### MAIN ###############################################################################  
 # Retrieve the raw data file and store the data in the dataframe. Skip line 0, as it contains the title. 
+
 raw_data_df = pd.read_csv('Derived Data Imjin 800.csv',header = 1, keep_default_na = False)
+#raw_data_df = pd.read_csv('Full Runtime 5600K Cree LED Production Stella EL.csv',header = 1, keep_default_na = False)
 
 # Create a new Workbook and change the title of the active Worksheet 
 raw_data_wb = Workbook()
@@ -109,7 +158,7 @@ ws.title = 'Raw Data'
 for row in dataframe_to_rows(raw_data_df, index = False, header = True):
     ws.append(row)
 raw_data_wb.save("Lumensphere Raw Data.xlsx")
- 
+#raw_data_wb.save("Lumensphere Raw Data_ Stella.xlsx")
   
 # Reuse raw data dataframe and store the contents of the Excel file (which was copied from the CSV file)
 # Store the column names of the raw data (in Excel)
@@ -176,9 +225,8 @@ for i in range(1, num_inputs.size):
 
     
 
-output_data_df['Date/Time'] = pd.to_datetime(output_data_df['Date/Time'])
-output_data_df['Date/Time'] = (output_data_df['Date/Time']- output_data_df['Date/Time'].iloc[0]).astype("timedelta64[s]")
-
+output_data_df['Date/Time'] = time_format(output_data_df['Date/Time']) 
+print(output_data_df['Date/Time'].head())
 
 # Create a new workbook to hold the plotted data 
 output_data_wb = Workbook()
@@ -188,10 +236,17 @@ ws.title = 'Output Data'
 # Read the output data into an Excel file
 output_data_wb = process_data(output_data_wb, ws, output_data_df, col_titles, num_inputs, title_inputs, outputs)
 
-# Create the chart 
-create_chart(output_data_wb, ws, title_inputs, outputs, output_data_df, axis, col_titles, graph_title)
-output_data_wb.save('LumenData.xlsx')
+##### Chart creation 
 
+# Call make_chart() to determine if we need to create a chart 
+x_axis = make_chart(axis)
+
+# If the x_axis is not empty, then create a chart 
+if (x_axis.size != 0): 
+    y_axis = axis.loc[(axis == 'Y') | (axis == 'y')]
+    create_chart(output_data_wb, ws, title_inputs, outputs, output_data_df, x_axis, y_axis, col_titles, graph_title)
+output_data_wb.save('LumenData.xlsx')
+#output_data_wb.save('LumenData_Stella.xlsx')
 
 
     
