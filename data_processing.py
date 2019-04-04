@@ -17,11 +17,13 @@ class Data_Processing (object):
         self.output_wb = output_wb
     
     # Create the dataframe that stores the raw data of the CSV file 
-    def create_raw_dataframe(self): 
-        print(self.input_csv)
-        df = pd.read_csv(self.get_input_csv + '.csv',header = 1, keep_default_na = False)
+    def create_csv_dataframe(self, file): 
+        #print(self.input_csv)
+        df = pd.read_csv(file + '.csv', header = 1, keep_default_na = False)
         return df
-        
+    def create_excel_dataframe(self, file): 
+        df = pd.read_excel(file + '.xlsx')
+        return df    
     # Create the Excel workbook that stores the raw data in Excel 
     def create_raw_Excelbook(self, data_df):  
         wb = Workbook()
@@ -149,6 +151,7 @@ class Data_Processing (object):
 
     # Determines the need for a chart legend
     #   If there is only 1 y-axis, title the y_axis and delete the legend  
+
     def chart_legend(self,chart, y_axis_rows, new_titles):
         if (len(y_axis_rows) == 1): 
             chart.y_axis.title = new_titles.loc[y_axis_rows[0]]
@@ -172,6 +175,19 @@ class Data_Processing (object):
         read_file = pd.read_excel('LumenConfig.xlsx', sheet_name = 'Sheet1')
         return read_file
 
+    # Convert the letter elements of inputs into integers and Strings and outputs into integers 
+    # so we can later use them as indices. 
+    def convert_columns(self, config_df, col_names):
+        title_inputs = config_df['Input'].copy()    
+        config_df['Input Column Title'] = title_inputs
+        title_inputs = config_df['Input Column Title']
+        num_inputs = config_df['Input']
+        outputs = config_df['Output']
+        for i in range(0, num_inputs.size): 
+            num_inputs.replace(num_inputs.loc[i], self.letter2int(num_inputs.loc[i]), inplace = True)
+            title_inputs.replace(title_inputs.loc[i], self.letter2title(title_inputs.loc[i], col_names), inplace = True)
+            outputs.replace(outputs.loc[i], self.letter2int(outputs.loc[i]), inplace = True)
+        return config_df
     # getters and setters 
     
     @property

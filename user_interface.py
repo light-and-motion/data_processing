@@ -1,4 +1,5 @@
 from data_processing import Data_Processing
+import pandas as pd
 class User_interface:
     def __init__(self, choice, config_file, input_csv, output_wb):
         self.choice = choice
@@ -23,11 +24,14 @@ def choose_config(choice):
         config_file = input('Enter name of Multimeter config file: ')
     elif choice == 3:
         config_file = input('Enter name of Serial Data config file: ')
-    elif choice == 0: #default option for testing purposes
-        config_file = 'LumenConfig'
-    else:
-        choice = None
-        print('Please enter valid input.\n')
+    #elif choice == 0: #default option for testing purposes
+     
+    config_file = 'LumenConfig'
+    
+    #else:
+        #choice = None
+        #print('Please enter valid input.\n')
+    print("config_file", config_file)
     return config_file
 
 
@@ -57,7 +61,11 @@ def choose_output_wb():
         else:
             output_wb = output_choice
     return output_wb
-    
+
+
+
+
+
 ########################################## MAIN ####################################################################
 ### Main execution block ###
 banner()
@@ -76,29 +84,16 @@ df = Data_Processing(data_choice, config_file, input_csv, output_wb)
 
 
 # Retrieve the csv file and store its contents into a dataframe 
-raw_data_df = df.create_raw_dataframe()
+raw_data_df = df.create_csv_dataframe(input_csv)
 
 # Read the raw dataframe into an Excel file 
 raw_data_excel = df.create_raw_Excelbook(raw_data_df)
 
-# Read the configuration file into config_df. 
-config_df = df.read_config_file()
-col_names = raw_data_df.columns
-num_inputs= config_df['Input']
-title_inputs = config_df['Input'].copy()
-outputs = config_df['Output']
-col_titles = config_df['Title']
-formats = config_df['Format']
-axis = config_df['Axis']
-graph_title = config_df['Graph Title']
 
-# ########################## Could be converted into functions 
-# Convert the letter elements of inputs into integers and Strings and outputs into integers 
-# so we can later use them as indices in different ways. 
-for i in range(0, num_inputs.size): 
-    num_inputs.replace(num_inputs.loc[i], df.letter2int(num_inputs.loc[i]), inplace = True)
-    title_inputs.replace(title_inputs.loc[i], df.letter2title(title_inputs.loc[i], col_names), inplace = True)
-    outputs.replace(outputs.loc[i], df.letter2int(outputs.loc[i]), inplace = True)
+# Get the names of the columns and read the configuration file into config_df
+col_names = raw_data_df.columns
+config_df = df.create_excel_dataframe(config_file)
+config_df = df.convert_columns(config_df, col_names)
 
 # output_data_df will hold all the columns that we want to plot later
 
@@ -106,6 +101,7 @@ for i in range(0, num_inputs.size):
 # Note: Even though only one column is being extracted at a time, the column being extracted 
 # is stored in a dataframe as only dataframes, not series!, can combine with other dataframes. 
 
+'''
 output_data_df = raw_data_df[[title_inputs.loc[0]]]
 
 
@@ -134,3 +130,4 @@ if (x_axis.size != 0):
 
 #print(df.get_output_wb)
 output_data_wb.save(df.get_output_wb + '.xlsx')
+'''
