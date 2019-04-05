@@ -6,7 +6,7 @@ from openpyxl.styles import Font
 from openpyxl.chart import (ScatterChart, Reference, Series)
 
 # DOUBLE UNDERSCORE 
-class Data_Processing (object): 
+class Data_Processing: 
     CSV = '.csv'
     XLSX = '.xlsx'
     
@@ -88,8 +88,11 @@ class Data_Processing (object):
     # new_titles will be to create the new names of the columns
     # num_inputs will be used to locate the cells where we want to store our data 
     # title_inputs will be used to retrieve the column datas 
-    def process_data(self, wb, df, new_titles, num_inputs, title_inputs, outputs):
+    def process_data(self, wb, df, config_df):
 
+        new_titles = config_df['Title']
+        title_inputs = config_df['Input Column Title']
+        outputs = config_df['Output']
 
         # Read in all the data 
         for j in range(new_titles.size): 
@@ -111,9 +114,14 @@ class Data_Processing (object):
         x_axis = axis.loc[(axis == 'x') | (axis == 'X')]
         return x_axis
 
-    def create_chart(self,wb, title_inputs, outputs, outputs_data_df, x_axis, y_axis, new_titles, graph_title): 
+    def create_chart(self,wb, outputs_data_df, x_axis, y_axis, config_df): 
 
         ws = wb.active
+        
+        title_inputs = config_df['Input Column Title']
+        outputs = config_df['Output']
+        new_titles = config_df['Title']
+        graph_title = config_df['Graph Title']
 
         # Assume number of rows will be same throughout dataframe 
         row_size = outputs_data_df[title_inputs.loc[0]].size
@@ -188,6 +196,15 @@ class Data_Processing (object):
             title_inputs.replace(title_inputs.loc[i], self.letter2title(title_inputs.loc[i], col_names), inplace = True)
             outputs.replace(outputs.loc[i], self.letter2int(outputs.loc[i]), inplace = True)
         return config_df
+    
+    def create_output_dataframe(self, raw_data_df, title_inputs):
+        df = raw_data_df[[title_inputs.loc[0]]]
+        for i in range(1, title_inputs.size): 
+            new_df = raw_data_df[[title_inputs.loc[i]]]
+            df = df.join(new_df)
+        return df
+
+
     # getters and setters 
     
     @property

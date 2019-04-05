@@ -1,6 +1,5 @@
-from data_processing import Data_Processing
-import pandas as pd
-class User_interface:
+
+class User_Interface:
     def __init__(self, choice, config_file, input_csv, output_wb):
         self.choice = choice
         self.config_file = config_file
@@ -66,68 +65,4 @@ def choose_output_wb():
 
 
 
-########################################## MAIN ####################################################################
-### Main execution block ###
-banner()
 
-#Asks user for which type of data to process based on numeric input. To be passed into choose_config
-data_choice = None
-while data_choice == None:
-    print('Which data file type would you like to process?\n1. Lumensphere\n2. Multimeter\n3. Serial Data\n')
-    data_choice = int(input('Enter a number: '))
-
-config_file = choose_config(data_choice)
-input_csv = choose_csv()
-output_wb = choose_output_wb()
-
-df = Data_Processing(data_choice, config_file, input_csv, output_wb)
-
-
-# Retrieve the csv file and store its contents into a dataframe 
-raw_data_df = df.create_csv_dataframe(input_csv)
-
-# Read the raw dataframe into an Excel file 
-raw_data_excel = df.create_raw_Excelbook(raw_data_df)
-
-
-# Get the names of the columns and read the configuration file into config_df
-col_names = raw_data_df.columns
-config_df = df.create_excel_dataframe(config_file)
-config_df = df.convert_columns(config_df, col_names)
-
-# output_data_df will hold all the columns that we want to plot later
-
-# We will use col_titles_inputs as indices to extract from the raw data the columns that we want plotted
-# Note: Even though only one column is being extracted at a time, the column being extracted 
-# is stored in a dataframe as only dataframes, not series!, can combine with other dataframes. 
-
-'''
-output_data_df = raw_data_df[[title_inputs.loc[0]]]
-
-
-for i in range(1, num_inputs.size): 
-    additional_df = raw_data_df[[title_inputs.loc[i]]]
-    output_data_df = output_data_df.join(additional_df)
-
-# format time 
-output_data_df['Date/Time'] = df.time_format(output_data_df['Date/Time']) 
-
-# create workbook to hold plotted data
-output_data_wb = df.create_plotted_workbook()
-
-# Read the output data into an Excel file
-output_data_wb = df. process_data(output_data_wb, output_data_df, col_titles, num_inputs, title_inputs, outputs)
-
-##### Chart creation 
-
-# Call make_chart() to determine if we need to create a chart 
-x_axis = df.make_chart(axis)
-
-# If the x_axis is not empty, then create a chart 
-if (x_axis.size != 0): 
-    y_axis = axis.loc[(axis == 'Y') | (axis == 'y')]
-    df.create_chart(output_data_wb, title_inputs, outputs, output_data_df, x_axis, y_axis, col_titles, graph_title)
-
-#print(df.get_output_wb)
-output_data_wb.save(df.get_output_wb + '.xlsx')
-'''
