@@ -1,4 +1,3 @@
-
 class User_Interface:
     def __init__(self, choice, config_file, input_csv, output_wb):
         self.choice = choice

@@ -24,11 +24,15 @@ raw_data_df = df.create_csv_dataframe(input_csv)
 raw_data_excel = df.create_raw_Excelbook(raw_data_df)
 
 
-# Get the names of the columns and read the configuration file into config_df
+# Get the names of the columns and read the configuration file into config_df_1
 # Then conver the column inputs and outputs into integers and titles to later use as indices 
 col_names = raw_data_df.columns
-config_df = df.create_excel_dataframe(config_file)
-config_df = df.convert_columns(config_df, col_names)
+config_df_1 = df.create_excel_dataframe(config_file, 'Sheet1')
+print(config_df_1)
+
+config_df_2 = df.create_excel_dataframe(config_file, 'Sheet2')
+config_df_1 = df.convert_columns(config_df_1, col_names)
+#print(config_df_1)
 
 # output_data_df will hold all the columns that we want to plot later
 
@@ -36,7 +40,7 @@ config_df = df.convert_columns(config_df, col_names)
 # Note: Even though only one column is being extracted at a time, the column being extracted 
 # is stored in a dataframe as only dataframes, not series!, can combine with other dataframes. 
 
-output_data_df = df.create_output_dataframe(raw_data_df, config_df['Input Column Title'])
+output_data_df = df.create_output_dataframe(raw_data_df, config_df_1['Input Column Title'])
 
 
 # format time 
@@ -48,20 +52,20 @@ output_data_wb = df.create_plotted_workbook()
 
 
 # Read the output data into an Excel file
-output_data_wb = df. process_data(output_data_wb, output_data_df, config_df)
+output_data_wb = df.process_data(output_data_wb, output_data_df, config_df_1)
 
 
 ##### Chart creation 
 
 # Call make_chart() to determine if we need to create a chart 
-axis = config_df['Axis']
+axis = config_df_1['Axis']
 x_axis = df.make_chart(axis)
 
 
 # If the x_axis is not empty, then create a chart 
 if (x_axis.size != 0): 
     y_axis = axis.loc[(axis == 'Y') | (axis == 'y')]
-    df.create_chart(output_data_wb, output_data_df, x_axis, y_axis, config_df)
+    df.create_chart(output_data_wb, output_data_df, x_axis, y_axis, config_df_1)
 
 #print(df.get_output_wb)
 output_data_wb.save(df.get_output_wb + '.xlsx')

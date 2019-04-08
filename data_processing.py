@@ -21,8 +21,8 @@ class Data_Processing:
         #print(self.input_csv)
         df = pd.read_csv(file + '.csv', header = 1, keep_default_na = False)
         return df
-    def create_excel_dataframe(self, file): 
-        df = pd.read_excel(file + '.xlsx')
+    def create_excel_dataframe(self, file, sheet): 
+        df = pd.read_excel(file + '.xlsx', sheet_name = sheet)
         return df    
     # Create the Excel workbook that stores the raw data in Excel 
     def create_raw_Excelbook(self, data_df):  
@@ -93,20 +93,51 @@ class Data_Processing:
         new_titles = config_df['Title']
         title_inputs = config_df['Input Column Title']
         outputs = config_df['Output']
+        ranges = config_df['Range']
 
+        # ENCAPSULATE INTO A NEW FUNCTION `
         # Read in all the data 
         for j in range(new_titles.size): 
             # Append and bold the header of input column to the first row of its desired column location in Excel. 
-            ws = wb.active
-            header = ws.cell(row=1, column = outputs.iloc[j]) 
-            header.value = new_titles.iloc[j]
-            header.font = Font(bold=True)
-            col_index = title_inputs.iloc[j]
-            for i in range(df[col_index].size): 
-
-                ws.cell(row = i+2, column = outputs.loc[j]).value = df.loc[i,col_index]
+            self.read_in_values(wb, j, df, new_titles, title_inputs, outputs, ranges)
         return wb
     
+    # Read in the value of 1 column to the output file 
+    def read_in_values(self, wb, j, df, new_titles, title_inputs, outputs, range): 
+        ws = wb.active
+        header = ws.cell(row=1, column = outputs.iloc[j]) 
+        header.value = new_titles.iloc[j]
+        header.font = Font(bold=True)
+        col_index = title_inputs.iloc[j]
+        
+        ## Range  
+        max_size = df[col_index].size
+        current_range = self.find_range(range.loc[j],max_size)
+        
+        start = current_range[0]
+        end = current_range[1]
+
+        # Indices: i helps to retrieve the contents of the current column 
+        #          cellRow helps ensures that the contents are placed in the correct cell 
+        i = start
+        cellRow = 2 
+        while (i <= end):  
+            ws.cell(row = cellRow, column = outputs.loc[j]).value = df.loc[i,col_index]
+            cellRow += 1
+            i += 1
+
+    # Determine the starting and ending point of the data to be read 
+    def find_range(self, current_range, total_size): 
+        print(current_range)
+        if (pd.isnull(current_range)): 
+            return [0,total_size-1]
+        else: 
+            range_list = current_range.split(':')
+            start = int(range_list[0])
+            end = int(range_list[1])
+            return [start,end]
+
+        
     # Effectively determines whether or not a chart will be created. 
     def make_chart(self,axis):
 
