@@ -1,9 +1,12 @@
 import pandas as pd
-from datetime import datetime
+from datetime import (date, datetime)
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font
 from openpyxl.chart import (ScatterChart, Reference, Series)
+from openpyxl.chart.axis import DateAxis
+import numpy as np
+import xlsxwriter
 
 # DOUBLE UNDERSCORE 
 class Data_Processing: 
@@ -23,6 +26,7 @@ class Data_Processing:
         return df
     def create_excel_dataframe(self, file, sheet): 
         df = pd.read_excel(file + '.xlsx', sheet_name = sheet)
+        #df = file[sheet]
         return df    
     # Create the Excel workbook that stores the raw data in Excel 
     def create_raw_Excelbook(self, data_df):  
@@ -110,7 +114,7 @@ class Data_Processing:
         header.font = Font(bold=True)
         col_index = title_inputs.iloc[j]
         
-        ## Range  
+        ## Range
         max_size = df[col_index].size
         current_range = self.find_range(range.loc[j],max_size)
         
@@ -121,20 +125,24 @@ class Data_Processing:
         #          cellRow helps ensures that the contents are placed in the correct cell 
         i = start
         cellRow = 2 
+        print(df.loc[0,col_index])
         while (i <= end):  
             ws.cell(row = cellRow, column = outputs.loc[j]).value = df.loc[i,col_index]
             cellRow += 1
             i += 1
 
     # Determine the starting and ending point of the data to be read 
+    # Range is calculated against the row indexes of the Excel worksheet. Thus, the first
+    # cell in a column will be located at row 2  
     def find_range(self, current_range, total_size): 
-        print(current_range)
         if (pd.isnull(current_range)): 
             return [0,total_size-1]
         else: 
             range_list = current_range.split(':')
-            start = int(range_list[0])
-            end = int(range_list[1])
+            start = int(range_list[0])-2
+            end = int(range_list[1])-2
+            if (start < 0): 
+                return [0, total_size-1]
             return [start,end]
 
         
@@ -145,14 +153,14 @@ class Data_Processing:
         x_axis = axis.loc[(axis == 'x') | (axis == 'X')]
         return x_axis
 
-    def create_chart(self,wb, outputs_data_df, x_axis, y_axis, config_df): 
+    def create_chart(self,wb, outputs_data_df, x_axis, y_axis, config_df_1, config_df_2): 
 
         ws = wb.active
         
-        title_inputs = config_df['Input Column Title']
-        outputs = config_df['Output']
-        new_titles = config_df['Title']
-        graph_title = config_df['Graph Title']
+        title_inputs = config_df_1['Input Column Title']
+        outputs = config_df_1['Output']
+        new_titles = config_df_1['Title']
+        graph_title = config_df_2['Graph Title']
 
         # Assume number of rows will be same throughout dataframe 
         row_size = outputs_data_df[title_inputs.loc[0]].size
@@ -184,10 +192,20 @@ class Data_Processing:
         #chart.x_axis.tickLblSkip = 3
         self.chart_legend(chart, y_axis_rows, new_titles)
         self.chart_title(chart, new_titles, graph_title, x_axis_row, y_axis_rows)
-
+        self.chart_scaling(chart, config_df_2['X Min'], config_df_2['X Max'], config_df_2['Y Min'], config_df_2['Y Max'])
         cs.add_chart(chart)
 
 
+    def chart_scaling(self, chart, x_min, x_max, y_min, y_max): 
+        if (not x_min.dropna().empty): 
+            chart.x_axis.scaling.min = x_min.loc[0]
+        if (not x_max.dropna().empty): 
+            chart.x_axis.scaling.max = x_max.loc[0]
+        if (not y_min.dropna().empty): 
+            chart.y_axis.scaling.min = y_min.loc[0]
+        if (not y_max.dropna().empty): 
+            chart.y_axis.scaling.max = y_max.loc[0]
+        
     # Determines the need for a chart legend
     #   If there is only 1 y-axis, title the y_axis and delete the legend  
 
@@ -228,7 +246,7 @@ class Data_Processing:
             outputs.replace(outputs.loc[i], self.letter2int(outputs.loc[i]), inplace = True)
         return config_df
     
-    def create_output_dataframe(self, raw_data_df, title_inputs):
+    def create_mapping_dataframe(self, raw_data_df, title_inputs):
         df = raw_data_df[[title_inputs.loc[0]]]
         for i in range(1, title_inputs.size): 
             new_df = raw_data_df[[title_inputs.loc[i]]]
