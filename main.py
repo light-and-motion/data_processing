@@ -1,4 +1,6 @@
 import user_interface
+import numpy as np
+import pandas as pd
 from data_processing import Data_Processing
 
 ### Main execution block ###
@@ -19,20 +21,28 @@ output_wb = user_interface.choose_output_wb()
 df = Data_Processing(data_choice, config_file, input_csv, output_wb)
 
 
-# Retrieve the csv file and store its contents into a dataframe 
-raw_data_df = df.create_csv_dataframe(input_csv)
-
-# Read the raw dataframe into an Excel file 
-raw_data_excel = df.create_raw_Excelbook(raw_data_df)
-
-
 # Get the names of the columns and read the configuration file into config_df_1
 # Then conver the column inputs and outputs into integers and titles to later use as indices 
-col_names = raw_data_df.columns
 config_df_1 = df.create_excel_dataframe(config_title, config_file.sheetnames[0])
 
 
 config_df_2 = df.create_excel_dataframe(config_title, config_file.sheetnames[1])
+
+
+# Reset config_df_2['Header'] so that it only stores non-NaN values and resets the index 
+'''
+config_df_2['Header'].dropna(inplace=True)
+config_df_2['Header'].reset_index(drop=True, inplace = True)
+print(config_df_2['Header'])
+# Retrieve the csv file and store its contents into a dataframe 
+
+'''
+raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Header'])
+
+# Read the raw dataframe into an Excel file 
+raw_data_excel = df.create_raw_Excelbook(raw_data_df)
+
+col_names = raw_data_df.columns
 config_df_1 = df.convert_columns(config_df_1, col_names)
 #print(config_df_1)
 

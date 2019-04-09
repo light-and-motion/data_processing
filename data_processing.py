@@ -20,9 +20,13 @@ class Data_Processing:
         self.output_wb = output_wb
     
     # Create the dataframe that stores the raw data of the CSV file 
-    def create_csv_dataframe(self, file): 
-        #print(self.input_csv)
-        df = pd.read_csv(file + '.csv', header = 1, keep_default_na = False)
+    def create_csv_dataframe(self, file, startLine): 
+        if (startLine.dropna().empty): 
+            startLine = 0
+        else: 
+            startLine = startLine.loc[0]
+        
+        df = pd.read_csv(file + '.csv', header = startLine, keep_default_na = False)
         return df
     def create_excel_dataframe(self, file, sheet): 
         df = pd.read_excel(file + '.xlsx', sheet_name = sheet)
@@ -125,7 +129,6 @@ class Data_Processing:
         #          cellRow helps ensures that the contents are placed in the correct cell 
         i = start
         cellRow = 2 
-        print(df.loc[0,col_index])
         while (i <= end):  
             ws.cell(row = cellRow, column = outputs.loc[j]).value = df.loc[i,col_index]
             cellRow += 1
@@ -177,7 +180,6 @@ class Data_Processing:
         # Plot as many y-axes as indicated in the configuration file 
     
         y_axis_rows = y_axis.index
-        #print(y_axis_rows)
         
         for row in y_axis_rows: 
             y = Reference(ws, min_col = outputs.loc[row], min_row = 2, max_row = row_size)
