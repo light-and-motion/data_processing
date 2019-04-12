@@ -37,7 +37,7 @@ print(config_df_2['Header'])
 # Retrieve the csv file and store its contents into a dataframe 
 
 '''
-raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Header'])
+raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Row Skip'])
 
 # Read the raw dataframe into an Excel file 
 raw_data_excel = df.create_raw_Excelbook(raw_data_df)
@@ -52,11 +52,20 @@ config_df_1 = df.convert_columns(config_df_1, col_names)
 # Note: Even though only one column is being extracted at a time, the column being extracted 
 # is stored in a dataframe as only dataframes, not series!, can combine with other dataframes. 
 
-mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input Column Title'])
+mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'])
 
 
-# format time 
-mapping_data_df['Date/Time'] = df.time_format(mapping_data_df['Date/Time']) 
+# format time only if the time columns is to be mapped
+new_titles = config_df_1['Input']
+print(new_titles)
+
+if (data_choice == 1 and any('Date/Time' == new_titles)):
+    mapping_data_df['Date/Time'] = df.time_format(mapping_data_df['Date/Time'], data_choice)
+
+elif (data_choice == 2 and any('Start Time' == new_titles)): 
+    mapping_data_df['Start Time'] = df.time_format(mapping_data_df['Start Time'], data_choice) 
+elif (data_choice == 3 and any('seconds' == new_titles)):
+    mapping_data_df['seconds'] = df.time_format(mapping_data_df['seconds'], data_choice)
 
 
 

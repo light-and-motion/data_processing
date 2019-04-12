@@ -1,3 +1,4 @@
+from openpyxl import load_workbook
 class User_Interface:
     def __init__(self, choice, config_file, input_csv, output_wb):
         self.choice = choice
@@ -24,13 +25,14 @@ def choose_config(choice):
         config_file = input('Enter name of Serial Data config file: ')
     #elif choice == 0: #default option for testing purposes
      
-    config_file = 'LumenConfig'
+    #config_file = 'LumenConfig'
     
     #else:
         #choice = None
         #print('Please enter valid input.\n')
-    print("config_file", config_file)
-    return config_file
+    
+    # return both the workbook and the name of the workbook in String format 
+    return [load_workbook(config_file + '.xlsx'), config_file]
 
 
 #Asks user for file name of CSV to process

@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import (date, datetime)
+from datetime import (date, datetime, time)
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font
@@ -24,9 +24,10 @@ class Data_Processing:
         if (startLine.dropna().empty): 
             startLine = 0
         else: 
-            startLine = startLine.loc[0]
+            startLine = startLine.loc[0] - 1 
         
-        df = pd.read_csv(file + '.csv', header = startLine, keep_default_na = False)
+        df = pd.read_csv(file + '.csv', skiprows= startLine, keep_default_na = False)
+
         return df
     def create_excel_dataframe(self, file, sheet): 
         df = pd.read_excel(file + '.xlsx', sheet_name = sheet)
@@ -51,46 +52,84 @@ class Data_Processing:
     
     # Converts a column letter to its corresponding integer.
     # https://www.geeksforgeeks.org/find-excel-column-number-column-title/
-    def letter2int(self, letters):
+    def letter2int(self, letter_series):
         result = 0
-        for x in letters: 
-            x = x.upper()
-            result *= 26
-            result += ord(x) - ord('A') + 1
-        return result 
+        for col_letter in letter_series: 
+            result = 0
+            for x in col_letter: 
+                x = x.upper()
+                result *= 26
+                result += ord(x) - ord('A') + 1   
+            letter_series.replace(col_letter, result, inplace=True)
+
+        return letter_series
 
     # Converts the location format of the input columns from letters to new_titles  
-    def letter2title(self, letters, names):    
-        index = self.letter2int(letters)
-        title = names[index-1]
-        return title
+    def letter2title(self, letter_series, names):
+        indices = self.letter2int(letter_series)
+        x = 0
+        for col_letter in letter_series: 
+            index = indices.loc[x]      
+            title = names[index-1]
+            letter_series.replace(col_letter, title, inplace=True)
+            x += 1
+        return letter_series
 
-    def time_format(self, datetime_series): 
-        start_datetime = datetime_series.loc[0]
-        start_list = start_datetime.split()
-        start_time = pd.to_timedelta(start_list[1])
-        for cur_datetime in datetime_series: 
+    def get_hours_minutes_seconds(self, time):
+        time = int(time)
+        hours = time // 3600 
+        time = time % 3600
+        minutes = time // 60 
+        seconds = time % 60
+        
+        return [hours,minutes,seconds]
+        
+        #for time in time_series: 
 
-            # Split the datetime string into a list by a space delimiter 
-            # and store the HH:MM:SS portion into a variable. 
-            cur_datetime_list = cur_datetime.split() 
+    def convert_to_time_object(self, series, data_choice):
+        if (data_choice == 1 or data_choice == 2): 
+            for cur_datetime in series: 
+                # Split the datetime string into a list by a space delimiter and store the HH:MM:SS 
+                # portion into a variable 
+                cur_datetime_list = cur_datetime.split()
+                cur_time_list = cur_datetime_list[1].split('.')
+                cur_time = pd.to_timedelta(cur_time_list[0])
+                series.replace(cur_datetime, cur_time, inplace = True)
 
-            # Store the time portion into cur_time and convert it to a timedelta object 
-            cur_time = pd.to_timedelta(cur_datetime_list[1])
+        if (data_choice == 3): 
+            for unit_time in series: 
+                time_list = self.get_hours_minutes_seconds(unit_time)
+                cur_time = str(time_list[0]) + ':' + str(time_list[1]) + ':' + str(time_list[2])
+                cur_time = pd.to_timedelta(cur_time)
+                series.replace(unit_time, cur_time, inplace = True)
+        #return series
+    
 
+    # applicable for Lumensphere and MultiMeter data 
+    def time_format(self, time_series, data_choice): 
+        
+        self.convert_to_time_object(time_series, data_choice)
+        start_time = time_series.loc[0]
+        x = 0 
+        for current_time in time_series: 
+            
             # Find the difference between the current time and the start time. 
             # Convert the timedelta object into a string and split string into a list
             # by space delimiter.  
-            difference= str(cur_time-start_time)
+            difference= str(current_time-start_time)
             difference_list = difference.split()
-
+            
             # Store the time portion of the string into elapsed_time
             elapsed_time = difference_list[2]
-
+            
             # Convert elapsed_time to a datetime object and store the result in the date column 
             elapsed_time = datetime.strptime(elapsed_time, "%H:%M:%S").time()
-            datetime_series.replace(cur_datetime, elapsed_time, inplace = True)
-        return datetime_series
+            
+            #### WHY DOESN'T PUTTING current_time in place of time_series.loc[x] work ???? 
+            time_series.replace(time_series.loc[x], elapsed_time, inplace = True)
+            x += 1
+
+        return time_series
 
     # Store the data of the input columns of the CSV into the desired output columns in Excel 
     # new_titles will be to create the new names of the columns
@@ -99,7 +138,7 @@ class Data_Processing:
     def process_data(self, wb, df, config_df):
 
         new_titles = config_df['Title']
-        title_inputs = config_df['Input Column Title']
+        title_inputs = config_df['Input']
         outputs = config_df['Output']
         ranges = config_df['Range']
 
@@ -160,7 +199,7 @@ class Data_Processing:
 
         ws = wb.active
         
-        title_inputs = config_df_1['Input Column Title']
+        title_inputs = config_df_1['Input']
         outputs = config_df_1['Output']
         new_titles = config_df_1['Title']
         graph_title = config_df_2['Graph Title']
@@ -237,15 +276,22 @@ class Data_Processing:
     # Convert the letter elements of inputs into integers and Strings and outputs into integers 
     # so we can later use them as indices. 
     def convert_columns(self, config_df, col_names):
-        title_inputs = config_df['Input'].copy()    
-        config_df['Input Column Title'] = title_inputs
-        title_inputs = config_df['Input Column Title']
-        num_inputs = config_df['Input']
-        outputs = config_df['Output']
+        # make a deep copy of the input column letters to convert 
+        
+        config_df['Input'] = self.letter2title(config_df['Input'], col_names)
+
+        config_df['Output'] = self.letter2int(config_df['Output'])
+        #outputs = config_df['Output']
+
+        #num_inputs = self.letter2int(num_inputs)
+        #title_inputs = self.letter2title(title_inputs, col_names)
+        #outputs = self.letter2int(outputs)
+        '''
         for i in range(0, num_inputs.size): 
             num_inputs.replace(num_inputs.loc[i], self.letter2int(num_inputs.loc[i]), inplace = True)
             title_inputs.replace(title_inputs.loc[i], self.letter2title(title_inputs.loc[i], col_names), inplace = True)
             outputs.replace(outputs.loc[i], self.letter2int(outputs.loc[i]), inplace = True)
+        '''
         return config_df
     
     def create_mapping_dataframe(self, raw_data_df, title_inputs):
