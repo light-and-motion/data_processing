@@ -61,7 +61,6 @@ class Data_Processing:
                 result *= 26
                 result += ord(x) - ord('A') + 1   
             letter_series.replace(col_letter, result, inplace=True)
-
         return letter_series
 
     # Converts the location format of the input columns from letters to new_titles  
@@ -73,7 +72,6 @@ class Data_Processing:
             title = names[index-1]
             letter_series.replace(col_letter, title, inplace=True)
             x += 1
-        return letter_series
 
     def get_hours_minutes_seconds(self, time):
         time = int(time)
@@ -93,30 +91,28 @@ class Data_Processing:
                 # portion into a variable 
                 cur_datetime_list = cur_datetime.split()
                 cur_time_list = cur_datetime_list[1].split('.')
-                cur_time = pd.to_timedelta(cur_time_list[0])
+                cur_time = cur_time_list[0]
                 series.replace(cur_datetime, cur_time, inplace = True)
 
         if (data_choice == 3): 
             for unit_time in series: 
                 time_list = self.get_hours_minutes_seconds(unit_time)
                 cur_time = str(time_list[0]) + ':' + str(time_list[1]) + ':' + str(time_list[2])
-                cur_time = pd.to_timedelta(cur_time)
                 series.replace(unit_time, cur_time, inplace = True)
-        #return series
-    
+        
 
     # applicable for Lumensphere and MultiMeter data 
     def time_format(self, time_series, data_choice): 
         
         self.convert_to_time_object(time_series, data_choice)
-        start_time = time_series.loc[0]
+        start_time = pd.to_timedelta(time_series.loc[0])
         x = 0 
         for current_time in time_series: 
             
             # Find the difference between the current time and the start time. 
             # Convert the timedelta object into a string and split string into a list
             # by space delimiter.  
-            difference= str(current_time-start_time)
+            difference= str(pd.to_timedelta(current_time)-start_time)
             difference_list = difference.split()
             
             # Store the time portion of the string into elapsed_time
@@ -126,7 +122,7 @@ class Data_Processing:
             elapsed_time = datetime.strptime(elapsed_time, "%H:%M:%S").time()
             
             #### WHY DOESN'T PUTTING current_time in place of time_series.loc[x] work ???? 
-            time_series.replace(time_series.loc[x], elapsed_time, inplace = True)
+            time_series.replace(current_time, elapsed_time, inplace = True)
             x += 1
 
         return time_series
@@ -276,22 +272,10 @@ class Data_Processing:
     # Convert the letter elements of inputs into integers and Strings and outputs into integers 
     # so we can later use them as indices. 
     def convert_columns(self, config_df, col_names):
-        # make a deep copy of the input column letters to convert 
+        self.letter2title(config_df['Input'], col_names)
+
+        self.letter2int(config_df['Output'])
         
-        config_df['Input'] = self.letter2title(config_df['Input'], col_names)
-
-        config_df['Output'] = self.letter2int(config_df['Output'])
-        #outputs = config_df['Output']
-
-        #num_inputs = self.letter2int(num_inputs)
-        #title_inputs = self.letter2title(title_inputs, col_names)
-        #outputs = self.letter2int(outputs)
-        '''
-        for i in range(0, num_inputs.size): 
-            num_inputs.replace(num_inputs.loc[i], self.letter2int(num_inputs.loc[i]), inplace = True)
-            title_inputs.replace(title_inputs.loc[i], self.letter2title(title_inputs.loc[i], col_names), inplace = True)
-            outputs.replace(outputs.loc[i], self.letter2int(outputs.loc[i]), inplace = True)
-        '''
         return config_df
     
     def create_mapping_dataframe(self, raw_data_df, title_inputs):

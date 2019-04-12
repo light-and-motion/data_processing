@@ -60,12 +60,12 @@ new_titles = config_df_1['Input']
 print(new_titles)
 
 if (data_choice == 1 and any('Date/Time' == new_titles)):
-    mapping_data_df['Date/Time'] = df.time_format(mapping_data_df['Date/Time'], data_choice)
+    df.time_format(mapping_data_df['Date/Time'], data_choice)
 
 elif (data_choice == 2 and any('Start Time' == new_titles)): 
-    mapping_data_df['Start Time'] = df.time_format(mapping_data_df['Start Time'], data_choice) 
+    df.time_format(mapping_data_df['Start Time'], data_choice) 
 elif (data_choice == 3 and any('seconds' == new_titles)):
-    mapping_data_df['seconds'] = df.time_format(mapping_data_df['seconds'], data_choice)
+    df.time_format(mapping_data_df['seconds'], data_choice)
 
 
 
