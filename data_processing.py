@@ -74,7 +74,10 @@ class Data_Processing:
             x += 1
 
     def get_hours_minutes_seconds(self, time):
+        #print('time before conversion = ', time)
+        time = time * 3600
         time = int(time)
+        #print("time after conversion = ", time)
         hours = time // 3600 
         time = time % 3600
         minutes = time // 60 
@@ -103,12 +106,10 @@ class Data_Processing:
 
     # applicable for Lumensphere and MultiMeter data 
     def time_format(self, time_series, data_choice): 
-        
         self.convert_to_time_object(time_series, data_choice)
         start_time = pd.to_timedelta(time_series.loc[0])
         x = 0 
         for current_time in time_series: 
-            
             # Find the difference between the current time and the start time. 
             # Convert the timedelta object into a string and split string into a list
             # by space delimiter.  
@@ -118,6 +119,7 @@ class Data_Processing:
             # Store the time portion of the string into elapsed_time
             elapsed_time = difference_list[2]
             
+        
             # Convert elapsed_time to a datetime object and store the result in the date column 
             elapsed_time = datetime.strptime(elapsed_time, "%H:%M:%S").time()
             
@@ -142,30 +144,25 @@ class Data_Processing:
         # Read in all the data 
         for j in range(new_titles.size): 
             # Append and bold the header of input column to the first row of its desired column location in Excel. 
-            self.read_in_values(wb, j, df, new_titles, title_inputs, outputs, ranges)
+            col_num = outputs.iloc[j]
+            self.read_in_values(wb, df, new_titles.iloc[j], title_inputs.iloc[j], outputs.iloc[j], col_num)
         return wb
     
     # Read in the value of 1 column to the output file 
-    def read_in_values(self, wb, j, df, new_titles, title_inputs, outputs, range): 
+    def read_in_values(self, wb, df, new_title, title_input, output, col_num): 
         ws = wb.active
-        header = ws.cell(row=1, column = outputs.iloc[j]) 
-        header.value = new_titles.iloc[j]
+        header = ws.cell(row=1, column = output) 
+        header.value = new_title
         header.font = Font(bold=True)
-        col_index = title_inputs.iloc[j]
+        col_index = title_input
         
-        ## Range
-        max_size = df[col_index].size
-        current_range = self.find_range(range.loc[j],max_size)
-        
-        start = current_range[0]
-        end = current_range[1]
-
         # Indices: i helps to retrieve the contents of the current column 
         #          cellRow helps ensures that the contents are placed in the correct cell 
-        i = start
         cellRow = 2 
-        while (i <= end):  
-            ws.cell(row = cellRow, column = outputs.loc[j]).value = df.loc[i,col_index]
+        i = 0
+        size = df[col_index].size
+        while (i < size):   
+            ws.cell(row = cellRow, column = col_num).value = df.loc[i,col_index]
             cellRow += 1
             i += 1
 
@@ -189,7 +186,8 @@ class Data_Processing:
 
         # Extract the row index (if any) of the value that will serve as our x-axis 
         x_axis = axis.loc[(axis == 'x') | (axis == 'X')]
-        return x_axis
+        y_axis = axis.loc[(axis == 'y') | (axis == 'Y')]
+        return [x_axis, y_axis]
 
     def create_chart(self,wb, outputs_data_df, x_axis, y_axis, config_df_1, config_df_2): 
 
@@ -278,11 +276,22 @@ class Data_Processing:
         
         return config_df
     
-    def create_mapping_dataframe(self, raw_data_df, title_inputs):
-        df = raw_data_df[[title_inputs.loc[0]]]
-        for i in range(1, title_inputs.size): 
-            new_df = raw_data_df[[title_inputs.loc[i]]]
-            df = df.join(new_df)
+    def create_mapping_dataframe(self, raw_data_df, title_inputs, range_inputs):
+        
+        # initialize an empty df which will eventually store all mapped values 
+        df = pd.DataFrame()
+
+        # find max_size (a column of raw_data_df)
+        max_size = raw_data_df.loc[0].size
+
+        # store all the data to be mapped (range slicing included) into a df
+        # append each new series to the 
+        for i in range(len(range_inputs)): 
+            range_list = self.find_range(range_inputs.loc[i],max_size)
+            start = range_list[0]
+            end = range_list[1]
+            new_series = raw_data_df[title_inputs.loc[i]].iloc[start:end]
+            df[title_inputs.loc[i]] = new_series
         return df
 
 

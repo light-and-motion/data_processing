@@ -52,21 +52,23 @@ config_df_1 = df.convert_columns(config_df_1, col_names)
 # Note: Even though only one column is being extracted at a time, the column being extracted 
 # is stored in a dataframe as only dataframes, not series!, can combine with other dataframes. 
 
-mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'])
+
+## Do range slicing here 
+mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'], config_df_1['Range'])
+
 
 
 # format time only if the time columns is to be mapped
 new_titles = config_df_1['Input']
-print(new_titles)
 
 if (data_choice == 1 and any('Date/Time' == new_titles)):
     df.time_format(mapping_data_df['Date/Time'], data_choice)
 
 elif (data_choice == 2 and any('Start Time' == new_titles)): 
     df.time_format(mapping_data_df['Start Time'], data_choice) 
-elif (data_choice == 3 and any('seconds' == new_titles)):
-    df.time_format(mapping_data_df['seconds'], data_choice)
-
+elif (data_choice == 3 and any('hours' == new_titles)): 
+#elif (data_choice == 3 and any('seconds' == new_titles)):
+    df.time_format(mapping_data_df['hours'], data_choice)
 
 
 # create workbook to hold plotted data
@@ -79,14 +81,13 @@ output_data_wb = df.process_data(output_data_wb, mapping_data_df, config_df_1)
 
 ##### Chart creation 
 
-# Call make_chart() to determine if we need to create a chart 
-axis = config_df_1['Axis']
-x_axis = df.make_chart(axis)
-
+# Call make_chart() to determine if we need to create a chart (at least 1 x and 1 y)
+axis = df.make_chart(config_df_1['Axis'])
+x_axis = axis[0]
+y_axis = axis[1]
 
 # If the x_axis is not empty, then create a chart 
-if (x_axis.size != 0): 
-    y_axis = axis.loc[(axis == 'Y') | (axis == 'y')]
+if (x_axis.size != 0 and y_axis.size != 0): 
     df.create_chart(output_data_wb, mapping_data_df, x_axis, y_axis, config_df_1, config_df_2)
 
 #print(df.get_output_wb)
