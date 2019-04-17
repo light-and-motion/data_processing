@@ -2,6 +2,7 @@ import user_interface
 import numpy as np
 import pandas as pd
 from data_processing import Data_Processing
+from win32com.client import Dispatch
 
 ### Main execution block ###
 user_interface.banner()
@@ -16,9 +17,9 @@ config_list = user_interface.choose_config(data_choice)
 config_file = config_list[0]
 config_title = config_list[1]
 input_csv = user_interface.choose_csv()
-output_wb = user_interface.choose_output_wb()
+output_name = user_interface.choose_output_name()
 
-df = Data_Processing(data_choice, config_file, input_csv, output_wb)
+df = Data_Processing(data_choice, config_file, input_csv, output_name)
 
 
 # Get the names of the columns and read the configuration file into config_df_1
@@ -37,7 +38,7 @@ print(config_df_2['Header'])
 # Retrieve the csv file and store its contents into a dataframe 
 
 '''
-raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Row Skip'])
+raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Row Skip'].loc[0])
 
 # Read the raw dataframe into an Excel file 
 raw_data_excel = df.create_raw_Excelbook(raw_data_df)
@@ -61,14 +62,27 @@ mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'],
 # format time only if the time columns is to be mapped
 new_titles = config_df_1['Input']
 
+time_unit = 'None'
 if (data_choice == 1 and any('Date/Time' == new_titles)):
-    df.time_format(mapping_data_df['Date/Time'], data_choice)
+    time_title = 'Date/Time'
 
+elif (data_choice == 2 and any('Start Time' == new_titles)):
+    time_title = 'Start Time' 
+
+elif (data_choice == 3): 
+    if (any('hours' == new_titles)): 
+        time_title = 'hours'
+    elif (any('seconds' == new_titles)): 
+        time_title = 'seconds'
+    time_unit = config_df_2['Time Unit'].loc[0]
+    
+mapping_data_df[time_title] = df.convert_to_time_object(mapping_data_df[time_title], data_choice, time_unit)
+df.time_format(mapping_data_df[time_title])
+'''
 elif (data_choice == 2 and any('Start Time' == new_titles)): 
-    df.time_format(mapping_data_df['Start Time'], data_choice) 
-elif (data_choice == 3 and any('hours' == new_titles)): 
-#elif (data_choice == 3 and any('seconds' == new_titles)):
-    df.time_format(mapping_data_df['hours'], data_choice)
+    df.time_format(mapping_data_df['Start Time'], data_choice, None) 
+'''
+
 
 
 # create workbook to hold plotted data
@@ -90,5 +104,11 @@ y_axis = axis[1]
 if (x_axis.size != 0 and y_axis.size != 0): 
     df.create_chart(output_data_wb, mapping_data_df, x_axis, y_axis, config_df_1, config_df_2)
 
-#print(df.get_output_wb)
-output_data_wb.save(df.get_output_wb + '.xlsx')
+#print(df.get_output_name)
+output_data_wb.save(df.get_output_name + '.xlsx')
+
+# create the jpg file 
+df.export_jpg(mapping_data_df, x_axis, y_axis, config_df_1, config_df_2, output_name)
+
+
+

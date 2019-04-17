@@ -1,10 +1,10 @@
 from openpyxl import load_workbook
 class User_Interface:
-    def __init__(self, choice, config_file, input_csv, output_wb):
+    def __init__(self, choice, config_file, input_csv, output_name):
         self.choice = choice
         self.config_file = config_file
         self.input_csv = input_csv
-        self.output_wb = output_wb
+        self.output_name = output_name
 
 # ENCAPSULATE INTO ANOTHER CLASS 
 #Prints program banner
@@ -25,8 +25,8 @@ def choose_config(choice):
         config_file = input('Enter name of Serial Data config file: ')
     #elif choice == 0: #default option for testing purposes
      
+    config_file = 'SerialConfig'
     #config_file = 'LumenConfig'
-    
     #else:
         #choice = None
         #print('Please enter valid input.\n')
@@ -43,7 +43,8 @@ def choose_csv():
         csv_choice = input('Enter name of CSV file to process or enter ''default'': ')
         
         if csv_choice == 'default':
-            input_csv = 'Derived Data Imjin 800'
+            input_csv = 'Serial'
+            #input_csv = 'Derived Data Imjin 800'
         else:
             input_csv = csv_choice
     return input_csv
@@ -51,16 +52,17 @@ def choose_csv():
 
 ##asks user for file name of final excel workbook
 #default is LumenData (testing purposes)
-def choose_output_wb():
-    output_wb = None
-    while output_wb == None:
+def choose_output_name():
+    output_name = None
+    while output_name == None:
         output_choice = input('Enter name of Output file or enter ''default'': ')
 
         if output_choice == 'default':
-            output_wb = 'LumenData'
+            #output_name = 'LumenData'
+            output_name = 'Serial_Output'
         else:
-            output_wb = output_choice
-    return output_wb
+            output_name = output_choice
+    return output_name
 
 
 
