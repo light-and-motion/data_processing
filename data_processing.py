@@ -155,9 +155,21 @@ class Data_Processing:
         return [hours,minutes,seconds]
 
     def convert_to_time_object(self, series, data_choice, unit):
+        """
+        Returns a series that contains a String representation of a time object in %H:%M:%S format 
+
+        Parameters: 
+        series (Series): The Series that is to be converted. Will either contain floats or a datetime object in form: %m/%d/%Y %H:%M:%S AM/PM
+        data_choice (int): Gives the type of file whose time is being converted: 1) lumensphere, 2) multimeter, 3) serial 
+        unit (String): The time unit of the series, if the series contains floats. Otherwise, if the series contains datetime objects, 
+                        unit will be set to None. 
+
+        Returns: 
+        Series object: String representation of time object in %H:%M:%S clocktime format
+        """
         if (data_choice == 1 or data_choice == 2): 
             for cur_datetime in series: 
-                # Split the datetime string into a list by a space delimiter and store the HH:MM:SS 
+                # Split the datetime object into a list by a space delimiter and store the %H:%M:%S  
                 # portion into a variable 
                 cur_datetime_list = cur_datetime.split()
                 cur_time_list = cur_datetime_list[1].split('.')
@@ -169,64 +181,82 @@ class Data_Processing:
                 time_list = self.get_hours_minutes_seconds(time, unit)
                 cur_time = str(time_list[0]) + ':' + str(time_list[1]) + ':' + str(time_list[2])
                 series.replace(time, cur_time, inplace = True)
+        #print(series.head())
         return series
         
-
-    # applicable for Lumensphere and MultiMeter data 
+ 
     def time_format(self, time_series): 
-        #print(time_series.head())
-        #self.convert_to_time_object(time_series, data_choice)
+        """
+        Takes in a String series in %H:%M:%S clocktime format and returns a time Series that gives the elapsed time in %H:%M:%S format. 
+
+        Parameters: 
+        time_series (Series): Series that contains String representations of clocktimes 
+
+        Returns: 
+        time_series (Series): Series that contains time objects
+
+        """
         start_time = pd.to_timedelta(time_series.loc[0])
-        #print(start_time)
-        x = 0 
+    
         for current_time in time_series: 
-            # Find the difference between the current time and the start time. 
-            # Convert the timedelta object into a string and split string into a list
-            # by space delimiter.  
+            # Convert the String 'current_time' into a timedelta object and find the difference between 'current_time' and 'start_time'
+            # to find the elapsed time. Convert the difference between the two times into a string and use the space 
+            # delimiter to split it into a list. 
             difference= str(pd.to_timedelta(current_time)-start_time)
             difference_list = difference.split()
             
-            # Store the time portion of the string into elapsed_time
+            # Store the time portion of the String into 'elapsed_time' and convert
+            # 'elapsed_time' into a datetime object 
             elapsed_time = difference_list[2]
-            
-        
-            # Convert elapsed_time to a datetime object and store the result in the date column 
             elapsed_time = datetime.strptime(elapsed_time, "%H:%M:%S").time()
             
-            #### WHY DOESN'T PUTTING current_time in place of time_series.loc[x] work ???? 
+            
             time_series.replace(current_time, elapsed_time, inplace = True)
-            x += 1
-        #print(time_series)
         return time_series
 
     # Store the data of the input columns of the CSV into the desired output columns in Excel 
-    # new_titles will be to create the new names of the columns
-    # num_inputs will be used to locate the cells where we want to store our data 
-    # title_inputs will be used to retrieve the column datas 
+    
     def process_data(self, wb, df, config_df):
+        """
+        Maps the input data of the CSV file into the desired columns in the output Excel file 
 
+        Parameters: 
+        wb (Workbook object): Excel workbook that will store the results of the data processing 
+        df (DataFrame): DataFrame that stores the data to be mapped 
+        config_df (DataFrame): DataFrame that stores the data in the 'mapped data portion' of the configuration file  
+
+        Returns: 
+        Workbook object with data mapped to proper columns 
+        """
         new_titles = config_df['Title']
         title_inputs = config_df['Input']
         outputs = config_df['Output']
 
-        # ENCAPSULATE INTO A NEW FUNCTION `
         # Read in all the data 
         for j in range(new_titles.size): 
-            # Append and bold the header of input column to the first row of its desired column location in Excel. 
-            col_num = outputs.iloc[j]
-            self.read_in_values(wb, df, new_titles.iloc[j], title_inputs.iloc[j], outputs.iloc[j], col_num)
+            self.read_in_values(wb, df, new_titles.iloc[j], title_inputs.iloc[j], outputs.iloc[j])
         return wb
     
-    # Read in the value of 1 column to the output file 
-    def read_in_values(self, wb, df, new_title, title_input, output, col_num): 
+    def read_in_values(self, wb, df, new_title, title_input, col_num):
+        """
+        Reads in the data of 1 input column into the Excel workbook 
+
+        Parameters: 
+        wb (Workbook object): 
+        wb (Workbook object): Excel workbook that will store the results of the data processing 
+        df (Series): DataFrame that stores the data to be mapped 
+        new_title (String): New column title of the mapped data 
+        title_inputs (String): Current column title of the series that is being mapped    
+        col_num (int): Number of column the data is being mapped to   
+        """ 
         ws = wb.active
-        header = ws.cell(row=1, column = output) 
+        header = ws.cell(row=1, column = col_num) 
         header.value = new_title
         header.font = Font(bold=True)
         col_index = title_input
         
-        # Indices: i helps to retrieve the contents of the current column 
-        #          cellRow helps ensures that the contents are placed in the correct cell 
+        # Indices: i retrieves the data in the column 
+        #          cellRow ensures that the data is being mapped to the current cell in the Excel worksheet
         cellRow = 2 
         i = 0
         size = df[col_index].size
@@ -239,6 +269,18 @@ class Data_Processing:
     # Range is calculated against the row indexes of the Excel worksheet. Thus, the first
     # cell in a column will be located at row 2  
     def find_range(self, current_range, total_size): 
+
+        """
+        Returns a list of the starting and ending indices of the data you want to process for a Series. 
+
+        Parameters: 
+        current_range (float): The interval of the data to be read (inclusive) in start:end form
+        total_size (int) - Size of the Series
+
+        Returns: 
+        List - A two element list whose first element is the starting row index and whose 
+                second element is the ending row index. 
+        """
         if (pd.isnull(current_range)): 
             return [0,total_size-1]
         else: 
@@ -250,16 +292,35 @@ class Data_Processing:
             return [start,end]
 
         
-    # Effectively determines whether or not a chart will be created. 
+    
     def make_chart(self,axis):
+        """
+        Returns a list that indicates which columns will serve as the x-axis and y-axes of a plotted chart 
 
-        # Extract the row index (if any) of the value that will serve as our x-axis 
+        Parameters: 
+        axis (Series): Series that indicates which columns will serve as the x-axis and the y-axes
+
+        Returns:
+        List: A list, whose first element (should be) a one-element Series of the column that will serve as the x-axis 
+                and whose second element is a Series of the column(s) that will serve as the y-axes
+        """ 
         x_axis = axis.loc[(axis == 'x') | (axis == 'X')]
         y_axis = axis.loc[(axis == 'y') | (axis == 'Y')]
         return [x_axis, y_axis]
 
     def create_chart(self,wb, outputs_data_df, x_axis, y_axis, config_df_1, config_df_2): 
+        """
+        Creates a chart of the plotted data in a new worksheet of the output Excel workbook
 
+        Parameters: 
+        wb (Workbook object): Excel workbook of the mapped data 
+        outputs_data_df (DataFrame) - DataFrame of the mapped data 
+        x_axis (Series): Series that indicates which column will serve as the x-axis 
+        y_axis (Series): Series that indicates which column(s) will serve as the y-axes
+        config_df_1 (DataFrame): DataFrame that stores the data in the 'mapped data portion' of the configuration file  
+        config_df_2 (DataFrame): DataFrame that stores the data in the 'general settings' of the configuration file 
+        """
+        #print(type(config_df_1))
         ws = wb.active
         
         title_inputs = config_df_1['Input']
@@ -288,16 +349,14 @@ class Data_Processing:
             s = Series(y,x,title=new_titles.loc[row])
             chart.append(s)
         
-    
         chart.x_axis.title = new_titles.loc[x_axis_row]
+        
         # situate x-axis below negative numbers 
         chart.x_axis.tickLblPos = "low"
 
-        #chart.x_axis.tickLblSkip = 3
-
         # Determine whether not there is more than 1 y-axis, which would necessitate the 
         # creation of a legend. 
-        create_legend = self.chart_legend(y_axis_rows, new_titles) 
+        create_legend = self.chart_legend(y_axis_rows) 
         if (not create_legend): 
             chart.y_axis.title = new_titles.loc[y_axis_rows[0]]
             chart.legend = None 
@@ -311,6 +370,17 @@ class Data_Processing:
 
 
     def chart_scaling(self, chart, x_min, x_max, y_min, y_max): 
+        """
+        Manual scaling on chart. If the Series is empty, then no manual scaling is required.  
+
+        Parameters: 
+        chart (Chart object): Chart whose axis is being manually scaled 
+        x_min (Series): Minimum value on x-axis scale 
+        x_max (Series): Maximum value on x-axis scale
+        y_min (Series): Minimum value on y-axis scale
+        y_max (Series): Maximum value on y-axis scale  
+        """
+        
         if (not x_min.dropna().empty): 
             chart.x_axis.scaling.min = x_min.loc[0]
         if (not x_max.dropna().empty): 
@@ -323,45 +393,79 @@ class Data_Processing:
     # Determines the need for a chart legend
     #   If there is only 1 y-axis, title the y_axis and delete the legend  
 
-    def chart_legend(self, y_axis_rows, new_titles):
+    def chart_legend(self, y_axis_rows):
+        """
+        Determines the need for a chart legend in the chart. If there is only 1 y-axis, then 
+        title the y-axis instead and remove the legend. 
+
+        Parameters: 
+        y_axis_rows (Series): Series that indicates which columns will serve as the y-axes of the chart. 
+        
+        Returns: 
+        bool: True if a chart legend is necessary. False if it is not. 
+        """
         if (len(y_axis_rows) == 1): 
             return False
-            #chart.y_axis.title = new_titles.loc[y_axis_rows[0]]
-            #chart.legend = None 
         return True
-        #return None 
+        
 
     ### Default chart title: If there is no given chart title then chart title will be: 
         #   'All y-axis vs x-axis'
     def chart_title(self, new_titles, graph_title, x_axis_row, y_axis_rows):
+        """
+        Returns the chart title. 
+
+        Parameters: 
+        new_titles (Series): Series that will be used to give a default chart title if no chart title is given 
+        graph_title (Series): Series that will contain the given chart title
+        x_axis_row (Series): Series that stores the index location of the column to serve as the x_axis
+        y_axis_row (Series): Series that stores the index location(s) of the column(s) to serve as the y-axes 
+
+        Returns: 
+        String: Title of chart. If no title is given, then the chart title will default to '[All] y-axes vs x-axis'
+        """
         # Note: A column with 'NaNs' is not considered empty. 
         if (graph_title.dropna().empty): 
             title = ''
-            #print(title)
             for i in range(y_axis_rows.size-1): 
                 title += new_titles.loc[y_axis_rows[i]] + ", "
             title += new_titles.loc[y_axis_rows[y_axis_rows.size-1]] + " vs " + new_titles.loc[x_axis_row]
         else: 
             title = graph_title.loc[0]
-        
-        #print(title + '\n')
+
         return title
 
-    def read_config_file(self): 
-        read_file = pd.read_excel('LumenConfig.xlsx', sheet_name = 'Sheet1')
-        return read_file
 
-    # Convert the letter elements of inputs into integers and Strings and outputs into integers 
-    # so we can later use them as indices. 
     def convert_columns(self, config_df, col_names):
-        self.letter2title(config_df['Input'], col_names)
+        """
+        Returns config_df where: 
+            a) column letters in the 'input' column of 'config_df' have been replaced by column titles
+            b) column letters in the 'output' column of 'config_df' have been replaced by column numbers
 
+        Parameters: 
+        config_df (DataFrame): DataFrame that contains the 'mapped data portion' of the configuration file 
+        col_names (Series): Series that contains the titles of the columns to be mapped 
+
+        Returns: 
+        DataFrame: Altered version of 'config_df' where elements of 'input' and 'output' columns have been altered  
+        """
+        self.letter2title(config_df['Input'], col_names)
         self.letter2int(config_df['Output'])
-        
+
         return config_df
     
     def create_mapping_dataframe(self, raw_data_df, title_inputs, range_inputs):
-        
+        """
+        Returns a DataFrame that contains only the columns in the CSV file that are being mapped 
+
+        Parameters: 
+        raw_data_df (DataFrame): DataFrame of CSV file 
+        title_inputs (Series): Series that contains the columns we want mapped 
+        range_inputs (Series): Series that contains the columns we want original data to be mapped to 
+
+        Returns: 
+        A Dataframe that contains only the columns in the CSV file that are being mapped
+        """
         # initialize an empty df which will eventually store all mapped values 
         df = pd.DataFrame()
 
@@ -382,6 +486,17 @@ class Data_Processing:
 
         
     def export_jpg(self, mapping_df, x_axis_list, y_axis_list, config_df_1, config_df_2, output_name):  
+        """
+        Produces a JPG file of the chart in matplotlib 
+
+        Parameters: 
+        mapping_df (DataFrame): DataFrame that contains only the columns in the CSV file that are being mapped 
+        x_axis (Series): Series that indicates which column will serve as the x-axis 
+        y_axis (Series): Series that indicates which column(s) will serve as the y-axes
+        config_df_1 (DataFrame): DataFrame that stores the data in the 'mapped data portion' of the configuration file  
+        config_df_2 (DataFrame): DataFrame that stores the data in the 'general settings' of the configuration file 
+        output_name (String): Name JPG file will be saved as 
+        """
         new_titles = config_df_1['Title']
         title_inputs = config_df_1['Input']
         graph_title = config_df_2['Graph Title']
@@ -415,7 +530,7 @@ class Data_Processing:
         
         # set the labels and/or legend of the chart 
         plt.xlabel(new_titles[x_axis_list.index[0]])
-        create_legend = self.chart_legend(y_axis_rows, new_titles)
+        create_legend = self.chart_legend(y_axis_rows)
         if (create_legend):
             plt.legend(loc='upper left')
         else: 
