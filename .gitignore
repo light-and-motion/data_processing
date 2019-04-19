@@ -1,0 +1,11 @@
+# Configuration files
+LumenConfig.xlsx
+MultiMeterConfig.xlsx
+SerialConfig.xlsx
+
+# Lumensphere files 
+Lumen_1.csv
+Lumen_2.csv
+
+# Multimeter temperature files
+Temp_1.csv
