@@ -38,7 +38,7 @@ print(config_df_2['Header'])
 # Retrieve the csv file and store its contents into a dataframe 
 
 '''
-raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Row Skip'].loc[0])
+raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Start Row'].loc[0])
 
 # Read the raw dataframe into an Excel file 
 raw_data_excel = df.create_raw_Excelbook(raw_data_df)
@@ -56,9 +56,6 @@ config_df_1 = df.convert_columns(config_df_1, col_names)
 
 ## Do range slicing here 
 mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'], config_df_1['Range'])
-
-
-
 # format time only if the time columns is to be mapped
 new_titles = config_df_1['Input']
 
@@ -78,10 +75,7 @@ elif (data_choice == 3):
     
 mapping_data_df[time_title] = df.convert_to_time_object(mapping_data_df[time_title], data_choice, time_unit)
 df.time_format(mapping_data_df[time_title])
-'''
-elif (data_choice == 2 and any('Start Time' == new_titles)): 
-    df.time_format(mapping_data_df['Start Time'], data_choice, None) 
-'''
+
 
 
 
@@ -91,7 +85,6 @@ output_data_wb = df.create_plotted_workbook()
 
 # Read the output data into an Excel file
 output_data_wb = df.process_data(output_data_wb, mapping_data_df, config_df_1)
-
 
 ##### Chart creation 
 
@@ -108,7 +101,7 @@ if (x_axis.size != 0 and y_axis.size != 0):
 output_data_wb.save(df.get_output_name + '.xlsx')
 
 # create the jpg file 
-df.export_jpg(mapping_data_df, x_axis, y_axis, config_df_1, config_df_2, output_name)
+#df.make_jpg(mapping_data_df, x_axis, y_axis, config_df_1, config_df_2, output_name)
 
 
 

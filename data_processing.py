@@ -1,5 +1,5 @@
 import pandas as pd
-from datetime import (date, datetime, time)
+from datetime import (datetime, timedelta, time, date)
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.styles import Font
@@ -35,6 +35,7 @@ class Data_Processing:
         Returns: 
         DataFrame: DataFrame of the CSV file 
         """
+        
         if (pd.isnull(startLine)): 
             startLine = 0
         else: 
@@ -43,6 +44,7 @@ class Data_Processing:
         df = pd.read_csv(file + '.csv', skiprows= startLine, keep_default_na = True)
 
         return df
+
     def create_excel_dataframe(self, file, sheet): 
         """
         Returns a DataFrame of an Excel file 
@@ -53,8 +55,8 @@ class Data_Processing:
 
         Returns: 
         DataFrame: DataFrame of the Excel file 
-
         """
+        
         df = pd.read_excel(file + '.xlsx', sheet_name = sheet)
         return df    
 
@@ -68,6 +70,7 @@ class Data_Processing:
         Returns: 
         Workbook object: Excel workbook representation of DataFrame
         """
+        
         wb = Workbook()
         ws = wb.active
         ws.title = 'Raw Data'
@@ -77,15 +80,6 @@ class Data_Processing:
         wb.save(self.get_input_csv + '.xlsx')
         return wb
 
-    def create_plotted_workbook(self): 
-        """
-        Returns an empty Excel workbook of the data to be plotted with the title of the
-        default worksheet labeled as "Output Data."
-        """
-        wb = Workbook()
-        ws = wb.active
-        ws.title = 'Output Data'
-        return wb
     
     def letter2int(self, letter_series):
         """
@@ -131,6 +125,109 @@ class Data_Processing:
             letter_series.replace(col_letter, title, inplace=True)
             x += 1
 
+    def largest_range_interval(self, range_inputs, max_size):
+        """
+        Returns the row index of the largest range interval in Excel  
+
+        Parameters: 
+        range_inputs (Series): Contains the range interval of all the columns to be mapped
+        max_size (int): Size of 1 column in the DataFrame of the CSV file 
+
+        Returns: 
+        int: Returns the row index of the largest range interval in Excel 
+        """ 
+        max_interval = 0
+        max_interval_index = 0
+        i = 0
+        #print(range_inputs)
+        while (i < range_inputs.size): 
+            range_list = self.find_range(range_inputs.iloc[i],max_size)
+            range_difference = range_list[1]-range_list[0]
+            if (range_difference > max_interval): 
+                max_interval = range_difference
+                max_interval_index = i
+            i += 1
+            
+        return max_interval_index
+
+    def create_mapping_dataframe(self, raw_data_df, title_inputs, range_inputs):
+        """
+        Returns a DataFrame that contains only the columns in the CSV file that are being mapped 
+
+        Parameters: 
+        raw_data_df (DataFrame): DataFrame of CSV file 
+        title_inputs (Series): Series that contains the columns we want mapped 
+        range_inputs (Series): Series that contains the columns we want original data to be mapped to 
+
+        Returns: 
+        A Dataframe that contains only the columns in the CSV file that are being mapped
+        """
+        # initialize an empty df which will eventually store all mapped values 
+        df = pd.DataFrame()
+        
+
+        # Find size of a column of df 
+        max_size = raw_data_df.iloc[:,0].size
+        
+        # Determine the column with the largest range interval, whose index will be used for the entire DataFrame 'df'. 
+        interval_index = self.largest_range_interval(range_inputs, max_size)
+        range_list = self.find_range(range_inputs.loc[interval_index],max_size)
+        start = range_list[0]
+        end = range_list[1]
+        df[title_inputs.loc[interval_index]] = raw_data_df[title_inputs.loc[interval_index]].iloc[start:end].reset_index(drop = True)
+        #print(raw_data_df.columns)
+
+        # Drop rows/columns that have already been used above
+        raw_data_df = raw_data_df.drop([title_inputs.loc[interval_index]], axis = 1)
+        title_inputs = title_inputs.drop(labels = interval_index).reset_index(drop = True)
+        range_inputs = range_inputs.drop(labels = interval_index).reset_index(drop = True)
+        
+        
+        # Store all the data to be mapped (range slicing included) into a df
+        # Append each new series to 'df'
+        for i in range(len(range_inputs)): 
+            #print(i)
+            range_list = self.find_range(range_inputs.loc[i],max_size)
+            start = range_list[0]
+            end = range_list[1]
+            new_series = raw_data_df[title_inputs.loc[i]].iloc[start:end].reset_index(drop = True)
+            df[title_inputs.loc[i]] = new_series
+        #df.fillna('0:' + str(max_size))
+        return df
+
+    def convert_to_time_object(self, series, data_choice, unit):
+        """
+        Returns a series that contains a String representation of a time object in %H:%M:%S format 
+
+        Parameters: 
+        series (Series): The Series that is to be converted. Will either contain floats or a datetime object in form: %m/%d/%Y %H:%M:%S AM/PM
+        data_choice (int): Gives the type of file whose time is being converted: 1) lumensphere, 2) multimeter, 3) serial 
+        unit (String): The time unit of the series, if the series contains floats. Otherwise, if the series contains datetime objects, 
+                        unit will be set to None. 
+
+        Returns: 
+        Series object: String representation of time object in %H:%M:%S clocktime format
+        """
+        series = series.dropna()
+        #print(series)
+        if (data_choice == 1 or data_choice == 2): 
+            for cur_datetime in series: 
+                #print(cur_datetime)
+                # Split the datetime object into a list by a space delimiter and store the %H:%M:%S  
+                # portion into a variable 
+                cur_datetime_list = cur_datetime.split()
+                cur_time_list = cur_datetime_list[1].split('.')
+                cur_time = cur_time_list[0]
+                series.replace(cur_datetime, cur_time, inplace = True)
+
+        if (data_choice == 3): 
+            for time in series: 
+                time_list = self.get_hours_minutes_seconds(time, unit)
+                cur_time = str(time_list[0]) + ':' + str(time_list[1]) + ':' + str(time_list[2])
+                series.replace(time, cur_time, inplace = True)
+        #print(series.head())
+        return series
+
     def get_hours_minutes_seconds(self, time, time_unit):
         """
         Takes in an float representation of a a single unit of time, converts it to an integer, and 
@@ -154,37 +251,6 @@ class Data_Processing:
         
         return [hours,minutes,seconds]
 
-    def convert_to_time_object(self, series, data_choice, unit):
-        """
-        Returns a series that contains a String representation of a time object in %H:%M:%S format 
-
-        Parameters: 
-        series (Series): The Series that is to be converted. Will either contain floats or a datetime object in form: %m/%d/%Y %H:%M:%S AM/PM
-        data_choice (int): Gives the type of file whose time is being converted: 1) lumensphere, 2) multimeter, 3) serial 
-        unit (String): The time unit of the series, if the series contains floats. Otherwise, if the series contains datetime objects, 
-                        unit will be set to None. 
-
-        Returns: 
-        Series object: String representation of time object in %H:%M:%S clocktime format
-        """
-        if (data_choice == 1 or data_choice == 2): 
-            for cur_datetime in series: 
-                # Split the datetime object into a list by a space delimiter and store the %H:%M:%S  
-                # portion into a variable 
-                cur_datetime_list = cur_datetime.split()
-                cur_time_list = cur_datetime_list[1].split('.')
-                cur_time = cur_time_list[0]
-                series.replace(cur_datetime, cur_time, inplace = True)
-
-        if (data_choice == 3): 
-            for time in series: 
-                time_list = self.get_hours_minutes_seconds(time, unit)
-                cur_time = str(time_list[0]) + ':' + str(time_list[1]) + ':' + str(time_list[2])
-                series.replace(time, cur_time, inplace = True)
-        #print(series.head())
-        return series
-        
- 
     def time_format(self, time_series): 
         """
         Takes in a String series in %H:%M:%S clocktime format and returns a time Series that gives the elapsed time in %H:%M:%S format. 
@@ -193,28 +259,60 @@ class Data_Processing:
         time_series (Series): Series that contains String representations of clocktimes 
 
         Returns: 
-        time_series (Series): Series that contains time objects
+        time_series (Series): Series that contains timedelta objects
 
         """
+        time_series_modified = time_series.dropna()
         start_time = pd.to_timedelta(time_series.loc[0])
-    
-        for current_time in time_series: 
+
+        # Iterate through 'time_series_modified' which has the NA values dropped but replace the String with the timedelta in 
+        # the original 'time_series.'
+        for current_time in time_series_modified: 
             # Convert the String 'current_time' into a timedelta object and find the difference between 'current_time' and 'start_time'
             # to find the elapsed time. Convert the difference between the two times into a string and use the space 
             # delimiter to split it into a list. 
             difference= str(pd.to_timedelta(current_time)-start_time)
             difference_list = difference.split()
             
-            # Store the time portion of the String into 'elapsed_time' and convert
-            # 'elapsed_time' into a datetime object 
+            # Store the time portion of the String into 'elapsed_time' and use the colon delimiter to split the time into a list 
             elapsed_time = difference_list[2]
-            elapsed_time = datetime.strptime(elapsed_time, "%H:%M:%S").time()
+            elapsed_time_list = elapsed_time.split(':')
             
-            
-            time_series.replace(current_time, elapsed_time, inplace = True)
+            # Convert each element int the list into an integer and use the elements to produce a timedelta object 
+            time = timedelta(hours = int(elapsed_time_list[0]), minutes = int(elapsed_time_list[1]), seconds = int(elapsed_time_list[2]))            
+            time_series.replace(current_time, time, inplace = True)
         return time_series
 
-    # Store the data of the input columns of the CSV into the desired output columns in Excel 
+    
+    def create_plotted_workbook(self): 
+        """
+        Returns an empty Excel workbook of the data to be plotted with the title of the
+        default worksheet labeled as "Output Data."
+        """
+        
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Output Data'
+        return wb
+
+    def convert_columns(self, config_df, col_names):
+        """
+        Returns config_df where: 
+            a) column letters in the 'input' column of 'config_df' have been replaced by column titles
+            b) column letters in the 'output' column of 'config_df' have been replaced by column numbers
+
+        Parameters: 
+        config_df (DataFrame): DataFrame that contains the 'mapped data portion' of the configuration file 
+        col_names (Series): Series that contains the titles of the columns to be mapped 
+
+        Returns: 
+        DataFrame: Altered version of 'config_df' where elements of 'input' and 'output' columns have been altered  
+        """
+        
+        self.letter2title(config_df['Input'], col_names)
+        self.letter2int(config_df['Output'])
+
+        return config_df
     
     def process_data(self, wb, df, config_df):
         """
@@ -281,15 +379,23 @@ class Data_Processing:
         List - A two element list whose first element is the starting row index and whose 
                 second element is the ending row index. 
         """
+        start = 0 
+        end = total_size-1
+        # interval is the entire column  
         if (pd.isnull(current_range)): 
-            return [0,total_size-1]
+            pass
         else: 
             range_list = current_range.split(':')
-            start = int(range_list[0])-2
-            end = int(range_list[1])-2
-            if (start < 0): 
-                return [0, total_size-1]
-            return [start,end]
+            if (range_list[0] == ''):
+                end = int(range_list[1])-2
+            elif (range_list[1] == ''): 
+                start = int(range_list[0])-2
+            else: 
+                start = int(range_list[0])-2
+                end = int(range_list[1])-2
+                if (start < 0): 
+                    return [0, total_size-1]
+        return [start,end]
 
         
     
@@ -434,58 +540,8 @@ class Data_Processing:
             title = graph_title.loc[0]
 
         return title
-
-
-    def convert_columns(self, config_df, col_names):
-        """
-        Returns config_df where: 
-            a) column letters in the 'input' column of 'config_df' have been replaced by column titles
-            b) column letters in the 'output' column of 'config_df' have been replaced by column numbers
-
-        Parameters: 
-        config_df (DataFrame): DataFrame that contains the 'mapped data portion' of the configuration file 
-        col_names (Series): Series that contains the titles of the columns to be mapped 
-
-        Returns: 
-        DataFrame: Altered version of 'config_df' where elements of 'input' and 'output' columns have been altered  
-        """
-        self.letter2title(config_df['Input'], col_names)
-        self.letter2int(config_df['Output'])
-
-        return config_df
-    
-    def create_mapping_dataframe(self, raw_data_df, title_inputs, range_inputs):
-        """
-        Returns a DataFrame that contains only the columns in the CSV file that are being mapped 
-
-        Parameters: 
-        raw_data_df (DataFrame): DataFrame of CSV file 
-        title_inputs (Series): Series that contains the columns we want mapped 
-        range_inputs (Series): Series that contains the columns we want original data to be mapped to 
-
-        Returns: 
-        A Dataframe that contains only the columns in the CSV file that are being mapped
-        """
-        # initialize an empty df which will eventually store all mapped values 
-        df = pd.DataFrame()
-
-        # find max_size of 1 column (a column of raw_data_df)
-        max_size = raw_data_df.iloc[:,0].size
         
-        # store all the data to be mapped (range slicing included) into a df
-        # append each new series to the 
-        for i in range(len(range_inputs)): 
-            range_list = self.find_range(range_inputs.loc[i],max_size)
-            start = range_list[0]
-            end = range_list[1]
-            #print(start,end)
-            new_series = raw_data_df[title_inputs.loc[i]].iloc[start:end]
-            df[title_inputs.loc[i]] = new_series
-        return df
-
-
-        
-    def export_jpg(self, mapping_df, x_axis_list, y_axis_list, config_df_1, config_df_2, output_name):  
+    def make_jpg(self, mapping_df, x_axis_list, y_axis_list, config_df_1, config_df_2, output_name):  
         """
         Produces a JPG file of the chart in matplotlib 
 
