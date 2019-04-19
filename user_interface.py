@@ -45,7 +45,8 @@ def choose_csv():
         
         if csv_choice == 'default':
             #input_csv = 'Serial'
-            input_csv = 'Derived Data Imjin 800'
+            #input_csv = 'Derived Data Imjin 800'
+            input_csv = 'Lumen_1'
         else:
             input_csv = csv_choice
     return input_csv

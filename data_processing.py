@@ -81,49 +81,46 @@ class Data_Processing:
         return wb
 
     
-    def letter2int(self, letter_series):
+    def create_mapping_dataframe(self, raw_data_df, title_inputs, range_inputs):
         """
-        Takes in a series of letters and returns a series mapped to the 
-        corresponding integer number
-
-        Source: https://www.geeksforgeeks.org/find-excel-column-number-column-title/
+        Returns a DataFrame that contains only the columns in the CSV file that are being mapped 
 
         Parameters: 
-        letter_series (Series object): Series that holds the Excel column letters
+        raw_data_df (DataFrame): DataFrame of CSV file 
+        title_inputs (Series): Series that contains the columns we want mapped 
+        range_inputs (Series): Series that contains the columns we want original data to be mapped to 
 
         Returns: 
-        Series object: Series that holds the corresponding Excel column numbers
+        A Dataframe that contains only the columns in the CSV file that are being mapped
         """
-        result = 0
-        for col_letter in letter_series: 
-            result = 0
-            for x in col_letter: 
-                x = x.upper()
-                result *= 26
-                result += ord(x) - ord('A') + 1   
-            letter_series.replace(col_letter, result, inplace=True)
-        return letter_series
+        # initialize an empty df which will eventually store all mapped values 
+        df = pd.DataFrame()
+        
+        # Find size of a column of df 
+        max_size = raw_data_df.iloc[:,0].size
+        
+        # Determine the column with the largest range interval, whose index will be used for the entire DataFrame 'df'. 
+        interval_index = self.largest_range_interval(range_inputs, max_size)
+        range_list = self.find_range(range_inputs.loc[interval_index],max_size)
+        start = range_list[0]
+        end = range_list[1]
+        df[title_inputs.loc[interval_index]] = raw_data_df[title_inputs.loc[interval_index]].iloc[start:end].reset_index(drop = True)
 
-    # Converts the location format of the input columns from letters to new_titles  
-    def letter2title(self, letter_series, names):
-        """
-        Converts the data inside a Series from Excel column letters to its column title 
-
-        Parameters: 
-        letter_series (Series object): Series that holds the Excel column letters
-
-        names (Series object): Series that holds the column titles 
-
-        Returns: 
-        void 
-        """
-        indices = self.letter2int(letter_series)
-        x = 0
-        for col_letter in letter_series: 
-            index = indices.loc[x]      
-            title = names[index-1]
-            letter_series.replace(col_letter, title, inplace=True)
-            x += 1
+        # Drop rows/columns that have already been used above
+        raw_data_df = raw_data_df.drop([title_inputs.loc[interval_index]], axis = 1)
+        title_inputs = title_inputs.drop(labels = interval_index).reset_index(drop = True)
+        range_inputs = range_inputs.drop(labels = interval_index).reset_index(drop = True)
+        
+        # Store all the data to be mapped (range slicing included) into a df
+        # Append each new series to 'df'
+        for i in range(len(range_inputs)): 
+            #print(i)
+            range_list = self.find_range(range_inputs.loc[i],max_size)
+            start = range_list[0]
+            end = range_list[1]
+            new_series = raw_data_df[title_inputs.loc[i]].iloc[start:end].reset_index(drop = True)
+            df[title_inputs.loc[i]] = new_series
+        return df
 
     def largest_range_interval(self, range_inputs, max_size):
         """
@@ -150,50 +147,41 @@ class Data_Processing:
             
         return max_interval_index
 
-    def create_mapping_dataframe(self, raw_data_df, title_inputs, range_inputs):
+     # Determine the starting and ending point of the data to be read 
+    # Range is calculated against the row indexes of the Excel worksheet. Thus, the first
+    # cell in a column will be located at row 2  
+    
+    def find_range(self, current_range, total_size): 
+
         """
-        Returns a DataFrame that contains only the columns in the CSV file that are being mapped 
+        Returns a list of the starting and ending indices of the data you want to process for a Series. 
 
         Parameters: 
-        raw_data_df (DataFrame): DataFrame of CSV file 
-        title_inputs (Series): Series that contains the columns we want mapped 
-        range_inputs (Series): Series that contains the columns we want original data to be mapped to 
+        current_range (float): The interval of the data to be read (inclusive) in start:end form
+        total_size (int) - Size of the Series
 
         Returns: 
-        A Dataframe that contains only the columns in the CSV file that are being mapped
+        List - A two element list whose first element is the starting row index and whose 
+                second element is the ending row index. 
         """
-        # initialize an empty df which will eventually store all mapped values 
-        df = pd.DataFrame()
-        
-
-        # Find size of a column of df 
-        max_size = raw_data_df.iloc[:,0].size
-        
-        # Determine the column with the largest range interval, whose index will be used for the entire DataFrame 'df'. 
-        interval_index = self.largest_range_interval(range_inputs, max_size)
-        range_list = self.find_range(range_inputs.loc[interval_index],max_size)
-        start = range_list[0]
-        end = range_list[1]
-        df[title_inputs.loc[interval_index]] = raw_data_df[title_inputs.loc[interval_index]].iloc[start:end].reset_index(drop = True)
-        #print(raw_data_df.columns)
-
-        # Drop rows/columns that have already been used above
-        raw_data_df = raw_data_df.drop([title_inputs.loc[interval_index]], axis = 1)
-        title_inputs = title_inputs.drop(labels = interval_index).reset_index(drop = True)
-        range_inputs = range_inputs.drop(labels = interval_index).reset_index(drop = True)
-        
-        
-        # Store all the data to be mapped (range slicing included) into a df
-        # Append each new series to 'df'
-        for i in range(len(range_inputs)): 
-            #print(i)
-            range_list = self.find_range(range_inputs.loc[i],max_size)
-            start = range_list[0]
-            end = range_list[1]
-            new_series = raw_data_df[title_inputs.loc[i]].iloc[start:end].reset_index(drop = True)
-            df[title_inputs.loc[i]] = new_series
-        #df.fillna('0:' + str(max_size))
-        return df
+        start = 0 
+        end = total_size-1
+        # interval is the entire column  
+        if (pd.isnull(current_range)): 
+            pass
+        else: 
+            range_list = current_range.split(':')
+            if (range_list[0] == ''):
+                end = int(range_list[1])-2
+            elif (range_list[1] == ''): 
+                start = int(range_list[0])-2
+            else: 
+                start = int(range_list[0])-2
+                end = int(range_list[1])-2
+                if (start < 0): 
+                    return [0, total_size-1]
+        return [start,end]
+    
 
     def convert_to_time_object(self, series, data_choice, unit):
         """
@@ -314,6 +302,50 @@ class Data_Processing:
 
         return config_df
     
+    # Converts the location format of the input columns from letters to new_titles  
+    def letter2title(self, letter_series, names):
+        """
+        Converts the data inside a Series from Excel column letters to its column title 
+
+        Parameters: 
+        letter_series (Series object): Series that holds the Excel column letters
+
+        names (Series object): Series that holds the column titles 
+
+        Returns: 
+        void 
+        """
+        indices = self.letter2int(letter_series)
+        x = 0
+        for col_letter in letter_series: 
+            index = indices.loc[x]      
+            title = names[index-1]
+            letter_series.replace(col_letter, title, inplace=True)
+            x += 1
+    
+    def letter2int(self, letter_series):
+        """
+        Takes in a series of letters and returns a series mapped to the 
+        corresponding integer number
+
+        Source: https://www.geeksforgeeks.org/find-excel-column-number-column-title/
+
+        Parameters: 
+        letter_series (Series object): Series that holds the Excel column letters
+
+        Returns: 
+        Series object: Series that holds the corresponding Excel column numbers
+        """
+        result = 0
+        for col_letter in letter_series: 
+            result = 0
+            for x in col_letter: 
+                x = x.upper()
+                result *= 26
+                result += ord(x) - ord('A') + 1   
+            letter_series.replace(col_letter, result, inplace=True)
+        return letter_series
+
     def process_data(self, wb, df, config_df):
         """
         Maps the input data of the CSV file into the desired columns in the output Excel file 
@@ -362,43 +394,7 @@ class Data_Processing:
             ws.cell(row = cellRow, column = col_num).value = df.loc[i,col_index]
             cellRow += 1
             i += 1
-
-    # Determine the starting and ending point of the data to be read 
-    # Range is calculated against the row indexes of the Excel worksheet. Thus, the first
-    # cell in a column will be located at row 2  
-    def find_range(self, current_range, total_size): 
-
-        """
-        Returns a list of the starting and ending indices of the data you want to process for a Series. 
-
-        Parameters: 
-        current_range (float): The interval of the data to be read (inclusive) in start:end form
-        total_size (int) - Size of the Series
-
-        Returns: 
-        List - A two element list whose first element is the starting row index and whose 
-                second element is the ending row index. 
-        """
-        start = 0 
-        end = total_size-1
-        # interval is the entire column  
-        if (pd.isnull(current_range)): 
-            pass
-        else: 
-            range_list = current_range.split(':')
-            if (range_list[0] == ''):
-                end = int(range_list[1])-2
-            elif (range_list[1] == ''): 
-                start = int(range_list[0])-2
-            else: 
-                start = int(range_list[0])-2
-                end = int(range_list[1])-2
-                if (start < 0): 
-                    return [0, total_size-1]
-        return [start,end]
-
-        
-    
+ 
     def make_chart(self,axis):
         """
         Returns a list that indicates which columns will serve as the x-axis and y-axes of a plotted chart 
@@ -449,7 +445,6 @@ class Data_Processing:
         # Plot as many y-axes as indicated in the configuration file 
     
         y_axis_rows = y_axis.index
-        
         for row in y_axis_rows: 
             y = Reference(ws, min_col = outputs.loc[row], min_row = 2, max_row = row_size)
             s = Series(y,x,title=new_titles.loc[row])
@@ -474,28 +469,6 @@ class Data_Processing:
         self.chart_scaling(chart, config_df_2['X Min'], config_df_2['X Max'], config_df_2['Y Min'], config_df_2['Y Max'])
         cs.add_chart(chart)
 
-
-    def chart_scaling(self, chart, x_min, x_max, y_min, y_max): 
-        """
-        Manual scaling on chart. If the Series is empty, then no manual scaling is required.  
-
-        Parameters: 
-        chart (Chart object): Chart whose axis is being manually scaled 
-        x_min (Series): Minimum value on x-axis scale 
-        x_max (Series): Maximum value on x-axis scale
-        y_min (Series): Minimum value on y-axis scale
-        y_max (Series): Maximum value on y-axis scale  
-        """
-        
-        if (not x_min.dropna().empty): 
-            chart.x_axis.scaling.min = x_min.loc[0]
-        if (not x_max.dropna().empty): 
-            chart.x_axis.scaling.max = x_max.loc[0]
-        if (not y_min.dropna().empty): 
-            chart.y_axis.scaling.min = y_min.loc[0]
-        if (not y_max.dropna().empty): 
-            chart.y_axis.scaling.max = y_max.loc[0]
-        
     # Determines the need for a chart legend
     #   If there is only 1 y-axis, title the y_axis and delete the legend  
 
@@ -514,7 +487,6 @@ class Data_Processing:
             return False
         return True
         
-
     ### Default chart title: If there is no given chart title then chart title will be: 
         #   'All y-axis vs x-axis'
     def chart_title(self, new_titles, graph_title, x_axis_row, y_axis_rows):
@@ -540,6 +512,27 @@ class Data_Processing:
             title = graph_title.loc[0]
 
         return title
+
+    def chart_scaling(self, chart, x_min, x_max, y_min, y_max): 
+        """
+        Manual scaling on chart. If the Series is empty, then no manual scaling is required.  
+
+        Parameters: 
+        chart (Chart object): Chart whose axis is being manually scaled 
+        x_min (Series): Minimum value on x-axis scale 
+        x_max (Series): Maximum value on x-axis scale
+        y_min (Series): Minimum value on y-axis scale
+        y_max (Series): Maximum value on y-axis scale  
+        """
+        
+        if (not x_min.dropna().empty): 
+            chart.x_axis.scaling.min = x_min.loc[0]
+        if (not x_max.dropna().empty): 
+            chart.x_axis.scaling.max = x_max.loc[0]
+        if (not y_min.dropna().empty): 
+            chart.y_axis.scaling.min = y_min.loc[0]
+        if (not y_max.dropna().empty): 
+            chart.y_axis.scaling.max = y_max.loc[0]
         
     def make_jpg(self, mapping_df, x_axis_list, y_axis_list, config_df_1, config_df_2, output_name):  
         """
@@ -558,6 +551,7 @@ class Data_Processing:
         graph_title = config_df_2['Graph Title']
         time_list = ['Date/Time', 'Start Time', 'seconds', 'hours']
 
+        
         # plot multiple lines on a single graph
         # As matplotlib does not allow datetime.time objects to be set as an axis, must convert to a 
         # datetime object to plot on graph.  
@@ -569,7 +563,8 @@ class Data_Processing:
                 is_time = True
                 break
         if (is_time):
-            datetime_x_axis = [ datetime.combine(datetime.now(), time) for time in mapping_df[x_axis]]
+            datetime_x_axis = self.convert_timedelta_to_datetime(mapping_df[x_axis])
+            
         fig, ax = plt.subplots(1,1)
         for new_y_index in y_axis_list.index: 
             new_y_axis = title_inputs[new_y_index]
@@ -598,7 +593,29 @@ class Data_Processing:
         # save the graph 
         plt.savefig(output_name + '.jpeg') 
 
-    
+    def convert_timedelta_to_datetime(self,timedelta_series): 
+        
+        # convert 'timedelta_series' to type String 
+        timedelta_str_series = timedelta_series.astype(str)
+
+        # split 'timedelta_str_series' using the space delimiter and store the results into a list
+        timedelta_str_list = [time.split() for time in timedelta_str_series]
+
+        # Retrieve the 'time' portion of timedelta_str_list and store into another list  
+        time_str_list = [time[2] for time in timedelta_str_list]
+
+        # split 'time_str_list' using '.' delimiter and store results back into 'time_str_list'  
+        time_str_list = [time.split('.') for time in time_str_list]
+
+        # Retrieve the '%H:%M:%S' formatted time and store results back into list 
+        time_str_list = [time[0] for time in time_str_list]
+
+        # Convert 'time_str_list' into a series and turn each element into a datetime.time() object
+        # Store in a new list. 
+        time_str_series = pd.Series(time_str_list)
+        time_obj = [datetime.strptime(time_str, '%H:%M:%S').time() for time_str in time_str_series]
+        datetime_x_axis = [ datetime.combine(datetime.now(), time) for time in time_obj]
+        return datetime_x_axis
     
     @property
     def get_config_file(self): 

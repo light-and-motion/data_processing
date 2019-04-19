@@ -101,7 +101,7 @@ if (x_axis.size != 0 and y_axis.size != 0):
 output_data_wb.save(df.get_output_name + '.xlsx')
 
 # create the jpg file 
-#df.make_jpg(mapping_data_df, x_axis, y_axis, config_df_1, config_df_2, output_name)
+df.make_jpg(mapping_data_df, x_axis, y_axis, config_df_1, config_df_2, output_name)
 
 
 
