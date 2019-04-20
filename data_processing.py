@@ -237,7 +237,7 @@ class Data_Processing:
         
         return [hours,minutes,seconds]
 
-    def time_format(self, time_series): 
+    def time_format(self, time_series, start_time): 
         """
         Takes in a String series in %H:%M:%S clocktime format and returns a time Series that gives the elapsed time in %H:%M:%S format. 
 
@@ -251,7 +251,7 @@ class Data_Processing:
 
         time_series_modified = time_series.dropna()
     
-        start_time = pd.to_timedelta(time_series.loc[0])
+        start_time = pd.to_timedelta(start_time)
         # Iterate through 'time_series_modified' which has the NA values dropped but replace the String with the timedelta in 
         # the original 'time_series.'
         for current_time in time_series_modified: 
@@ -271,7 +271,6 @@ class Data_Processing:
             #elapsedtime = datetime.strptime(elapsed_time, '%H:%M:%S').time()
             time_series.replace(current_time, time, inplace = True)
         
-       
         return time_series
 
     
@@ -292,6 +291,7 @@ class Data_Processing:
             a) column letters in the 'input' column of 'config_df' have been replaced by column titles
             b) column letters in the 'output' column of 'config_df' have been replaced by column numbers
 
+
         Parameters: 
         config_df (DataFrame): DataFrame that contains the 'mapped data portion' of the configuration file 
         col_names (Series): Series that contains the titles of the columns to be mapped 
@@ -302,6 +302,8 @@ class Data_Processing:
         
         self.letter2title(config_df['Input'], col_names)
         self.letter2int(config_df['Output'])
+        config_df['Title'] = self.default_titles(config_df['Title'], config_df['Input'])
+        print(config_df['Title'])
 
         return config_df
     
@@ -348,6 +350,21 @@ class Data_Processing:
                 result += ord(x) - ord('A') + 1   
             letter_series.replace(col_letter, result, inplace=True)
         return letter_series
+
+    def default_titles(self, new_titles, input_titles): 
+        x = 0
+        print(type(input_titles), type(new_titles))
+        print(new_titles)
+        print(input_titles)
+       
+        new_new_titles = pd.Series()
+        new_new_titles.resize(new_titles.size)
+        for title in new_titles: 
+            if (pd.isnull(title)): 
+                #print(input_titles.iat[x])
+                new_new_titles.iat[x] = input_titles.iat[x]
+            x += 1
+        return new_new_titles
 
     def process_data(self, wb, df, config_df):
         """
@@ -468,12 +485,15 @@ class Data_Processing:
         # Title the chart
         chart.title = self.chart_title(new_titles, graph_title, x_axis_row, y_axis_rows)
 
+        # Determine whether grid lines should be on or off. By default it is on. 
+        grid_lines = self.grid_lines(config_df_2['Grid Lines'].loc[0])
+        if (not grid_lines): 
+            chart.x_axis.majorGridlines = None 
+            chart.y_axis.majorGridlines = None
         # Chart scaling 
         self.chart_scaling(chart, config_df_2['X Min'], config_df_2['X Max'], config_df_2['Y Min'], config_df_2['Y Max'])
         cs.add_chart(chart)
 
-    # Determines the need for a chart legend
-    #   If there is only 1 y-axis, title the y_axis and delete the legend  
 
     def chart_legend(self, y_axis_rows):
         """
@@ -516,6 +536,13 @@ class Data_Processing:
 
         return title
 
+    # Determines the need for a chart legend
+    #   If there is only 1 y-axis, title the y_axis and delete the legend  
+    def grid_lines(self, choice): 
+        if (pd.isnull(choice) or choice.upper() == 'YES'): 
+            return True
+        return False 
+
     def chart_scaling(self, chart, x_min, x_max, y_min, y_max): 
         """
         Manual scaling on chart. If the Series is empty, then no manual scaling is required.  
@@ -537,7 +564,7 @@ class Data_Processing:
         if (not y_max.dropna().empty): 
             chart.y_axis.scaling.max = y_max.loc[0]
         
-    def make_jpg(self, mapping_df, x_axis_list, y_axis_list, config_df_1, config_df_2, output_name):  
+    def make_jpeg(self, mapping_df, x_axis_list, y_axis_list, config_df_1, config_df_2, output_name):  
         """
         Produces a JPG file of the chart in matplotlib 
 
@@ -573,10 +600,6 @@ class Data_Processing:
         x_axis_rows = x_axis_list.index[0] 
         y_axis_rows = y_axis_list.index
 
-        # set the title 
-        title = self.chart_title(new_titles, graph_title, x_axis_rows, y_axis_rows)
-        plt.title(title)  
-        
         # set the labels and/or legend of the chart 
         plt.xlabel(new_titles[x_axis_list.index[0]])
         create_legend = self.chart_legend(y_axis_rows)
@@ -584,10 +607,20 @@ class Data_Processing:
             plt.legend(loc='upper left')
         else: 
             plt.ylabel(new_titles[y_axis_list.index[0]])
+
+        # set the title 
+        title = self.chart_title(new_titles, graph_title, x_axis_rows, y_axis_rows)
+        plt.title(title)  
         
+        # set gridlines 
+        grid_lines = self.grid_lines(config_df_2['Grid Lines'].loc[0])
+        if (grid_lines): 
+            plt.grid(b = True)
+
         # date formatter 
         if (not config_df_2['Time Axis'].dropna().empty):
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+            fig.autofmt_xdate()
 
         # save the graph 
         plt.savefig(output_name + '.jpeg') 
@@ -612,6 +645,7 @@ class Data_Processing:
 
         # Retrieve the '%H:%M:%S' formatted time and store results back into list 
         time_str_list = [time[0] for time in time_str_list]
+        #time_str_list = [time[3:] for time in time_str_list]
 
         # Convert 'time_str_list' into a series and turn each element into a datetime.time() object
         # Store in a new list. 

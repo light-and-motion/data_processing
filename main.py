@@ -65,41 +65,56 @@ time_col = config_df_2['Time Axis']
 # so the NaNs in mapping_data[time_title] won't convert
 # the data type into object. 
 if (not time_col.dropna().empty): 
+    # Retrieve the column title of the 'time' column 
     time_unit = config_df_2['Time Unit'].loc[0]
     time_index = df.letter2int(config_df_2['Time Axis']).loc[0]
     time_title = raw_data_df.columns[time_index-1]
+
+    # Retrieve the start time and convert it to a string in elapsed time format 
+    # start_time is a Series with length 1 
+    start_time = pd.Series(raw_data_df[time_title].loc[0])
+    start_time = df.convert_to_time_object(start_time, time_unit)
+
+
     new_time_col = pd.DataFrame()
     new_time_col = df.convert_to_time_object(mapping_data_df[time_title], time_unit)
-    df.time_format(new_time_col)
+    df.time_format(new_time_col, start_time.loc[0])
     #df.time_format(mapping_data_df[time_title])
 print("After formatting time")
 mapping_data_df[time_title] = new_time_col
 
 
-# create workbook to hold plotted data
-output_data_wb = df.create_plotted_workbook()
 
+# Output files 
+excel_output = config_df_2['Excel'].loc[0]
+jpeg_output = config_df_2['JPEG'].loc[0]
 
-# Read the output data into an Excel file
-output_data_wb = df.process_data(output_data_wb, mapping_data_df, config_df_1)
-
-##### Chart creation 
-
-
-# Call make_chart() to determine if we need to create a chart (at least 1 x and 1 y)
+# Grab the x-axis and y-axis and determine if a chart will be outputted 
 axis = df.make_chart(config_df_1['Axis'])
 x_axis = axis[0]
 y_axis = axis[1]
-
-# If the x_axis is not empty, then create a chart 
+create_chart = False
 if (x_axis.size != 0 and y_axis.size != 0): 
-    df.create_chart(output_data_wb, mapping_data_df, x_axis, y_axis, config_df_1, config_df_2)
+    create_chart = True
 
-#print(df.get_output_name)
-output_data_wb.save(df.get_output_name + '.xlsx')
+# Creating an Excel file 
+if (excel_output == 'YES' or pd.isnull(excel_output)):
+    # create workbook to hold plotted data
+    output_data_wb = df.create_plotted_workbook()
+
+    # Read the output data into an Excel file
+    output_data_wb = df.process_data(output_data_wb, mapping_data_df, config_df_1)
+
+    # If the x_axis is not empty, then create a chart 
+    if (create_chart): 
+        df.create_chart(output_data_wb, mapping_data_df, x_axis, y_axis, config_df_1, config_df_2)
+
+    #print(df.get_output_name)
+    output_data_wb.save(df.get_output_name + '.xlsx')
 
 # create the jpg file 
-df.make_jpg(mapping_data_df, x_axis, y_axis, config_df_1, config_df_2, output_name)
+if (pd.isnull(jpeg_output) or jpeg_output.upper() == 'YES' or create_chart):
+    df.make_jpeg(mapping_data_df, x_axis, y_axis, config_df_1, config_df_2, output_name)
 
 
 
