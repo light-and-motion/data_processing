@@ -59,24 +59,21 @@ mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'],
 # format time only if the time columns is to be mapped
 new_titles = config_df_1['Input']
 
-time_unit = 'None'
-if (data_choice == 1 and any('Date/Time' == new_titles)):
-    time_title = 'Date/Time'
+time_col = config_df_2['Time Axis']
 
-elif (data_choice == 2 and any('Start Time' == new_titles)):
-    time_title = 'Start Time' 
-
-elif (data_choice == 3): 
-    if (any('hours' == new_titles)): 
-        time_title = 'hours'
-    elif (any('seconds' == new_titles)): 
-        time_title = 'seconds'
+# Store the new time col in a new Series temporarily, 
+# so the NaNs in mapping_data[time_title] won't convert
+# the data type into object. 
+if (not time_col.dropna().empty): 
     time_unit = config_df_2['Time Unit'].loc[0]
-    
-mapping_data_df[time_title] = df.convert_to_time_object(mapping_data_df[time_title], data_choice, time_unit)
-df.time_format(mapping_data_df[time_title])
-
-
+    time_index = df.letter2int(config_df_2['Time Axis']).loc[0]
+    time_title = raw_data_df.columns[time_index-1]
+    new_time_col = pd.DataFrame()
+    new_time_col = df.convert_to_time_object(mapping_data_df[time_title], time_unit)
+    df.time_format(new_time_col)
+    #df.time_format(mapping_data_df[time_title])
+print("After formatting time")
+mapping_data_df[time_title] = new_time_col
 
 
 # create workbook to hold plotted data
@@ -87,6 +84,7 @@ output_data_wb = df.create_plotted_workbook()
 output_data_wb = df.process_data(output_data_wb, mapping_data_df, config_df_1)
 
 ##### Chart creation 
+
 
 # Call make_chart() to determine if we need to create a chart (at least 1 x and 1 y)
 axis = df.make_chart(config_df_1['Axis'])

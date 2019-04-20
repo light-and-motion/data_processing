@@ -178,27 +178,24 @@ class Data_Processing:
             else: 
                 start = int(range_list[0])-2
                 end = int(range_list[1])-2
-                if (start < 0): 
-                    return [0, total_size-1]
+                if (start < 0):
+                    return [0, end] 
         return [start,end]
     
 
-    def convert_to_time_object(self, series, data_choice, unit):
+    def convert_to_time_object(self, series, unit):
         """
         Returns a series that contains a String representation of a time object in %H:%M:%S format 
 
         Parameters: 
         series (Series): The Series that is to be converted. Will either contain floats or a datetime object in form: %m/%d/%Y %H:%M:%S AM/PM
-        data_choice (int): Gives the type of file whose time is being converted: 1) lumensphere, 2) multimeter, 3) serial 
-        unit (String): The time unit of the series, if the series contains floats. Otherwise, if the series contains datetime objects, 
-                        unit will be set to None. 
+        unit (String): The time unit of the series. D = datetime object, H = hours, M = minutes, S = seconds 
 
         Returns: 
         Series object: String representation of time object in %H:%M:%S clocktime format
         """
         series = series.dropna()
-        #print(series)
-        if (data_choice == 1 or data_choice == 2): 
+        if (unit.upper() == 'D'): 
             for cur_datetime in series: 
                 #print(cur_datetime)
                 # Split the datetime object into a list by a space delimiter and store the %H:%M:%S  
@@ -208,12 +205,11 @@ class Data_Processing:
                 cur_time = cur_time_list[0]
                 series.replace(cur_datetime, cur_time, inplace = True)
 
-        if (data_choice == 3): 
+        else: #If the time series is in hours, minutes, or seconds 
             for time in series: 
                 time_list = self.get_hours_minutes_seconds(time, unit)
                 cur_time = str(time_list[0]) + ':' + str(time_list[1]) + ':' + str(time_list[2])
                 series.replace(time, cur_time, inplace = True)
-        #print(series.head())
         return series
 
     def get_hours_minutes_seconds(self, time, time_unit):
@@ -231,6 +227,8 @@ class Data_Processing:
         """
         if (time_unit.upper() == 'H'): 
             time = time * 3600
+        elif (time_unit.upper() == 'M'): 
+            time = time * 60    
         time = int(time)
         hours = time // 3600 
         time = time % 3600
@@ -250,9 +248,10 @@ class Data_Processing:
         time_series (Series): Series that contains timedelta objects
 
         """
-        time_series_modified = time_series.dropna()
-        start_time = pd.to_timedelta(time_series.loc[0])
 
+        time_series_modified = time_series.dropna()
+    
+        start_time = pd.to_timedelta(time_series.loc[0])
         # Iterate through 'time_series_modified' which has the NA values dropped but replace the String with the timedelta in 
         # the original 'time_series.'
         for current_time in time_series_modified: 
@@ -261,14 +260,18 @@ class Data_Processing:
             # delimiter to split it into a list. 
             difference= str(pd.to_timedelta(current_time)-start_time)
             difference_list = difference.split()
-            
             # Store the time portion of the String into 'elapsed_time' and use the colon delimiter to split the time into a list 
             elapsed_time = difference_list[2]
             elapsed_time_list = elapsed_time.split(':')
             
             # Convert each element int the list into an integer and use the elements to produce a timedelta object 
             time = timedelta(hours = int(elapsed_time_list[0]), minutes = int(elapsed_time_list[1]), seconds = int(elapsed_time_list[2]))            
+        
+            #### convert to datetime object 
+            #elapsedtime = datetime.strptime(elapsed_time, '%H:%M:%S').time()
             time_series.replace(current_time, time, inplace = True)
+        
+       
         return time_series
 
     
@@ -549,26 +552,21 @@ class Data_Processing:
         new_titles = config_df_1['Title']
         title_inputs = config_df_1['Input']
         graph_title = config_df_2['Graph Title']
-        time_list = ['Date/Time', 'Start Time', 'seconds', 'hours']
 
         
         # plot multiple lines on a single graph
         # As matplotlib does not allow datetime.time objects to be set as an axis, must convert to a 
         # datetime object to plot on graph.  
-        x_axis = title_inputs[x_axis_list.index[0]]
-        datetime_x_axis = []
-        is_time = False
-        for title in title_inputs: 
-            if (title in time_list): 
-                is_time = True
-                break
-        if (is_time):
-            datetime_x_axis = self.convert_timedelta_to_datetime(mapping_df[x_axis])
-            
+        x_axis = mapping_df[title_inputs[x_axis_list.index[0]]].dropna()
+        #print(x_axis.head())
+        if (not config_df_2['Time Axis'].dropna().empty):
+            #datetime_x_axis = pd.Series(self.convert_timedelta_to_datetime(x_axis))
+            x_axis = pd.Series(self.convert_timedelta_to_datetime(x_axis))
+      
         fig, ax = plt.subplots(1,1)
         for new_y_index in y_axis_list.index: 
             new_y_axis = title_inputs[new_y_index]
-            plt.plot(datetime_x_axis, mapping_df[new_y_axis], label = new_titles.iloc[new_y_index])
+            plt.plot(x_axis, mapping_df[new_y_axis].dropna(), label = new_titles.iloc[new_y_index])
     
         
         # gives the rows that holds the titles of the columns to be plotted 
@@ -588,7 +586,8 @@ class Data_Processing:
             plt.ylabel(new_titles[y_axis_list.index[0]])
         
         # date formatter 
-        ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+        if (not config_df_2['Time Axis'].dropna().empty):
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
 
         # save the graph 
         plt.savefig(output_name + '.jpeg') 
@@ -597,13 +596,17 @@ class Data_Processing:
         
         # convert 'timedelta_series' to type String 
         timedelta_str_series = timedelta_series.astype(str)
+        #print('timedelta_str_series')
 
         # split 'timedelta_str_series' using the space delimiter and store the results into a list
         timedelta_str_list = [time.split() for time in timedelta_str_series]
-
+        #print('timedelta_str_list')
+        
+        
         # Retrieve the 'time' portion of timedelta_str_list and store into another list  
         time_str_list = [time[2] for time in timedelta_str_list]
-
+        #print('time_str_list')
+        #print(time_str_list)
         # split 'time_str_list' using '.' delimiter and store results back into 'time_str_list'  
         time_str_list = [time.split('.') for time in time_str_list]
 
@@ -614,8 +617,9 @@ class Data_Processing:
         # Store in a new list. 
         time_str_series = pd.Series(time_str_list)
         time_obj = [datetime.strptime(time_str, '%H:%M:%S').time() for time_str in time_str_series]
-        datetime_x_axis = [ datetime.combine(datetime.now(), time) for time in time_obj]
-        return datetime_x_axis
+        x_axis = [ datetime.combine(datetime.now(), time) for time in time_obj]
+        #x_axis = pd.Series(x_axis)
+        return x_axis
     
     @property
     def get_config_file(self): 
