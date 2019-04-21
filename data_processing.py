@@ -270,7 +270,7 @@ class Data_Processing:
             #### convert to datetime object 
             #elapsedtime = datetime.strptime(elapsed_time, '%H:%M:%S').time()
             time_series.replace(current_time, time, inplace = True)
-        
+           
         return time_series
 
     
@@ -290,7 +290,7 @@ class Data_Processing:
         Returns config_df where: 
             a) column letters in the 'input' column of 'config_df' have been replaced by column titles
             b) column letters in the 'output' column of 'config_df' have been replaced by column numbers
-
+            c) 
 
         Parameters: 
         config_df (DataFrame): DataFrame that contains the 'mapped data portion' of the configuration file 
@@ -302,7 +302,7 @@ class Data_Processing:
         
         self.letter2title(config_df['Input'], col_names)
         self.letter2int(config_df['Output'])
-        config_df['Title'] = self.default_titles(config_df['Title'], config_df['Input'])
+          config_df['Title'] = self.default_titles(config_df['Title'], config_df['Input'])
 
         return config_df
     
@@ -349,7 +349,7 @@ class Data_Processing:
                 result += ord(x) - ord('A') + 1   
             letter_series.replace(col_letter, result, inplace=True)
         return letter_series
-
+    
     def default_titles(self, new_titles, input_titles): 
         x = 0
         for title in new_titles: 
@@ -477,13 +477,21 @@ class Data_Processing:
         # Title the chart
         chart.title = self.chart_title(new_titles, graph_title, x_axis_row, y_axis_rows)
 
-        # Determine whether grid lines should be on or off. By default it is on. 
+          # Determine whether grid lines should be on or off. By default it is on. 
         grid_lines = self.grid_lines(config_df_2['Grid Lines'].loc[0])
         if (not grid_lines): 
             chart.x_axis.majorGridlines = None 
             chart.y_axis.majorGridlines = None
+
         # Chart scaling 
-        self.chart_scaling(chart, config_df_2['X Min'], config_df_2['X Max'], config_df_2['Y Min'], config_df_2['Y Max'])
+        scale = self.chart_scaling(config_df_2['X Min'].loc[0], config_df_2['X Max'].loc[0], config_df_2['Y Min'].loc[0], 
+                    config_df_2['Y Max'].loc[0])
+        chart.x_axis.scaling.min = scale[0]
+        chart.x_axis.scaling.max = scale[1]
+        chart.y_axis.scaling.min = scale[2]
+        chart.y_axis.scaling.max = scale[3]
+
+        
         cs.add_chart(chart)
 
 
@@ -525,36 +533,41 @@ class Data_Processing:
             title += new_titles.loc[y_axis_rows[y_axis_rows.size-1]] + " vs " + new_titles.loc[x_axis_row]
         else: 
             title = graph_title.loc[0]
-        
-        return title
 
-    # Determines the need for a chart legend
-    #   If there is only 1 y-axis, title the y_axis and delete the legend  
-    def grid_lines(self, choice): 
+        return title
+       def grid_lines(self, choice): 
         if (pd.isnull(choice) or choice.upper() == 'YES'): 
             return True
         return False 
 
-    def chart_scaling(self, chart, x_min, x_max, y_min, y_max): 
+    def chart_scaling(self, x_min, x_max, y_min, y_max): 
         """
-        Manual scaling on chart. If the Series is empty, then no manual scaling is required.  
+        Returns a list of the limits of the x and y axis 
 
         Parameters: 
-        chart (Chart object): Chart whose axis is being manually scaled 
-        x_min (Series): Minimum value on x-axis scale 
-        x_max (Series): Maximum value on x-axis scale
-        y_min (Series): Minimum value on y-axis scale
-        y_max (Series): Maximum value on y-axis scale  
+        x_min (*np.int64 or np.float64): Minimum value on x-axis scale 
+        x_max (*np.int64 or np.float64): Maximum value on x-axis scale
+        y_min (*np.int64 or np.float64): Minimum value on y-axis scale
+        y_max (*np.int64 or np.float64): Maximum value on y-axis scale 
+
+        *should be  
+
+        Returns: 
+        A list of the manual scales for the min and max of the x and y axis.
         """
-        
-        if (not x_min.dropna().empty): 
-            chart.x_axis.scaling.min = x_min.loc[0]
-        if (not x_max.dropna().empty): 
-            chart.x_axis.scaling.max = x_max.loc[0]
-        if (not y_min.dropna().empty): 
-            chart.y_axis.scaling.min = y_min.loc[0]
-        if (not y_max.dropna().empty): 
-            chart.y_axis.scaling.max = y_max.loc[0]
+        x_min_scale = None
+        x_max_scale = None
+        y_min_scale = None
+        y_max_scale = None
+        if (not pd.isnull(x_min) and (type(x_min) == np.float64 or type(x_min) == np.int64)): 
+            x_min_scale = x_min
+        if (not pd.isnull(x_max) and (type(x_min) == np.float64 or type(x_min) == np.int64)): 
+            x_max_scale = x_max
+        if (not pd.isnull(y_min) and (type(x_min) == np.float64 or type(x_min) == np.int64)): 
+            y_min_scale = y_min
+        if (not pd.isnull(y_max) and (type(x_min) == np.float64 or type(x_min) == np.int64)): 
+            y_max_scale = y_max
+        return [x_min_scale, x_max_scale, y_min_scale, y_max_scale]
         
     def make_jpeg(self, mapping_df, x_axis_list, y_axis_list, config_df_1, config_df_2, output_name):  
         """
@@ -590,8 +603,8 @@ class Data_Processing:
         
         # gives the rows that holds the titles of the columns to be plotted 
         x_axis_rows = x_axis_list.index[0] 
-        y_axis_rows = y_axis_list.index
-
+        y_axis_rows = y_axis_list.index 
+        
         # set the labels and/or legend of the chart 
         plt.xlabel(new_titles[x_axis_list.index[0]])
         create_legend = self.chart_legend(y_axis_rows)
@@ -600,7 +613,7 @@ class Data_Processing:
         else: 
             plt.ylabel(new_titles[y_axis_list.index[0]])
 
-        # set the title 
+            # set the title 
         title = self.chart_title(new_titles, graph_title, x_axis_rows, y_axis_rows)
         plt.title(title)  
         
@@ -608,11 +621,17 @@ class Data_Processing:
         grid_lines = self.grid_lines(config_df_2['Grid Lines'].loc[0])
         if (grid_lines): 
             plt.grid(b = True)
-
+        
         # date formatter 
         if (not config_df_2['Time Axis'].dropna().empty):
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
-            fig.autofmt_xdate()
+             fig.autofmt_xdate()
+
+        # Chart scaling 
+        scale = self.chart_scaling(config_df_2['X Min'].loc[0], config_df_2['X Max'].loc[0], config_df_2['Y Min'].loc[0], 
+                    config_df_2['Y Max'].loc[0])
+        plt.xlim(scale[0], scale[1])
+        plt.ylim(scale[2], scale[3])
 
         # save the graph 
         plt.savefig(output_name + '.jpeg') 
@@ -637,7 +656,6 @@ class Data_Processing:
 
         # Retrieve the '%H:%M:%S' formatted time and store results back into list 
         time_str_list = [time[0] for time in time_str_list]
-        #time_str_list = [time[3:] for time in time_str_list]
 
         # Convert 'time_str_list' into a series and turn each element into a datetime.time() object
         # Store in a new list. 
