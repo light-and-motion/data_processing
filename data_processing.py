@@ -57,7 +57,7 @@ class Data_Processing:
         DataFrame: DataFrame of the Excel file 
         """
         
-        df = pd.read_excel(file + '.xlsx', sheet_name = sheet)
+        df = pd.read_excel(file + '.xlsx', sheet_name = sheet, dtype= {'Title': str})
         return df    
 
     def create_raw_Excelbook(self, data_df):  
@@ -469,7 +469,14 @@ class Data_Processing:
         chart.title = self.chart_title(new_titles, graph_title, x_axis_row, y_axis_rows)
 
         # Chart scaling 
-        self.chart_scaling(chart, config_df_2['X Min'], config_df_2['X Max'], config_df_2['Y Min'], config_df_2['Y Max'])
+        scale = self.chart_scaling(config_df_2['X Min'].loc[0], config_df_2['X Max'].loc[0], config_df_2['Y Min'].loc[0], 
+                    config_df_2['Y Max'].loc[0])
+        chart.x_axis.scaling.min = scale[0]
+        chart.x_axis.scaling.max = scale[1]
+        chart.y_axis.scaling.min = scale[2]
+        chart.y_axis.scaling.max = scale[3]
+
+        
         cs.add_chart(chart)
 
     # Determines the need for a chart legend
@@ -516,26 +523,34 @@ class Data_Processing:
 
         return title
 
-    def chart_scaling(self, chart, x_min, x_max, y_min, y_max): 
+    def chart_scaling(self, x_min, x_max, y_min, y_max): 
         """
-        Manual scaling on chart. If the Series is empty, then no manual scaling is required.  
+        Returns a list of the limits of the x and y axis 
 
         Parameters: 
-        chart (Chart object): Chart whose axis is being manually scaled 
-        x_min (Series): Minimum value on x-axis scale 
-        x_max (Series): Maximum value on x-axis scale
-        y_min (Series): Minimum value on y-axis scale
-        y_max (Series): Maximum value on y-axis scale  
+        x_min (*np.int64 or np.float64): Minimum value on x-axis scale 
+        x_max (*np.int64 or np.float64): Maximum value on x-axis scale
+        y_min (*np.int64 or np.float64): Minimum value on y-axis scale
+        y_max (*np.int64 or np.float64): Maximum value on y-axis scale 
+
+        *should be  
+
+        Returns: 
+        A list of the manual scales for the min and max of the x and y axis.
         """
-        
-        if (not x_min.dropna().empty): 
-            chart.x_axis.scaling.min = x_min.loc[0]
-        if (not x_max.dropna().empty): 
-            chart.x_axis.scaling.max = x_max.loc[0]
-        if (not y_min.dropna().empty): 
-            chart.y_axis.scaling.min = y_min.loc[0]
-        if (not y_max.dropna().empty): 
-            chart.y_axis.scaling.max = y_max.loc[0]
+        x_min_scale = None
+        x_max_scale = None
+        y_min_scale = None
+        y_max_scale = None
+        if (not pd.isnull(x_min) and (type(x_min) == np.float64 or type(x_min) == np.int64)): 
+            x_min_scale = x_min
+        if (not pd.isnull(x_max) and (type(x_min) == np.float64 or type(x_min) == np.int64)): 
+            x_max_scale = x_max
+        if (not pd.isnull(y_min) and (type(x_min) == np.float64 or type(x_min) == np.int64)): 
+            y_min_scale = y_min
+        if (not pd.isnull(y_max) and (type(x_min) == np.float64 or type(x_min) == np.int64)): 
+            y_max_scale = y_max
+        return [x_min_scale, x_max_scale, y_min_scale, y_max_scale]
         
     def make_jpg(self, mapping_df, x_axis_list, y_axis_list, config_df_1, config_df_2, output_name):  
         """
@@ -588,6 +603,12 @@ class Data_Processing:
         # date formatter 
         if (not config_df_2['Time Axis'].dropna().empty):
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
+
+        # Chart scaling 
+        scale = self.chart_scaling(config_df_2['X Min'].loc[0], config_df_2['X Max'].loc[0], config_df_2['Y Min'].loc[0], 
+                    config_df_2['Y Max'].loc[0])
+        plt.xlim(scale[0], scale[1])
+        plt.ylim(scale[2], scale[3])
 
         # save the graph 
         plt.savefig(output_name + '.jpeg') 
