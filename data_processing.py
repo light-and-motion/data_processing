@@ -57,7 +57,7 @@ class Data_Processing:
         DataFrame: DataFrame of the Excel file 
         """
         
-        df = pd.read_excel(file + '.xlsx', sheet_name = sheet)
+        df = pd.read_excel(file + '.xlsx', sheet_name = sheet, dtype = {'Title': str})
         return df    
 
     def create_raw_Excelbook(self, data_df):  
@@ -303,7 +303,6 @@ class Data_Processing:
         self.letter2title(config_df['Input'], col_names)
         self.letter2int(config_df['Output'])
         config_df['Title'] = self.default_titles(config_df['Title'], config_df['Input'])
-        print(config_df['Title'])
 
         return config_df
     
@@ -353,18 +352,11 @@ class Data_Processing:
 
     def default_titles(self, new_titles, input_titles): 
         x = 0
-        print(type(input_titles), type(new_titles))
-        print(new_titles)
-        print(input_titles)
-       
-        new_new_titles = pd.Series()
-        new_new_titles.resize(new_titles.size)
         for title in new_titles: 
-            if (pd.isnull(title)): 
-                #print(input_titles.iat[x])
-                new_new_titles.iat[x] = input_titles.iat[x]
+            if (title == 'nan'): 
+                new_titles.iat[x] = input_titles.iat[x]
             x += 1
-        return new_new_titles
+        return new_titles
 
     def process_data(self, wb, df, config_df):
         """
@@ -533,7 +525,7 @@ class Data_Processing:
             title += new_titles.loc[y_axis_rows[y_axis_rows.size-1]] + " vs " + new_titles.loc[x_axis_row]
         else: 
             title = graph_title.loc[0]
-
+        
         return title
 
     # Determines the need for a chart legend
