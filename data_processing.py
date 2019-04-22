@@ -80,7 +80,7 @@ class Data_Processing:
         return wb
 
     
-    def create_mapping_dataframe(self, raw_data_df, title_inputs, range_inputs):
+    def create_mapping_dataframe(self, raw_data_df, title_inputs, range_inputs, format):
         """
         Returns a DataFrame that contains only the columns in the CSV file that are being mapped 
 
@@ -98,29 +98,39 @@ class Data_Processing:
         # Find size of a column of df 
         max_size = raw_data_df.iloc[:,0].size
         
+
         # Determine the column with the largest range interval, whose index will be used for the entire DataFrame 'df'. 
         interval_index = self.largest_range_interval(range_inputs, max_size)
         range_list = self.find_range(range_inputs.loc[interval_index],max_size)
         start = range_list[0]
         end = range_list[1]
         df[title_inputs.loc[interval_index]] = raw_data_df[title_inputs.loc[interval_index]].iloc[start:end].reset_index(drop = True)
+        if (not pd.isnull(format.iloc[interval_index]) and type(format.iloc[interval_index]) == int):
+            df[title_inputs.loc[interval_index]] = self.round_numbers(df[title_inputs.loc[interval_index]], format.iloc[interval_index])
 
         # Drop rows/columns that have already been used above
         raw_data_df = raw_data_df.drop([title_inputs.loc[interval_index]], axis = 1)
         title_inputs = title_inputs.drop(labels = interval_index).reset_index(drop = True)
         range_inputs = range_inputs.drop(labels = interval_index).reset_index(drop = True)
-        
+        format = format.drop(labels = interval_index).reset_index(drop = True)
+
         # Store all the data to be mapped (range slicing included) into a df
         # Append each new series to 'df'
         for i in range(len(range_inputs)): 
-            #print(i)
             range_list = self.find_range(range_inputs.loc[i],max_size)
             start = range_list[0]
             end = range_list[1]
             new_series = raw_data_df[title_inputs.loc[i]].iloc[start:end].reset_index(drop = True)
+
+            # Round numbers
+            if (not pd.isnull(format.iloc[i]) and type(format.iloc[i]) == int):
+                new_series = self.round_numbers(new_series, format.iloc[i])
             df[title_inputs.loc[i]] = new_series
         return df
 
+    def round_numbers(self, series, round_to): 
+        series = series.round(round_to)
+        return series
     def largest_range_interval(self, range_inputs, max_size):
         """
         Returns the row index of the largest range interval in Excel  
@@ -539,7 +549,15 @@ class Data_Processing:
     #   If there is only 1 y-axis, title the y_axis and delete the legend  
 
     def grid_lines(self, choice): 
+        """
+        Returns True if grid lines will be on chart, False otherwise
 
+        Parameters: 
+        choice (str): String will either be 'yes', 'no', or null (case insensitive) to indicate grid line settings
+
+        Returns: 
+        bool: True if chart will have grid lines, False if it will not 
+        """
         if (pd.isnull(choice) or choice.upper() == 'YES'): 
             return True
         return False 

@@ -44,7 +44,7 @@ config_df_1 = df.convert_columns(config_df_1, col_names)
 
  
 # Store the columns we want mapped into a new DataFrame 
-mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'], config_df_1['Range'])
+mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'], config_df_1['Range'], config_df_1['Format'])
 
 
 # format time only if the time columns is to be mapped
@@ -52,6 +52,7 @@ mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'],
 new_titles = config_df_1['Input']
 
 time_col = config_df_2['Time Axis']
+
 
 # Store the new time col in a new Series temporarily, 
 # so the NaNs in mapping_data[time_title] won't convert
