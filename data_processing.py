@@ -479,6 +479,7 @@ class Data_Processing:
           # Determine whether grid lines should be on or off. By default it is on. 
         grid_lines = self.grid_lines(config_df_2['Grid Lines'].loc[0])
         if (not grid_lines): 
+            
             chart.x_axis.majorGridlines = None 
             chart.y_axis.majorGridlines = None
 
@@ -545,7 +546,7 @@ class Data_Processing:
 
     def chart_scaling(self, x_min, x_max, y_min, y_max): 
         """
-        Returns a list of the limits of the x and y axis 
+        Returns a list of the settings for the minimum and maximum of the x and y axis 
 
         Parameters: 
         x_min (*np.int64 or np.float64): Minimum value on x-axis scale 
@@ -556,7 +557,7 @@ class Data_Processing:
         *should be  
 
         Returns: 
-        A list of the manual scales for the min and max of the x and y axis.
+        A list of the settings for the minimum and maximum of the x and y axis.
         """
         x_min_scale = None
         x_max_scale = None
@@ -645,7 +646,15 @@ class Data_Processing:
         plt.savefig(output_name + '.jpeg') 
 
     def convert_timedelta_to_datetime(self,timedelta_series): 
-        
+        """
+        Takes in a Series that contains timedelta objects and returns a Series that contains datetime objects
+
+        Parameters: 
+        timedelta_series (Series): Series that contains timedelta objects
+
+        Returns: 
+        Series that contains datetime objects 
+        """
         # convert 'timedelta_series' to type String 
         timedelta_str_series = timedelta_series.astype(str)
         #print('timedelta_str_series')
