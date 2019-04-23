@@ -22,7 +22,7 @@ class Data_Processing:
         self.output_name = output_name
     
     
-    def create_csv_dataframe(self, file, startLine, choice): 
+    def create_csv_dataframe(self, file, startLine): 
         """
         Takes in a CSV file of type lumensphere, multimeter, or serial
         and returns a DataFrame of the CSV file 
@@ -65,7 +65,7 @@ class Data_Processing:
 
         Parameters: 
         data_df (DataFrame): DataFrame whose data will be read into the Excel workbook 
-
+        choice (int): The type of file that is being read into Excel 
         Returns: 
         Workbook object: Excel workbook representation of DataFrame
         """
@@ -78,6 +78,7 @@ class Data_Processing:
             data_df['Max'] = self.convert_to_float(data_df['Max'])
             data_df['Average'] = self.convert_to_float(data_df['Average'])
             data_df['Min'] = self.convert_to_float(data_df['Min'])
+
         for row in dataframe_to_rows(data_df, index = False, header = True):            
             ws.append(row)
         wb.save(self.get_input_csv + '.xlsx')
@@ -85,6 +86,15 @@ class Data_Processing:
 
    
     def convert_to_float(self, series): 
+        """
+        Returns a series where the cells with empty Strings are dropped and the data in the Series is converted into floats
+        
+        Parameters: 
+        series (Series): A series with empty Strings in cells which prevent the series from being of float datatype
+
+        Returns: 
+        Series: A series with float datatypes
+        """
         series.replace('', np.nan,inplace=True)
         series = series.dropna()
         series = series.astype(float)

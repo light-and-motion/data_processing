@@ -27,13 +27,10 @@ config_df_1 = df.create_excel_dataframe(config_title, config_file.sheetnames[0])
 config_df_2 = df.create_excel_dataframe(config_title, config_file.sheetnames[1])
 
 # Create a DataFrame to hold the raw CSV file and then read said DataFrame into an Excel file 
-raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Start Row'].loc[0], data_choice)
+raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Start Row'].loc[0])
 raw_data_excel = df.create_raw_Excelbook(raw_data_df, data_choice)
 
 
-
-
-print(type(raw_data_df['Min'].loc[0]))
 # Convert the 'Input' and 'Output' column letters into, respectively, column titles and numbers
 col_names = raw_data_df.columns
 config_df_1 = df.convert_columns(config_df_1, col_names)
