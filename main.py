@@ -27,9 +27,13 @@ config_df_1 = df.create_excel_dataframe(config_title, config_file.sheetnames[0])
 config_df_2 = df.create_excel_dataframe(config_title, config_file.sheetnames[1])
 
 # Create a DataFrame to hold the raw CSV file and then read said DataFrame into an Excel file 
-raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Start Row'].loc[0])
-raw_data_excel = df.create_raw_Excelbook(raw_data_df)
+raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Start Row'].loc[0], data_choice)
+raw_data_excel = df.create_raw_Excelbook(raw_data_df, data_choice)
 
+
+
+
+print(type(raw_data_df['Min'].loc[0]))
 # Convert the 'Input' and 'Output' column letters into, respectively, column titles and numbers
 col_names = raw_data_df.columns
 config_df_1 = df.convert_columns(config_df_1, col_names)
@@ -42,7 +46,6 @@ config_df_1 = df.convert_columns(config_df_1, col_names)
 # is stored in a DataFrame as only dataframes, not series!, can combine with other dataframes. 
 
 
- 
 # Store the columns we want mapped into a new DataFrame 
 mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'], config_df_1['Range'], config_df_1['Format'])
 
@@ -51,28 +54,32 @@ mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'],
 # Determine if time will serve as one of the axis of the 
 new_titles = config_df_1['Input']
 
-time_col = config_df_2['Time Axis']
-
-
+time_unit = config_df_1['Time Unit'].dropna()
 # Store the new time col in a new Series temporarily, 
 # so the NaNs in mapping_data[time_title] won't convert
 # the data type into object. 
-if (not time_col.dropna().empty): 
-    # Retrieve the column title of the 'time' column 
-    time_unit = config_df_2['Time Unit'].loc[0]
-    time_index = df.letter2int(config_df_2['Time Axis']).loc[0]
-    time_title = raw_data_df.columns[time_index-1]
 
-    # Retrieve the start time and convert it to a string in elapsed time format 
-    # start_time is a Series with length 1 
-    start_time = pd.Series(raw_data_df[time_title].loc[0])
-    start_time = df.convert_to_time_object(start_time, time_unit)
+# Formatting time columns to be in 'Elapsed Time'
+if (not time_unit.empty): 
+    index = time_unit.index.values
+    time_indices = df.letter2int(config_df_1['Input Column Numbers'])
+    for i in range(time_unit.size): 
+        unit = time_unit.iloc[i]
+        
+        # Retrieve the column title of the 'time' column 
+        time_index = time_indices.loc[index[i]]
+        time_title = raw_data_df.columns[time_index-1]
+        
+        # Retrieve the start time and convert it to a string in elapsed time format 
+        # start_time is a Series with length 1 
+        start_time = pd.Series(raw_data_df[time_title].loc[0])
+        start_time = df.convert_to_time_object(start_time, unit)
 
 
-    new_time_col = pd.DataFrame()
-    new_time_col = df.convert_to_time_object(mapping_data_df[time_title], time_unit)
-    df.time_format(new_time_col, start_time.loc[0])
-    mapping_data_df[time_title] = new_time_col
+        new_time_col = pd.DataFrame()
+        new_time_col = df.convert_to_time_object(mapping_data_df[time_title], unit)
+        df.time_format(new_time_col, start_time.loc[0])
+        mapping_data_df[time_title] = new_time_col
 
 
 

@@ -22,7 +22,7 @@ class Data_Processing:
         self.output_name = output_name
     
     
-    def create_csv_dataframe(self, file, startLine): 
+    def create_csv_dataframe(self, file, startLine, choice): 
         """
         Takes in a CSV file of type lumensphere, multimeter, or serial
         and returns a DataFrame of the CSV file 
@@ -40,7 +40,7 @@ class Data_Processing:
         else: 
             startLine = startLine - 1 
         
-        df = pd.read_csv(file + '.csv', skiprows= startLine, keep_default_na = True)
+        df = pd.read_csv(file + '.csv', skiprows= startLine, keep_default_na = False, encoding = 'ISO-8859-1')
 
         return df
 
@@ -59,7 +59,7 @@ class Data_Processing:
         df = pd.read_excel(file + '.xlsx', sheet_name = sheet, dtype = {'Title': str})
         return df    
 
-    def create_raw_Excelbook(self, data_df):  
+    def create_raw_Excelbook(self, data_df, choice):  
         """
         Returns an Excel workbook to hold the data in a DataFrame
 
@@ -74,12 +74,22 @@ class Data_Processing:
         ws = wb.active
         ws.title = 'Raw Data'
 
-        for row in dataframe_to_rows(data_df, index = False, header = True):
+        if (choice == 2): 
+            data_df['Max'] = self.convert_to_float(data_df['Max'])
+            data_df['Average'] = self.convert_to_float(data_df['Average'])
+            data_df['Min'] = self.convert_to_float(data_df['Min'])
+        for row in dataframe_to_rows(data_df, index = False, header = True):            
             ws.append(row)
         wb.save(self.get_input_csv + '.xlsx')
         return wb
 
-    
+   
+    def convert_to_float(self, series): 
+        series.replace('', np.nan,inplace=True)
+        series = series.dropna()
+        series = series.astype(float)
+        return series
+
     def create_mapping_dataframe(self, raw_data_df, title_inputs, range_inputs, format):
         """
         Returns a DataFrame that contains only the columns in the CSV file that are being mapped 
@@ -109,6 +119,7 @@ class Data_Processing:
             df[title_inputs.loc[interval_index]] = self.round_numbers(df[title_inputs.loc[interval_index]], format.iloc[interval_index])
 
         # Drop rows/columns that have already been used above
+    
         raw_data_df = raw_data_df.drop([title_inputs.loc[interval_index]], axis = 1)
         title_inputs = title_inputs.drop(labels = interval_index).reset_index(drop = True)
         range_inputs = range_inputs.drop(labels = interval_index).reset_index(drop = True)
@@ -309,7 +320,8 @@ class Data_Processing:
         DataFrame: Altered version of 'config_df' where elements of 'input' and 'output' columns have been altered  
         """
         
-        self.letter2title(config_df['Input'], col_names)
+        config_df['Input Column Numbers'] = config_df['Input'].str.upper()
+        config_df['Input'] = self.letter2title(config_df['Input'], col_names)
         self.letter2int(config_df['Output'])
         config_df['Title'] = self.default_titles(config_df['Title'], config_df['Input'])
 
@@ -328,13 +340,16 @@ class Data_Processing:
         Returns: 
         void 
         """
+        col_title = []
         indices = self.letter2int(letter_series)
         x = 0
         for col_letter in letter_series: 
             index = indices.loc[x]      
             title = names[index-1]
-            letter_series.replace(col_letter, title, inplace=True)
+            col_title.append(title)
+            #letter_series.replace(col_letter, title, inplace=True)
             x += 1
+        return pd.Series(col_title)
     
     def letter2int(self, letter_series):
         """
@@ -350,8 +365,10 @@ class Data_Processing:
         Series object: Series that holds the corresponding Excel column numbers
         """
         result = 0
+        #print(letter_series)
         for col_letter in letter_series: 
             result = 0
+            #print('col_letter', col_letter)
             for x in col_letter: 
                 x = x.upper()
                 result *= 26
@@ -613,7 +630,7 @@ class Data_Processing:
         # datetime object to plot on graph.  
         x_axis = mapping_df[title_inputs[x_axis_list.index[0]]].dropna()
         #print(x_axis.head())
-        if (not config_df_2['Time Axis'].dropna().empty):
+        if (not config_df_1['Time Unit'].dropna().empty):
             #datetime_x_axis = pd.Series(self.convert_timedelta_to_datetime(x_axis))
             x_axis = pd.Series(self.convert_timedelta_to_datetime(x_axis))
       
@@ -645,7 +662,7 @@ class Data_Processing:
             plt.grid(b = True)
         
         # date formatter 
-        if (not config_df_2['Time Axis'].dropna().empty):
+        if (not config_df_1['Time Unit'].dropna().empty):
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
             fig.autofmt_xdate()
 
