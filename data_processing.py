@@ -9,6 +9,9 @@ import numpy as np
 import xlsxwriter
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import pdfkit
+from PyPDF2 import PdfFileReader, PdfFileWriter
+import os
 
 # DOUBLE UNDERSCORE 
 class Data_Processing: 
@@ -81,6 +84,7 @@ class Data_Processing:
 
         for row in dataframe_to_rows(data_df, index = False, header = True):            
             ws.append(row)
+        
         wb.save(self.get_input_csv + '.xlsx')
         return wb
 
@@ -394,7 +398,7 @@ class Data_Processing:
             x += 1
         return new_titles
 
-    def process_data(self, wb, df, config_df):
+    def process_data(self, wb, df, config_df, col_letters):
         """
         Maps the input data of the CSV file into the desired columns in the output Excel file 
 
@@ -410,12 +414,34 @@ class Data_Processing:
         title_inputs = config_df['Input']
         outputs = config_df['Output']
 
+
+        ws = wb.active
         # Read in all the data 
         for j in range(new_titles.size): 
-            self.read_in_values(wb, df, new_titles.iloc[j], title_inputs.iloc[j], outputs.iloc[j])
+            self.read_in_values(ws, df, new_titles.iloc[j], title_inputs.iloc[j], outputs.iloc[j])
+        self.adjust_column_widths(ws, df, col_letters, title_inputs, new_titles)
         return wb
+
+    def adjust_column_widths(self, ws, df, col_letters, title_inputs, new_titles):
+        i = 0
+        series_length = 0
     
-    def read_in_values(self, wb, df, new_title, title_input, col_num):
+        for letters in col_letters:
+            str_series = df[title_inputs.iloc[i]].astype(str)
+
+            # Turning Series into String suddenly converts Series into a datetype object-like format
+            if (str_series.str.contains('0 days').loc[0]): 
+                series_length= 6
+            else: 
+                str_series = str_series.map(len)
+                series_length = str_series.max()
+            max_length = max(int(series_length), len(new_titles.iloc[i]))
+            ws.column_dimensions[letters].width = max_length
+            i += 1
+
+    
+    
+    def read_in_values(self, ws, df, new_title, title_input, col_num):
         """
         Reads in the data of 1 input column into the Excel workbook 
 
@@ -427,7 +453,7 @@ class Data_Processing:
         title_inputs (String): Current column title of the series that is being mapped    
         col_num (int): Number of column the data is being mapped to   
         """ 
-        ws = wb.active
+        
         header = ws.cell(row=1, column = col_num) 
         header.value = new_title
         header.font = Font(bold=True)
@@ -443,20 +469,40 @@ class Data_Processing:
             cellRow += 1
             i += 1
  
+    def make_file(self, choice): 
+        """
+        Returns a bool to determine if a file type (.xlsx, .jpeg, .pdf) will be generated 
+
+        Parameters: 
+        choice (String): String will either be 'yes', 'no', or null (case insensitive)
+
+        Returns: 
+        bool: True if choice is 'yes' or null, False if choice is 'no'
+        """
+        if (pd.isnull(choice) or choice.upper() == 'YES'): 
+            return True
+        return False
+
     def make_chart(self,axis):
         """
-        Returns a list that indicates which columns will serve as the x-axis and y-axes of a plotted chart 
+        Returns a list that indicates whether there will be a chart and if so, which columns will serve as the x-axis 
+        and y-axes of a plotted chart 
 
         Parameters: 
         axis (Series): Series that indicates which columns will serve as the x-axis and the y-axes
 
         Returns:
-        List: A list, whose first element (should be) a one-element Series of the column that will serve as the x-axis 
-                and whose second element is a Series of the column(s) that will serve as the y-axes
+        List: 
+            a) If first element is False, no chart will be generated 
+            b) If first element is True, second element will be a one-element Series of the column that will serve as the x-axis 
+                and third element will be a Series of the column(s) that will serve as the y-axes
         """ 
+        if (axis.dropna().empty or not ((axis == 'x').any() or (axis == 'X').any()) or not ((axis == 'y').any() or (axis == 'Y').any())):  
+            return [False]
+        
         x_axis = axis.loc[(axis == 'x') | (axis == 'X')]
         y_axis = axis.loc[(axis == 'y') | (axis == 'Y')]
-        return [x_axis, y_axis]
+        return [True, x_axis, y_axis]
 
     def create_chart(self,wb, outputs_data_df, x_axis, y_axis, config_df_1, config_df_2): 
         """
@@ -532,6 +578,7 @@ class Data_Processing:
         cs.add_chart(chart)
 
 
+   
     def chart_legend(self, y_axis_rows):
         """
         Determines the need for a chart legend in the chart. If there is only 1 y-axis, then 
@@ -618,7 +665,7 @@ class Data_Processing:
             y_max_scale = y_max
         return [x_min_scale, x_max_scale, y_min_scale, y_max_scale]
         
-    def make_jpeg(self, mapping_df, x_axis_list, y_axis_list, config_df_1, config_df_2, output_name):  
+    def make_jpeg(self, mapping_df, x_axis_list, y_axis_list, config_df_1, config_df_2, output_name, pdf_choice):  
         """
         Produces a JPG file of the chart in matplotlib 
 
@@ -629,13 +676,15 @@ class Data_Processing:
         config_df_1 (DataFrame): DataFrame that stores the data in the 'mapped data portion' of the configuration file  
         config_df_2 (DataFrame): DataFrame that stores the data in the 'general settings' of the configuration file 
         output_name (String): Name JPG file will be saved as 
+        pdf_choice (String): String will contain 'yes', 'no', or null (case insensitive) and determine whether the plot
+                            should also be saved as a PDF
         """
         new_titles = config_df_1['Title']
         title_inputs = config_df_1['Input']
         graph_title = config_df_2['Graph Title']
 
         
-        # plot multiple lines on a single graph
+        # Plot multiple lines on a single graph. 
         # As matplotlib does not allow datetime.time objects to be set as an axis, must convert to a 
         # datetime object to plot on graph.  
         x_axis = mapping_df[title_inputs[x_axis_list.index[0]]].dropna()
@@ -643,18 +692,21 @@ class Data_Processing:
         if (not config_df_1['Time Unit'].dropna().empty):
             #datetime_x_axis = pd.Series(self.convert_timedelta_to_datetime(x_axis))
             x_axis = pd.Series(self.convert_timedelta_to_datetime(x_axis))
-      
+            
         fig, ax = plt.subplots(1,1)
         for new_y_index in y_axis_list.index: 
-            new_y_axis = title_inputs[new_y_index]
-            plt.plot(x_axis, mapping_df[new_y_axis].dropna(), label = new_titles.iloc[new_y_index])
-    
+            y_axis_title = title_inputs[new_y_index]
+            y_axis = mapping_df[y_axis_title]
+            if (not pd.isnull(config_df_1['Time Unit'].loc[new_y_index])): 
+                y_axis = self.convert_timedelta_to_datetime(y_axis)
+            plt.plot(x_axis, y_axis, label = new_titles.iloc[new_y_index])
+
         
-        # gives the rows that holds the titles of the columns to be plotted 
+        # Gives the rows that holds the titles of the columns to be plotted 
         x_axis_rows = x_axis_list.index[0] 
         y_axis_rows = y_axis_list.index 
         
-        # set the labels and/or legend of the chart 
+        # Set the labels and/or legend of the chart 
         plt.xlabel(new_titles[x_axis_list.index[0]])
         create_legend = self.chart_legend(y_axis_rows)
         if (create_legend):
@@ -662,16 +714,16 @@ class Data_Processing:
         else: 
             plt.ylabel(new_titles[y_axis_list.index[0]])
 
-            # set the title 
+            # Set the title 
         title = self.chart_title(new_titles, graph_title, x_axis_rows, y_axis_rows)
         plt.title(title)  
         
-        # set gridlines 
+        # Set gridlines 
         grid_lines = self.grid_lines(config_df_2['Grid Lines'].loc[0])
         if (grid_lines): 
             plt.grid(b = True)
         
-        # date formatter 
+        # Date formatter 
         if (not config_df_1['Time Unit'].dropna().empty):
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
             fig.autofmt_xdate()
@@ -687,8 +739,13 @@ class Data_Processing:
         plt.xlim(scale[0], scale[1])
         plt.ylim(scale[2], scale[3])
 
-        # save the graph 
-        plt.savefig(output_name + '.jpeg') 
+        # Save the graph 
+        plt.savefig(output_name + '.jpeg')
+        
+        if (pdf_choice): 
+            plt.savefig(output_name + '_graph' + '.pdf') 
+        return fig
+
 
     def convert_timedelta_to_datetime(self,timedelta_series): 
         """
@@ -726,7 +783,56 @@ class Data_Processing:
         x_axis = [ datetime.combine(datetime.now(), time) for time in time_obj]
         #x_axis = pd.Series(x_axis)
         return x_axis
+
+    def make_pdf(self, output_name,  mapping_data_df, create_chart): 
+        """
+        Generate the pdf of the processed results 
+
+        Parameters: 
+        output_name (String): Name PDF will be saved as 
+        mapping_data_df (DataFrame):  DataFrame that contains only the columns in the CSV file that are being mapped 
+        create_chart (bool): True if a chart will be generated in the PDF, False if not 
+        """
+        config = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
+        df_file = os.getcwd() + '\\' + output_name + '.pdf'
+
+        if (not create_chart): 
+            pdfkit.from_string(mapping_data_df.to_html(), df_file, configuration = config)
     
+        else:  
+            df_file = os.getcwd() + '\\' + output_name + '_table.pdf'
+            pdfkit.from_string(mapping_data_df.to_html(), df_file, configuration = config)
+            paths = [df_file, os.getcwd() + '\\' + output_name + '_graph.pdf' ]
+            self.merge_pdfs(paths, output_name)
+
+    # Source: https://realpython.com/pdf-python/
+    def merge_pdfs(self,paths, output_name): 
+
+        """
+        Merges two PDFs into a single PDF 
+
+        Parameters: 
+        paths (list): File paths of the PDFs to be merged  
+        output_name (String): Name PDF will be saved as  
+        """
+        pdf_writer = PdfFileWriter()
+
+        for path in paths: 
+            pdf_reader = PdfFileReader(path)
+            for page in range(pdf_reader.getNumPages()):
+                pdf_writer.addPage(pdf_reader.getPage(page))
+        
+        with open(output_name + '.pdf', 'wb') as out: 
+            pdf_writer.write(out)
+        
+        # Delete merged files 
+        os.remove(paths[0])
+        os.remove(paths[1])
+       
+        
+
+        
+
     @property
     def get_config_file(self): 
         return self.config_file

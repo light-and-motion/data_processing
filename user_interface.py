@@ -26,8 +26,8 @@ def choose_config(choice):
         config_file = input('Enter name of Serial Data config file: ')
     #elif choice == 0: #default option for testing purposes
      
-    config_file = 'MultiMeterConfig'
-    #config_file = 'SerialConfig'
+    #config_file = 'MultiMeterConfig'
+    config_file = 'SerialConfig'
     #config_file = 'LumenConfig'
     #else:
         #choice = None
@@ -45,8 +45,8 @@ def choose_csv():
         csv_choice = input('Enter name of CSV file to process or enter ''default'': ')
         
         if csv_choice == 'default':
-            #input_csv = 'Serial_1'
-            input_csv = 'Temp_2'
+            input_csv = 'Serial_1'
+            #input_csv = 'Temp_2'
             #input_csv = 'Lumen_1'
         else:
             input_csv = csv_choice
@@ -61,9 +61,9 @@ def choose_output_name():
         output_choice = input('Enter name of Output file or enter ''default'': ')
 
         if output_choice == 'default':
-            output_name = 'MultiMeter_Output'
+            #output_name = 'MultiMeter_Output'
             #output_name = 'LumenData'
-            #output_name = 'Serial_Output'
+            output_name = 'Serial_Output'
         else:
             output_name = output_choice
     return output_name

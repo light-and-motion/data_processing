@@ -1,8 +1,6 @@
 import user_interface
-import numpy as np
 import pandas as pd
 from data_processing import Data_Processing
-from win32com.client import Dispatch
 
 ### Main execution block ###
 user_interface.banner()
@@ -26,6 +24,7 @@ df = Data_Processing(data_choice, config_file, input_csv, output_name)
 config_df_1 = df.create_excel_dataframe(config_title, config_file.sheetnames[0])
 config_df_2 = df.create_excel_dataframe(config_title, config_file.sheetnames[1])
 
+output_columns = config_df_1['Output'].copy()
 # Create a DataFrame to hold the raw CSV file and then read said DataFrame into an Excel file 
 raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Start Row'].loc[0])
 raw_data_excel = df.create_raw_Excelbook(raw_data_df, data_choice)
@@ -81,33 +80,44 @@ if (not time_unit.empty):
 
 
 # Output files 
-excel_output = config_df_2['Excel'].loc[0]
-jpeg_output = config_df_2['JPEG'].loc[0]
+excel_output = df.make_file(config_df_2['Excel'].loc[0])
+jpeg_output = df.make_file(config_df_2['JPEG'].loc[0])
+pdf_output = df.make_file(config_df_2['PDF'].loc[0])
 
 # Grab the x-axis and y-axis and determine if a chart will be outputted 
 axis = df.make_chart(config_df_1['Axis'])
-x_axis = axis[0]
-y_axis = axis[1]
-create_chart = False
-if (x_axis.size != 0 and y_axis.size != 0): 
-    create_chart = True
+create_chart = axis[0]
+x_axis = None
+y_axis = None
+if (create_chart == True): 
+    x_axis = axis[1]
+    y_axis = axis[2]
+
+
+output_data_wb = None
 
 # Creating an Excel file 
-if (excel_output == 'YES' or pd.isnull(excel_output)):
+if (excel_output):
     # Create workbook to hold plotted data
     output_data_wb = df.create_plotted_workbook()
 
+
+
     # Read the output data into an Excel file
-    output_data_wb = df.process_data(output_data_wb, mapping_data_df, config_df_1)
+    output_data_wb = df.process_data(output_data_wb, mapping_data_df, config_df_1, output_columns)
 
     # If the x_axis is not empty, then create a chart 
     if (create_chart): 
         df.create_chart(output_data_wb, mapping_data_df, x_axis, y_axis, config_df_1, config_df_2)
     output_data_wb.save(df.get_output_name + '.xlsx')
 
-# Create the jpg file 
-if (pd.isnull(jpeg_output) or jpeg_output.upper() == 'YES' or create_chart):
-    df.make_jpeg(mapping_data_df, x_axis, y_axis, config_df_1, config_df_2, output_name)
+# Create the JPEG file and/or the chart portion of the pdf file 
+if ((jpeg_output or pdf_output) and create_chart):
+    df.make_jpeg(mapping_data_df, x_axis, y_axis, config_df_1, config_df_2, output_name, pdf_output)
+
+# Create the PDF file 
+if (pdf_output): 
+    df.make_pdf(output_name, mapping_data_df, create_chart)
 
 
 
