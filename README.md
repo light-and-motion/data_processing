@@ -21,7 +21,7 @@ Each row in the configuration file corresponds to a single column of data in the
 - **Time Unit**: How time is represented. 'D' is datetime, 'H' is hours, 'M' is minutes, and 'S' is seconds. Corresponding CSV column will convert the time into elapsed time with format HH:MM:SS   
 - **Axis**: Indicate whether CSV column will serve as an axis on the graph. 'X' for x-axis, 'Y' for y-axis. Can have multiple y-axis. 
 - **Title**: Title of the CSV column in the output files 
-- **Range**: Interval of the data in the CSV column to be processed. Indices will be based on the resulting Excel file 
+- **Range**: Interval of data in column that is to be processed. Indices will be based on the resulting Excel file 
 
 'Sheet 2' gives the 'General Settings' of the program. The columns should be titled: 
 > **Graph Title | Start Row | X Min | X Max | Y Min | Y Max | Grid Lines | Excel | JPEG | PDF** 
