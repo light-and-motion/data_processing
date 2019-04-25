@@ -82,8 +82,9 @@ In 'Sheet 2':
 - Improve algorithm for adjusting column widths. 
 - Look into creating a Time class.
 
-For most columns in the configuration file, it does not matter whether user bases the settings off of the CSV or Excel file. There are two exceptions: **Range** and **Start Row**. **Range** is based off of the Excel file, and **Start Row** is based off of the CSV file. The logic in future versions should resolve the discrepancy between **Range** and **Start Row** by dividing the interface into two, separate components that do not immediately follow one another: 
+For most columns in the configuration file, it does not matter whether user bases the settings off of the CSV or Excel file. There are two exceptions: **Range** and **Start Row**. **Range** is based off of the Excel file, and **Start Row** is based off of the CSV file. The logic in future versions should resolve the discrepancy between **Range** and **Start Row** by dividing the interface into two, separate components that do not execute altogether in a single run.  
 
+Components: 
 1. Process the CSV file into an Excel file
 2. Use the Excel file to configure the settings and produce an Excel, JPEG, and/or PDF of the processed results. 
 
