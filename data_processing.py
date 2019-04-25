@@ -125,8 +125,8 @@ class Data_Processing:
         start = range_list[0]
         end = range_list[1]
         df[title_inputs.loc[interval_index]] = raw_data_df[title_inputs.loc[interval_index]].iloc[start:end].reset_index(drop = True)
-        if (not pd.isnull(format.iloc[interval_index]) and type(format.iloc[interval_index]) == int):
-            df[title_inputs.loc[interval_index]] = self.round_numbers(df[title_inputs.loc[interval_index]], format.iloc[interval_index])
+        if (not pd.isnull(format.iloc[interval_index]) and type(format.iloc[interval_index]) == np.float64):
+            df[title_inputs.loc[interval_index]] = self.round_numbers(df[title_inputs.loc[interval_index]], int(format.iloc[interval_index]))
 
         # Drop the rows/columns that have already been used above
         raw_data_df = raw_data_df.drop([title_inputs.loc[interval_index]], axis = 1)
@@ -142,14 +142,13 @@ class Data_Processing:
             new_series = raw_data_df[title_inputs.loc[i]].iloc[start:end].reset_index(drop = True)
 
             # Round numbers
-            if (not pd.isnull(format.iloc[i]) and type(format.iloc[i]) == int):
-                new_series = self.round_numbers(new_series, format.iloc[i])
+            if (not pd.isnull(format.iloc[i]) and type(format.iloc[i]) == np.float64):
+                new_series = self.round_numbers(new_series, int(format.iloc[i]))
             df[title_inputs.loc[i]] = new_series
         return df
 
     def round_numbers(self, series, round_to): 
         """ Round numbers in 'series' to the number of decimal places indiciated by 'round_to'"""
-
         series = series.round(round_to)
         return series
     
@@ -600,8 +599,8 @@ class Data_Processing:
             y_max_scale = y_max
         return [x_min_scale, x_max_scale, y_min_scale, y_max_scale]
         
-    def make_jpeg(self, mapping_df, x_axis_row, y_axis_row, config_df_1, config_df_2, output_name, pdf_choice):  
-        """Produces a JPG (and maybe PDF) file of a matplotlib chart
+    def make_jpeg(self, mapping_df, x_axis_row, y_axis_row, config_df_1, config_df_2, output_name, jpeg_choice, pdf_choice):  
+        """Produces a JPG and/or PDF file of a matplotlib chart
 
         Parameters: 
         mapping_df (dataframe): CSV columns to be processed 
@@ -610,8 +609,8 @@ class Data_Processing:
         config_df_1 (dataframe): 'Mapped Settings' of the configuration file  
         config_df_2 (dataframe): 'General Settings' of the configuration file 
         output_name (str): Name JPG file will be saved as 
-        pdf_choice (str): str will contain 'yes', 'no', or null (case insensitive) and determine whether the plot
-                            should also be saved as a PDF
+        jpeg_choice (bool): True if chart will be saved as JPEG, False otherwise
+        pdf_choice (bool): True if chart will be saved as PDF, False otherwise
         """
         
         new_titles = config_df_1['Title']
@@ -672,8 +671,9 @@ class Data_Processing:
         plt.xlim(scale[0], scale[1])
         plt.ylim(scale[2], scale[3])
 
-        # Save the chart 
-        plt.savefig(output_name + '.jpeg')
+        # Save charts in stated formats
+        if (jpeg_choice): 
+            plt.savefig(output_name + '.jpeg')
         
         if (pdf_choice): 
             plt.savefig(output_name + '_chart' + '.pdf') 

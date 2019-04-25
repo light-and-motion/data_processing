@@ -17,7 +17,7 @@ There are several libraries that need to be imported for this program to run: nu
 Each row in the configuration file corresponds to a single column of data in the CSV file. 
 - **Input**: Column letters of the columns we want mapped
 - **Output**: Column letters of the columns we want the processed data to be mapped to in the output Excel file 
-- **Format**: Sig figs we want the data to be rounded to OR 'T' to indicate that the CSV column is a time object. Rows with a 'T' will have the corresponding CSV column converted into elapsed time (Format HH:MM:SS). 
+- **Format**: Sig figs we want the data to be rounded to
 - **Time Unit**: How time is represented. 'D' is datetime, 'H' is hours, 'M' is minutes, and 'S' is seconds    
 - **Axis**: Indicate whether CSV column will serve as an axis on the graph. 'X' for x-axis, 'Y' for y-axis. Can have multiple y-axis
 - **Title**: Title of the CSV column in the output files 
@@ -57,7 +57,7 @@ In 'Sheet 1':
 
 In 'Sheet 2': 
 - **Graph Title**: Syntax will be '\[All] y-axes vs x-axis'
-- **Start Row**: 0
+- **Start Row**: 1
 - **X Min**: --
 - **X Max**: --
 - **Y Min**: --

@@ -96,9 +96,9 @@ if (excel_output):
         df.create_chart(output_data_wb, mapping_data_df, x_axis, y_axis, config_df_1, config_df_2)
     output_data_wb.save(df.get_output_name + '.xlsx')
 
-# Create the JPEG file and/or the chart portion of the pdf file 
+# Create the JPEG file and/or the chart portion of the PDF file 
 if ((jpeg_output or pdf_output) and create_chart):
-    df.make_jpeg(mapping_data_df, x_axis, y_axis, config_df_1, config_df_2, output_name, pdf_output)
+    df.make_jpeg(mapping_data_df, x_axis, y_axis, config_df_1, config_df_2, output_name, jpeg_output, pdf_output)
 
 # Create the PDF file 
 if (pdf_output): 
