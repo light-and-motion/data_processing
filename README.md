@@ -44,11 +44,11 @@ Each column will contain only 1 value.
 
 ### Default Options
 
-**_'--' indicates that there will be no error generation if no value is inputted_**
+**_'--' indicates that there will be no error generation if no value is inputted._**
 
 In 'Sheet 1': 
-- **Input**: None
-- **Output**: None
+- **Input**: N/A
+- **Output**: N/A
 - **Format**: --
 - **Time Unit**: --
 - **Axis**: --
