@@ -44,22 +44,24 @@ Each column will contain only 1 value.
 
 ### Default Options
 
-**_'None' indicates that there will be no error generation if no value is inputted in the cell_**
+**_'--' indicates that there will be no error generation if no value is inputted_**
 
 In 'Sheet 1': 
-- **Format**: None 
-- **Time Unit**: None
-- **Axis**: None
+- **Input**: None
+- **Output**: None
+- **Format**: --
+- **Time Unit**: --
+- **Axis**: --
 - **Title**: Title of the column in the CSV file 
 - **Range**: All 
 
 In 'Sheet 2': 
 - **Graph Title**: Syntax will be '\[All] y-axes vs x-axis'
 - **Start Row**: 0
-- **X Min**: None
-- **X Max**: None
-- **Y Min**: None
-- **Y Max**: None
+- **X Min**: --
+- **X Max**: --
+- **Y Min**: --
+- **Y Max**: --
 - **Grid Lines**: Yes
 - **Excel**: Yes
 - **JPEG**: Yes
