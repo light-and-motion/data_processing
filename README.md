@@ -12,7 +12,7 @@ There are several libraries that need to be imported for this program to run: nu
 'Sheet 1' of the configuration file gives the ‘Mapped Settings’ of the program. The columns should be titled: 
 > **Input | Output | Format | Time Unit | Axis | Title | Range**
 
-**_Except for 'Titles' all inputs are case insensitive_**
+**_Except for 'Titles' all inputs are case insensitive._**
 
 Each row in the configuration file corresponds to a single column of data in the CSV file. 
 - **Input**: Column letters of the columns we want mapped
@@ -26,7 +26,7 @@ Each row in the configuration file corresponds to a single column of data in the
 'Sheet 2' gives the 'General Settings' of the program. The columns should be titled: 
 > **Graph Title | Start Row | X Min | X Max | Y Min | Y Max | Grid Lines | Excel | JPEG | PDF** 
 
-**_All inputs are case insensitive_**
+**_All inputs are case insensitive._**
 
 Each column will contain only 1 value. 
 
