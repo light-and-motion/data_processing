@@ -18,10 +18,10 @@ Each row in the configuration file corresponds to a single column of data in the
 - **Input**: Column letters of the columns we want mapped
 - **Output**: Column letters of the columns we want the processed data to be mapped to in the output Excel file 
 - **Format**: Sig figs we want the data to be rounded to
-- **Time Unit**: How time is represented. 'D' is datetime, 'H' is hours, 'M' is minutes, and 'S' is seconds    
-- **Axis**: Indicate whether CSV column will serve as an axis on the graph. 'X' for x-axis, 'Y' for y-axis. Can have multiple y-axis
+- **Time Unit**: How time is represented. 'D' is datetime, 'H' is hours, 'M' is minutes, and 'S' is seconds. Corresponding CSV column will convert the time into elapsed time with format HH:MM:SS   
+- **Axis**: Indicate whether CSV column will serve as an axis on the graph. 'X' for x-axis, 'Y' for y-axis. Can have multiple y-axis. 
 - **Title**: Title of the CSV column in the output files 
-- **Range**: Interval of the data in the CSV column to be processed 
+- **Range**: Interval of the data in the CSV column to be processed. Indices will be based on the resulting Excel file 
 
 'Sheet 2' gives the 'General Settings' of the program. The columns should be titled: 
 > **Graph Title | Start Row | X Min | X Max | Y Min | Y Max | Grid Lines | Excel | JPEG | PDF** 
@@ -31,7 +31,7 @@ Each row in the configuration file corresponds to a single column of data in the
 Each column will contain only 1 value. 
 
 - **ChartTitle**: Title of chart
-- **Start Row**: Row to begin processing CSV file 
+- **Start Row**: Row to begin processing CSV file. Index will be based on CSV file.  
 - **X Min**: Minimum value on x-axis of chart
 - **X Max**: Maximum value on x-axis of chart
 - **Y Min**: Minimum value on y-axis of chart
@@ -78,9 +78,14 @@ In 'Sheet 2':
 
 ## Future Refinements
 - Format PDF so the page containing the table and the chart are the same size. Center the table. 
-- Allow users who have already had their CSV files read into an Excel file to skip processing their CSV again. 
 - Replace text interface with a GUI. 
 - Improve algorithm for adjusting column widths. 
 - Look into creating a Time class.
 
+Ultimately, with the exception of **Start Row**, users should be basing their configuration file off of the resulting Excel version of the CSV file. To resolve the discrepancy between **Start Row** and the rest of the columns, the GUI should have two components: 
+
+1) Part 1: Process the CSV file into an Excel file
+2) Part 2: Use the Excel file to configure the settings and produce an Excel, JPEG, and/or PDF of the processed results. 
+
+There should also be an option that allows users who have already had their CSV files read into an Excel file to skip processing their CSV files again. 
 
