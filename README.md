@@ -2,14 +2,14 @@
 The purpose of this project is to develop an automated processing program that will streamline data formatting of routinely conducted experiments. The software will take in a lumensphere, multimeter, or serial CSV file and output an Excel, JPEG, and/or PDF file of the processed results. The Excel file will hold a spreadsheet and chart of the processed results. The JPEG file will consist of a chart made in matplotlib. The PDF will hold the table and the matplotlib chart. 
 
 ## Running 
+User will need a CSV file and a configuration file. The configuration file should be an Excel file and contain two Worksheets. There are no restrictions on the names of the sheets. 
+
 To run the program, run main.py.
 
 ## Background
 There are several libraries that need to be imported for this program to run: numpy, pandas, openpyxl, matplotlib, pdfkit, PyPDF2, and os. 
 
-In order to run this program, you need a CSV file and a configuration file. The configuration file should be an Excel file and contain two Worksheets. There are no restrictions on the names of the sheets. 
-
-'Sheet 1' gives the ‘Mapped Settings’ of the program. The columns should be titled: 
+'Sheet 1' of the configuration file gives the ‘Mapped Settings’ of the program. The columns should be titled: 
 > **Input | Output | Format | Time Unit | Axis | Title | Range**
 
 **_Except for 'Titles' all inputs are case insensitive_**
