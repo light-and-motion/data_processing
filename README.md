@@ -69,9 +69,9 @@ In 'Sheet 2':
 
 ## Restrictions: 
 - Cannot set scale limits on elapsed times, as Excel and matplotlib cannot scale datetime or timedelta objects. 
-- Cannot set float scale limits in matplotlib. 
-- matplotlib scales break down when the minimum and maximum are too far apart, i.e. 20 and 1000
-- Excel can graph axes with different lengths. Matplotlib cannot. 
+- matplotlib limits may not be scaled according to exact specifications. 
+- matplotlib scales break down when the minimum and maximum are too far apart, i.e. 20 and 1000 
+- Excel can graph axes with different lengths. For the most part, matplotlib cannot. (Exceptions do occur when the values stay constant throughout but the graphs of Excel and matplotlib do contain errors.) 
 - **Range** column must be formatted so it is read as 'Text,' otherwise it will be converted into time. 
 - Milliseconds will be removed when converting into elapsed time. 
 - A JPEG file will not be generated if a chart is not processed, even if **JPEG** is set to 'Yes.' An Excel and PDF file can still be generated without a chart addition. 
