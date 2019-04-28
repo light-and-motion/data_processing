@@ -88,14 +88,18 @@ class Data_Processing:
             df.drop(skipLine-startLine-1, inplace=True)
         df = df.reset_index(drop=True)
 
-        #TODO: How to generalize the conversion of PM time into a 12 hour time format?? 
-        # Possible solution: Make a new function called search_for_pm_times. 
-        # Search the first row of every column in the dataframe, convert every value to strptime(%-m/%-d/%Y %H:%M:%S) or 
-        # strptime(%-m/%d/%Y %H:%M). If a ValueError is NOT returned, then add it to the list of columns you need to parse.  
-        # Then call date_parser() to parse the given columns into the desired time format.
-        # https://stackoverflow.com/questions/9978534/match-dates-using-python-regular-expressions
-        self.date_parser(df['Date/Time'])
-
+        #TODO: Have generalized conversion of columns with ONlY PM times. How to extend that to columns that contain AM and PM times? 
+        # 
+        
+        # Search for the columns that have a PM time. (Note: Excel convert str times with a PM time into 24 hour time). 
+        # For example, 1:27 PM is converted into 13:27. 
+        datetime_str_columns = self.search_for_pm_times(df)
+        
+        # Format the PM time columns into 12 hour time format. 
+        [self.date_parser(df[column_name]) for column_name in datetime_str_columns]
+        
+        #[self.date_parser(datetime_str_df[column]) for column in datetime_str_df]
+        
         # As the transpose() function converts the dtypes of the transposed dataframe all into objects when the original dtypes 
         # were mixed, the while loop converts the numeric values back into their proper dtype
         i = 0
@@ -105,8 +109,27 @@ class Data_Processing:
             i += 1
         return df
     
+    def search_for_pm_times(self, df):
+        # Create a list that stores all the titles of the columns that contain PM times. 
+        # Search the first row of every column in the dataframe, convert every value to strptime(%-m/%-d/%Y %H:%M:%S) or 
+        # strptime(%-m/%d/%Y %H:%M). If a ValueError is NOT returned, then add the title of the column to the list. 
+        datetime_str_column = []
+        for column in df: 
+            series = df[column]
+            try: 
+                for format in ('%m/%d/%Y %H:%M', '%m/%d/%Y %H:%M:%S'): 
+                    datetime_str = str(series.loc[0])
+                    datetime.strptime(datetime_str, format)
+                    datetime_str_column.append(column)
+            except ValueError: 
+                pass 
+        return datetime_str_column
+        
+    
     def date_parser(self, datetime_str_pm): 
-        for datetime_str in datetime_str_pm: 
+
+        # Return a date format equal to the AM times 
+        for datetime_str in datetime_str_pm:  
             datetime_str_list = datetime_str.split()
             date = datetime_str_list[0]
             time = datetime_str_list[1]
@@ -117,8 +140,9 @@ class Data_Processing:
                 seconds = time_list[2]
             else: 
                 seconds = '00'
-            new_str = date + ' ' + hours + ':' +  minutes + ':' +  seconds + ' PM'     
+            new_str = date + ' ' + hours + ':' +  minutes + ':' +  seconds + ' PM'   
             datetime_str_pm.replace(datetime_str, new_str, inplace=True)
+        return datetime_str_pm
 
     def create_excel_dataframe(self, file, sheet): 
         """Returns a dataframe of an Excel file 

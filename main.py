@@ -30,6 +30,7 @@ raw_data_df = df.create_csv_dataframe(input_csv, config_df_2)
 
 raw_data_excel = df.create_raw_Excelbook(raw_data_df, data_choice)
 
+'''
 # Convert the 'Input' and 'Output' column letters into, respectively, column titles and numbers. 
 # Keep a standalone copy of the 'Output.'
 col_names = raw_data_df.columns
@@ -105,3 +106,4 @@ if ((jpeg_output or pdf_output) and create_chart):
 # Create the PDF file 
 if (pdf_output): 
     df.make_pdf(output_name, mapping_data_df, create_chart)
+'''
