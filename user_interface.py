@@ -23,7 +23,8 @@ def choose_config(choice):
         config_file = input('Enter name of Multimeter config file: ')
     elif choice == 3:
         config_file = input('Enter name of Serial Data config file: ')
-    config_file = 'LumenConfig'
+    #config_file = 'LumenConfig'
+    config_file = 'TestTimeConfig'
     return [load_workbook(config_file + '.xlsx'), config_file]
 
 
@@ -34,7 +35,9 @@ def choose_csv():
     while input_csv == None:
         csv_choice = input('Enter name of CSV file to process: ')
         input_csv = csv_choice
-    input_csv = 'Lumen_T'
+    #input_csv = 'Lumen_T'
+    input_csv = 'Test_Time'
+    #input_csv = 'Lumen_1'
     return input_csv
 
 

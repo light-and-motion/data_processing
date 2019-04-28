@@ -58,9 +58,15 @@ class Data_Processing:
         if (pd.isnull(transpose) or transpose.upper() == 'NO'): 
             df = pd.read_csv(file + '.csv', 
                             skiprows= startLine, 
-                            nrows = stopLine,
+                            #nrows = stopLine,
                             keep_default_na = False, 
                             encoding = 'ISO-8859-1')
+
+            #TODO: Better encapsulate date_parser. Currently appears in both parts of if-else conditional. 
+            datetime_str_columns = self.search_for_pm_times(df)
+            
+            # Format the PM time columns into 12 hour time format. 
+            [self.date_parser(df[column_name]) for column_name in datetime_str_columns]
         else: 
             # Make the columns and indices of the df pre-transpose integers. This will make is easier when you transpose the df 
             # to set the proper columns and indices. 
@@ -69,8 +75,10 @@ class Data_Processing:
                             index_col = None, 
                             skiprows = startLine, 
                             nrows = stopLine, 
+                            keep_default_na = False,
                             encoding = 'ISO-8859-1' )
 
+            #TODO: Ask if N/A marker is to be kept or if the cells that contain it be empty instead. 
             df = self.transpose_df(df, startLine, skipLine)
 
            
@@ -126,8 +134,10 @@ class Data_Processing:
         return datetime_str_column
         
     
-    def date_parser(self, datetime_str_pm): 
-
+    def date_parser(self, datetime_str_series): 
+        # Filter out AM time; they do not need to undergo re-formatting 
+        datetime_str_pm = datetime_str_series[~datetime_str_series.str.contains('AM')]
+    
         # Return a date format equal to the AM times 
         for datetime_str in datetime_str_pm:  
             datetime_str_list = datetime_str.split()
@@ -141,7 +151,7 @@ class Data_Processing:
             else: 
                 seconds = '00'
             new_str = date + ' ' + hours + ':' +  minutes + ':' +  seconds + ' PM'   
-            datetime_str_pm.replace(datetime_str, new_str, inplace=True)
+            datetime_str_series.replace(datetime_str, new_str, inplace=True)
         return datetime_str_pm
 
     def create_excel_dataframe(self, file, sheet): 
