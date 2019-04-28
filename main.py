@@ -30,21 +30,6 @@ config_df_1 = df.create_excel_dataframe(config_title, config_file.sheetnames[0])
 config_df_2 = df.create_excel_dataframe(config_title, config_file.sheetnames[1])
 
 
-<<<<<<< Updated upstream
-# Reset config_df_2['Header'] so that it only stores non-NaN values and resets the index 
-'''
-config_df_2['Header'].dropna(inplace=True)
-config_df_2['Header'].reset_index(drop=True, inplace = True)
-print(config_df_2['Header'])
-# Retrieve the csv file and store its contents into a dataframe 
-
-'''
-raw_data_df = df.create_csv_dataframe(input_csv, config_df_2['Start Row'].loc[0])
-
-# Read the raw dataframe into an Excel file 
-raw_data_excel = df.create_raw_Excelbook(raw_data_df)
-
-=======
 # Create a dataframe to hold the raw CSV file and then read said dataframe into an Excel file 
 raw_data_df = df.create_csv_dataframe(input_csv, config_df_2)
 
@@ -53,17 +38,12 @@ raw_data_excel = df.create_raw_Excelbook(raw_data_df, data_choice)
 
 # Convert the 'Input' and 'Output' column letters into, respectively, column titles and numbers. 
 # Keep a standalone copy of the 'Output.'
->>>>>>> Stashed changes
 col_names = raw_data_df.columns
 config_df_1 = df.convert_columns(config_df_1, col_names)
 #print(config_df_1)
 
-<<<<<<< Updated upstream
-# mapping_data_df will hold all the columns that we want to plot later
-=======
 # Store the columns we want mapped into a new dataframe 
 mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'], config_df_1['Title'], config_df_1['Range'], config_df_1['Format'])
->>>>>>> Stashed changes
 
 # We will use col_titles_inputs as indices to extract from the raw data the columns that we want plotted
 # Note: Even though only one column is being extracted at a time, the column being extracted 
