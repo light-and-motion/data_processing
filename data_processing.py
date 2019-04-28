@@ -22,6 +22,7 @@ class Data_Processing:
         self.output_name = output_name
     
     
+<<<<<<< Updated upstream
     def create_csv_dataframe(self, file, startLine): 
         """
         Takes in a CSV file of type lumensphere, multimeter, or serial
@@ -34,17 +35,96 @@ class Data_Processing:
 
         Returns: 
         DataFrame: DataFrame of the CSV file 
+=======
+    def create_csv_dataframe(self, file, config_df_2): 
+        """Returns a dataframe of the CSV file 
+
+        Parameters: 
+        file (str): Name of CSV file to be processed
+        config_df_2 (dataframe): 'General Settings' of the configuration file 
+>>>>>>> Stashed changes
         """
-        
+        startLine = config_df_2['Start Row'].loc[0]
+        stopLine = config_df_2['Stop Row'].loc[0]
+        skipLine = config_df_2['Skip Row'].loc[0]
+        transpose =  config_df_2['Transpose'].loc[0]
         if (pd.isnull(startLine)): 
             startLine = 0
+            stopLine = None 
         else: 
             startLine = startLine - 1 
+<<<<<<< Updated upstream
         
         df = pd.read_csv(file + '.csv', skiprows= startLine, keep_default_na = True)
+=======
+            stopLine = stopLine - startLine - 1 
+        
+        if (pd.isnull(transpose) or transpose.upper() == 'NO'): 
+            df = pd.read_csv(file + '.csv', 
+                            skiprows= startLine, 
+                            nrows = stopLine,
+                            keep_default_na = False, 
+                            encoding = 'ISO-8859-1')
+        else: 
+            # Make the columns and indices of the df pre-transpose integers. This will make is easier when you transpose the df 
+            # to set the proper columns and indices. 
+            df = pd.read_csv(file + '.csv',  
+                            header = None, 
+                            index_col = None, 
+                            skiprows = startLine, 
+                            nrows = stopLine, 
+                            encoding = 'ISO-8859-1' )
+>>>>>>> Stashed changes
 
+            df = self.transpose_df(df, startLine, skipLine)
+
+           
         return df
 
+
+    def transpose_df(self, df, startLine, skipLine): 
+        # Logic to set the actual columns and indices in the transposed data
+        df = df.transpose()
+        df.rename(df.iloc[0], axis = 'columns', inplace = True)
+        df.drop(0, inplace = True)
+        
+        ## Minus 1 is added because old column of transposed df has been dropped 
+        if (not pd.isnull(skipLine)): 
+            df.drop(skipLine-startLine-1, inplace=True)
+        df = df.reset_index(drop=True)
+
+        #TODO: How to generalize the conversion of PM time into a 12 hour time format?? 
+        # Possible solution: Make a new function called search_for_pm_times. 
+        # Search the first row of every column in the dataframe, convert every value to strptime(%-m/%-d/%Y %H:%M:%S) or 
+        # strptime(%-m/%d/%Y %H:%M). If a ValueError is NOT returned, then add it to the list of columns you need to parse.  
+        # Then call date_parser() to parse the given columns into the desired time format.
+        # https://stackoverflow.com/questions/9978534/match-dates-using-python-regular-expressions
+        self.date_parser(df['Date/Time'])
+
+        # As the transpose() function converts the dtypes of the transposed dataframe all into objects when the original dtypes 
+        # were mixed, the while loop converts the numeric values back into their proper dtype
+        i = 0
+        while i < df.columns.size:  
+            #TODO: Research why df.iloc[:,i] = pd.to_numeric(df.iloc[:,], errors = 'ignore') did not work 
+            df.iloc[:,i] = df.iloc[:,i].apply(pd.to_numeric, errors = 'ignore')
+            i += 1
+        return df
+    
+    def date_parser(self, datetime_str_pm): 
+        for datetime_str in datetime_str_pm: 
+            datetime_str_list = datetime_str.split()
+            date = datetime_str_list[0]
+            time = datetime_str_list[1]
+            time_list = time.split(':')
+            hours = str(int(time_list[0])-12)
+            minutes = time_list[1]
+            if (len(time_list) == 3): 
+                seconds = time_list[2]
+            else: 
+                seconds = '00'
+            new_str = date + ' ' + hours + ':' +  minutes + ':' +  seconds + ' PM'     
+            datetime_str_pm.replace(datetime_str, new_str, inplace=True)
+        
     def create_excel_dataframe(self, file, sheet): 
         """
         Returns a DataFrame of an Excel file 
@@ -87,7 +167,18 @@ class Data_Processing:
     
     def create_mapping_dataframe(self, raw_data_df, title_inputs, range_inputs):
         """
+<<<<<<< Updated upstream
         Returns a DataFrame that contains only the columns in the CSV file that are being mapped 
+=======
+        
+        series.replace('', np.nan,inplace=True)
+        series = series.dropna()
+        series = series.astype(float)
+        return series
+
+    def create_mapping_dataframe(self, raw_data_df, title_inputs, new_titles, range_inputs, format):
+        """Returns a dataframe that contains only the CSV columns that are being processed 
+>>>>>>> Stashed changes
 
         Parameters: 
         raw_data_df (DataFrame): DataFrame of CSV file 
@@ -108,7 +199,10 @@ class Data_Processing:
         range_list = self.find_range(range_inputs.loc[interval_index],max_size)
         start = range_list[0]
         end = range_list[1]
+
+        # Reset the index of the column when you store it in 'df'
         df[title_inputs.loc[interval_index]] = raw_data_df[title_inputs.loc[interval_index]].iloc[start:end].reset_index(drop = True)
+<<<<<<< Updated upstream
 
         # Drop rows/columns that have already been used above
         raw_data_df = raw_data_df.drop([title_inputs.loc[interval_index]], axis = 1)
@@ -117,6 +211,20 @@ class Data_Processing:
         
         # Store all the data to be mapped (range slicing included) into a df
         # Append each new series to 'df'
+=======
+        if (not pd.isnull(format.iloc[interval_index]) and type(format.iloc[interval_index]) == np.float64):
+            df[title_inputs.loc[interval_index]] = self.round_numbers(df[title_inputs.loc[interval_index]], int(format.iloc[interval_index]))
+        df.rename({title_inputs.loc[interval_index]: new_titles.loc[interval_index]}, axis = 'columns',inplace=True)
+        
+        # Drop the rows/columns that have already been used above
+        raw_data_df = raw_data_df.drop([title_inputs.loc[interval_index]], axis = 1)
+        title_inputs = title_inputs.drop(labels = interval_index).reset_index(drop = True)
+        range_inputs = range_inputs.drop(labels = interval_index).reset_index(drop = True)
+        format = format.drop(labels = interval_index).reset_index(drop = True)
+        new_titles = new_titles.drop(labels = interval_index).reset_index(drop = True)
+
+        # Store all the data to be processed into a dataframe and append each new column to the dataframe 
+>>>>>>> Stashed changes
         for i in range(len(range_inputs)): 
             #print(i)
             range_list = self.find_range(range_inputs.loc[i],max_size)
@@ -124,6 +232,10 @@ class Data_Processing:
             end = range_list[1]
             new_series = raw_data_df[title_inputs.loc[i]].iloc[start:end].reset_index(drop = True)
             df[title_inputs.loc[i]] = new_series
+
+            # Rename column titles
+            df.rename({title_inputs.loc[i]: new_titles.loc[i]}, axis = 'columns', inplace=True)
+        
         return df
 
     def largest_range_interval(self, range_inputs, max_size):
@@ -252,11 +364,15 @@ class Data_Processing:
         time_series (Series): Series that contains timedelta objects
 
         """
-
+        
         time_series_modified = time_series.dropna()
     
         start_time = pd.to_timedelta(start_time)
+<<<<<<< Updated upstream
         # Iterate through 'time_series_modified' which has the NA values dropped but replace the String with the timedelta in 
+=======
+        # Iterate through 'time_series_modified' which has the NaN values dropped but replace the str with the timedelta in 
+>>>>>>> Stashed changes
         # the original 'time_series.'
         for current_time in time_series_modified: 
             # Convert the String 'current_time' into a timedelta object and find the difference between 'current_time' and 'start_time'
@@ -270,9 +386,14 @@ class Data_Processing:
             
             # Convert each element int the list into an integer and use the elements to produce a timedelta object 
             time = timedelta(hours = int(elapsed_time_list[0]), minutes = int(elapsed_time_list[1]), seconds = int(elapsed_time_list[2]))            
+<<<<<<< Updated upstream
         
             #### convert to datetime object 
             #elapsedtime = datetime.strptime(elapsed_time, '%H:%M:%S').time()
+=======
+            
+            # Replace 'current_time' with 'time' in 'time_series'
+>>>>>>> Stashed changes
             time_series.replace(current_time, time, inplace = True)
         
         return time_series
@@ -374,10 +495,16 @@ class Data_Processing:
         Returns: 
         Workbook object with data mapped to proper columns 
         """
+<<<<<<< Updated upstream
+=======
+        
+
+>>>>>>> Stashed changes
         new_titles = config_df['Title']
         title_inputs = config_df['Input']
         outputs = config_df['Output']
 
+<<<<<<< Updated upstream
         # Read in all the data 
         for j in range(new_titles.size): 
             self.read_in_values(wb, df, new_titles.iloc[j], title_inputs.iloc[j], outputs.iloc[j])
@@ -394,20 +521,77 @@ class Data_Processing:
         new_title (String): New column title of the mapped data 
         title_inputs (String): Current column title of the series that is being mapped    
         col_num (int): Number of column the data is being mapped to   
+=======
+        # Rename the column titles of 'df'
+        df.rename(new_titles, axis = 'columns')
+
+        # Grab active Worksheet
+        ws = wb.active
+
+        # Read in all the data 
+        for j in range(new_titles.size): 
+            self.read_in_values(ws, df, new_titles.iloc[j], outputs.iloc[j])
+        self.adjust_column_widths(ws, df, output_col_letters, new_titles)
+        return wb
+
+   
+    def adjust_column_widths(self, ws, mapping_df, output_col_letters, new_titles):
+        """Adjust the column width of the Excel output file
+        
+        Parameters: 
+        ws (worksheet): Worksheet that data is being read into 
+        mapping_df (dataframe): CSV columns to be processed  
+        output_col_letters (series): Output column letters 
+        new_titles (series): New titles of the processed CSV columns 
+        """
+
+        i = 0
+        series_length = 0
+    
+        for letters in output_col_letters:
+            str_series = mapping_df[new_titles.iloc[i]].astype(str)
+
+            # Turning a float series into str may suddenly replace values with a datetime-like format
+            if (str_series.str.contains('days').loc[0]): 
+                series_length= 8
+            else: 
+                str_series = str_series.map(len)
+                series_length = str_series.max()
+            max_length = max(int(series_length), len(new_titles.iloc[i]))
+            ws.column_dimensions[letters].width = max_length
+            i += 1
+
+    
+    
+    def read_in_values(self, ws, mapping_df, new_title, col_num):
+        """Reads in the data of 1 to-be processed CSV column into the Excel workbook 
+
+        Parameters: 
+        wb (workbook): Store the results of the data processing 
+        mapping_df (series): CSV columns to be processed 
+        new_title (str): New titles of the processed CSV columns   
+        col_num (int): Column number the data is being read into   
+>>>>>>> Stashed changes
         """ 
         ws = wb.active
         header = ws.cell(row=1, column = col_num) 
         header.value = new_title
         header.font = Font(bold=True)
-        col_index = title_input
+        #col_index = title_input
         
         # Indices: i retrieves the data in the column 
         #          cellRow ensures that the data is being mapped to the current cell in the Excel worksheet
         cellRow = 2 
         i = 0
+<<<<<<< Updated upstream
         size = df[col_index].size
         while (i < size):   
             ws.cell(row = cellRow, column = col_num).value = df.loc[i,col_index]
+=======
+        size = mapping_df[new_title].size
+        while (i < size):   
+            ws.cell(row = cellRow, column = col_num).value = mapping_df.loc[i,new_title]
+>>>>>>> Stashed changes
             cellRow += 1
             i += 1
  
@@ -441,13 +625,17 @@ class Data_Processing:
         #print(type(config_df_1))
         ws = wb.active
         
-        title_inputs = config_df_1['Input']
+        #title_inputs = config_df_1['Input']
         outputs = config_df_1['Output']
         new_titles = config_df_1['Title']
         graph_title = config_df_2['Graph Title']
 
+<<<<<<< Updated upstream
         # Assume number of rows will be same throughout dataframe 
         row_size = outputs_data_df[title_inputs.loc[0]].size
+=======
+        row_size = mapping_df[new_titles.loc[0]].size
+>>>>>>> Stashed changes
         
         cs = wb.create_chartsheet()
         chart = ScatterChart()
@@ -592,24 +780,49 @@ class Data_Processing:
         output_name (String): Name JPG file will be saved as 
         """
         new_titles = config_df_1['Title']
+<<<<<<< Updated upstream
         title_inputs = config_df_1['Input']
         graph_title = config_df_2['Graph Title']
+=======
+        chart_title = config_df_2['Chart Title']
+>>>>>>> Stashed changes
 
         
         # plot multiple lines on a single graph
         # As matplotlib does not allow datetime.time objects to be set as an axis, must convert to a 
+<<<<<<< Updated upstream
         # datetime object to plot on graph.  
         x_axis = mapping_df[title_inputs[x_axis_list.index[0]]].dropna()
         #print(x_axis.head())
         if (not config_df_2['Time Axis'].dropna().empty):
             #datetime_x_axis = pd.Series(self.convert_timedelta_to_datetime(x_axis))
+=======
+        # datetime object to plot on chart. 
+        x_axis = mapping_df[new_titles[x_axis_row.index[0]]].dropna() 
+        x_index = x_axis_row.index[0]
+        
+        if (not (pd.isnull(config_df_1['Time Unit'].loc[x_index]))):
+>>>>>>> Stashed changes
             x_axis = pd.Series(self.convert_timedelta_to_datetime(x_axis))
       
         fig, ax = plt.subplots(1,1)
+<<<<<<< Updated upstream
         for new_y_index in y_axis_list.index: 
             new_y_axis = title_inputs[new_y_index]
             plt.plot(x_axis, mapping_df[new_y_axis].dropna(), label = new_titles.iloc[new_y_index])
     
+=======
+        for new_y_index in y_axis_row.index: 
+            y_axis_title = new_titles[new_y_index]
+            y_axis = mapping_df[y_axis_title]
+            if (not pd.isnull(config_df_1['Time Unit'].loc[new_y_index])): 
+                y_axis = self.convert_timedelta_to_datetime(y_axis)
+            plt.plot(x_axis, y_axis, label = new_titles.iloc[new_y_index])
+
+        # Gives the rows that holds the titles of the columns to be plotted 
+        x_axis_rows = x_axis_row.index[0] 
+        y_axis_rows = y_axis_row.index 
+>>>>>>> Stashed changes
         
         # gives the rows that holds the titles of the columns to be plotted 
         x_axis_rows = x_axis_list.index[0] 
@@ -675,7 +888,64 @@ class Data_Processing:
         x_axis = [ datetime.combine(datetime.now(), time) for time in time_obj]
         #x_axis = pd.Series(x_axis)
         return x_axis
+<<<<<<< Updated upstream
     
+=======
+
+    def make_pdf(self, output_name,  mapping_data_df, create_chart): 
+        """Generates a pdf of the processed results 
+
+        Parameters: 
+        output_name (str): Name PDF will be saved as 
+        mapping_data_df (dataframe): CSV columns to be processed
+        create_chart (bool): True if a chart will be generated in the PDF, False if not 
+        """
+        
+        
+        # Get the file path of the wkhtmltopdf executable 
+        config = pdfkit.configuration(wkhtmltopdf=r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe')
+        df_file = os.getcwd() + '\\' + output_name + '.pdf'
+        
+        # Replace NaN values with empty strings so the empty data cells do not look like they hold any values in the PDF file 
+        mapping_data_df = mapping_data_df.fillna('')
+        
+        # If the PDF file is to contain a chart, then merge the dataframe and chart PDF into a single PDF. 
+        # Otherwise, just save the dataframe PDF as is. 
+        if (not create_chart): 
+            pdfkit.from_string(mapping_data_df.to_html(), df_file, configuration = config)
+    
+        else:  
+            df_file = os.getcwd() + '\\' + output_name + '_table.pdf'
+            pdfkit.from_string(mapping_data_df.to_html(), df_file, configuration = config)
+            paths = [os.getcwd() + '\\' + output_name + '_chart.pdf' , df_file]
+            self.merge_pdfs(paths, output_name)
+
+    def merge_pdfs(self,paths, output_name): 
+        """Merges two PDFs into a single PDF 
+        
+        Source: https://realpython.com/pdf-python/
+
+        Parameters: 
+        paths (list): File paths of the PDFs to be merged  
+        output_name (str): Name PDF will be saved as  
+        """
+        
+        pdf_writer = PdfFileWriter()
+
+        for path in paths: 
+            pdf_reader = PdfFileReader(path)
+            for page in range(pdf_reader.getNumPages()):
+                pdf_writer.addPage(pdf_reader.getPage(page))
+        
+        with open(output_name + '.pdf', 'wb') as out: 
+            pdf_writer.write(out)
+        
+        # Delete merged files 
+        os.remove(paths[0])
+        os.remove(paths[1])
+       
+        
+>>>>>>> Stashed changes
     @property
     def get_config_file(self): 
         return self.config_file
