@@ -37,6 +37,41 @@ class Data_Processing:
         self.output_name = output_name
     
     
+    def read_csv_type(self, file, startLine, stopLine, skipLine, transpose):
+
+        # Read to the very end of the file  
+        if (stopLine == None and transpose == 'NO'): 
+            return pd.read_csv(file + '.csv', 
+                            skiprows= startLine, 
+                            keep_default_na = False, 
+                            encoding = 'ISO-8859-1')
+
+        # Stop reading before the end of a file 
+        elif (transpose.upper() == 'NO'):
+            return pd.read_csv(file + '.csv', 
+                            skiprows= startLine, 
+                            nrows = stopLine, 
+                            keep_default_na = False, 
+                            encoding = 'ISO-8859-1')
+
+        # Read to the very end and transpose df 
+        elif (stopLine == None and transpose.upper() == 'YES'): 
+            return pd.read_csv(file + '.csv', 
+                            header = None, 
+                            index_col= None, 
+                            skiprows= startLine, 
+                            keep_default_na = False, 
+                            encoding = 'ISO-8859-1') 
+        # Stop reading before the end and transpose df 
+        else: 
+            return pd.read_csv(file + '.csv', 
+                            header = None, 
+                            index_col= None, 
+                            skiprows= startLine,
+                            nrows = stopLine,  
+                            keep_default_na = False, 
+                            encoding = 'ISO-8859-1') 
+
     def create_csv_dataframe(self, file, config_df_2): 
         """Returns a dataframe of the CSV file 
 
@@ -44,43 +79,57 @@ class Data_Processing:
         file (str): Name of CSV file to be processed
         config_df_2 (dataframe): 'General Settings' of the configuration file 
         """
-        startLine = config_df_2['Start Row'].loc[0]
-        stopLine = config_df_2['Stop Row'].loc[0]
-        skipLine = config_df_2['Skip Row'].loc[0]
-        transpose =  config_df_2['Transpose'].loc[0]
-        if (pd.isnull(startLine)): 
-            startLine = 0
-            stopLine = None 
-        else: 
-            startLine = startLine - 1 
-            stopLine = stopLine - startLine - 1 
+
+        #TODO: Debug 
+        start_ser = config_df_2['Start Row']
+        stop_ser = config_df_2['Stop Row']
+        skip_ser = config_df_2['Skip Row']
+        transpose_ser = config_df_2['Transpose']
         
-        if (pd.isnull(transpose) or transpose.upper() == 'NO'): 
-            df = pd.read_csv(file + '.csv', 
-                            skiprows= startLine, 
-                            #nrows = stopLine,
-                            keep_default_na = False, 
-                            encoding = 'ISO-8859-1')
+        
+        startLine = 0
+        stopLine = None
+        skipLine = None
+        transpose = "NO"
 
-            #TODO: Better encapsulate date_parser. Currently appears in both parts of if-else conditional. 
-            datetime_str_columns = self.search_for_pm_times(df)
-            
-            # Format the PM time columns into 12 hour time format. 
-            [self.date_parser(df[column_name]) for column_name in datetime_str_columns]
-        else: 
-            # Make the columns and indices of the df pre-transpose integers. This will make is easier when you transpose the df 
-            # to set the proper columns and indices. 
-            df = pd.read_csv(file + '.csv',  
-                            header = None, 
-                            index_col = None, 
-                            skiprows = startLine, 
-                            nrows = stopLine, 
-                            keep_default_na = False,
-                            encoding = 'ISO-8859-1' )
+        if (not start_ser.dropna().empty): 
+            startLine = start_ser.loc[0]-1
+        if (not stop_ser.dropna().empty): 
+            stopLine = stop_ser.loc[0]-startLine-1
+        if (not skip_ser.dropna().empty):
+            skipLine = skip_ser.loc[0]
+        if (not transpose_ser.dropna().empty): 
+            transpose = transpose_ser.loc[0]
 
+        # Read the CSV into the dataframe         
+        df = self.read_csv_type(file, startLine, stopLine, skipLine, transpose) 
+  
+        if (transpose.upper() == 'YES'): 
             #TODO: Ask if N/A marker is to be kept or if the cells that contain it be empty instead. 
             df = self.transpose_df(df, startLine, skipLine)
 
+        
+        for column in df: 
+            df[column].replace('', np.nan, inplace=True)
+            df[column] = df[column].dropna()
+            df[column].astype(float, errors = 'ignore')
+        
+        ## Minus 1 is added because old column of transposed df has been dropped 
+        if (not skipLine == None): 
+            df.drop(skipLine-startLine-1, inplace=True)
+
+        # Get rid of columns with all whitespace 
+        df = df.dropna('columns', how='all')
+
+        # Reset index to start at 0 after dropping column(s)
+        df = df.reset_index(drop=True)
+        
+        # Search for the columns that have a PM time. (Note: Excel convert str times with a PM time into 24 hour time). 
+        # For example, 1:27 PM is converted into 13:27.  
+        datetime_str_columns = self.search_for_pm_times(df)
+            
+        # Format the PM time columns into 12 hour time format. 
+        [self.date_parser(df[column_name]) for column_name in datetime_str_columns]        
            
         return df
 
@@ -90,24 +139,9 @@ class Data_Processing:
         df = df.transpose()
         df.rename(df.iloc[0], axis = 'columns', inplace = True)
         df.drop(0, inplace = True)
-        
-        ## Minus 1 is added because old column of transposed df has been dropped 
-        if (not pd.isnull(skipLine)): 
-            df.drop(skipLine-startLine-1, inplace=True)
-        df = df.reset_index(drop=True)
 
-        #TODO: Have generalized conversion of columns with ONlY PM times. How to extend that to columns that contain AM and PM times? 
         #TODO: Research how dataframes are passed into functions. (pass by value or reference)
-        
-        # Search for the columns that have a PM time. (Note: Excel convert str times with a PM time into 24 hour time). 
-        # For example, 1:27 PM is converted into 13:27. 
-        datetime_str_columns = self.search_for_pm_times(df)
-        
-        # Format the PM time columns into 12 hour time format. 
-        [self.date_parser(df[column_name]) for column_name in datetime_str_columns]
-        
-        #[self.date_parser(datetime_str_df[column]) for column in datetime_str_df]
-        
+                
         # As the transpose() function converts the dtypes of the transposed dataframe all into objects when the original dtypes 
         # were mixed, the while loop converts the numeric values back into their proper dtype
         i = 0
@@ -122,6 +156,7 @@ class Data_Processing:
         # Search the first row of every column in the dataframe, convert every value to strptime(%-m/%-d/%Y %H:%M:%S) or 
         # strptime(%-m/%d/%Y %H:%M). If a ValueError is NOT returned, then add the title of the column to the list. 
         datetime_str_column = []
+        
         for column in df: 
             series = df[column]
             try: 
@@ -184,6 +219,15 @@ class Data_Processing:
             data_df['Max'] = self.convert_to_float(data_df['Max'])
             data_df['Average'] = self.convert_to_float(data_df['Average'])
             data_df['Min'] = self.convert_to_float(data_df['Min'])
+        print('2')
+        print(data_df.dtypes)
+        '''
+        print(data_df.dtypes)
+        for column in data_df: 
+            data_df[column].replace('', np.nan, inplace=True)
+            data_df[column] = data_df[column].dropna()
+            data_df[column].apply(pd.to_numeric, errors = 'ignore')
+        '''
 
         for row in dataframe_to_rows(data_df, index = False, header = True):            
             ws.append(row)
@@ -191,7 +235,7 @@ class Data_Processing:
         wb.save(self.get_input_csv + '.xlsx')
         return wb
 
-   
+    
     def convert_to_float(self, series): 
         """Returns a series with float datatypes, where the cells with empty Strings are dropped
         
@@ -201,7 +245,7 @@ class Data_Processing:
         
         series.replace('', np.nan,inplace=True)
         series = series.dropna()
-        series = series.astype(float)
+        series = pd.to_numeric(series)#series.astype(float, errors = 'ignore')
         return series
 
     def create_mapping_dataframe(self, raw_data_df, title_inputs, new_titles, range_inputs, format):
@@ -780,6 +824,7 @@ class Data_Processing:
         plt.ylim(scale[2], scale[3])
 
         # Save charts in stated formats
+        
         if (jpeg_choice): 
             plt.savefig(output_name + '.jpeg')
         

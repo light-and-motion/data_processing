@@ -27,7 +27,6 @@ config_df_2 = df.create_excel_dataframe(config_title, config_file.sheetnames[1])
 
 # Create a dataframe to hold the raw CSV file and then read said dataframe into an Excel file 
 raw_data_df = df.create_csv_dataframe(input_csv, config_df_2)
-print(raw_data_df.head())
 raw_data_excel = df.create_raw_Excelbook(raw_data_df, data_choice)
 
 
