@@ -10,7 +10,8 @@ import matplotlib.dates as mdates
 import pdfkit
 from PyPDF2 import PdfFileReader, PdfFileWriter
 import os
-
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 class Data_Processing: 
     """
     A class used to process the data of a CSV file.  
@@ -37,7 +38,77 @@ class Data_Processing:
         self.output_name = output_name
     
     
+    def create_csv_dataframe(self, file, config_df_2): 
+        """Returns a dataframe of the CSV file 
+
+        Parameters: 
+        file (str): Name of CSV file to be processed
+        config_df_2 (dataframe): 'General Settings' of the configuration file 
+        """
+
+        start_ser = config_df_2['Start Row']
+        stop_ser = config_df_2['Stop Row']
+        skip_ser = config_df_2['Skip Row']
+        transpose_ser = config_df_2['Transpose']
+        
+        # Default values         
+        startLine = 0
+        stopLine = None
+        skipLine = None
+        transpose = "NO"
+
+
+        if (not start_ser.dropna().empty): 
+            startLine = start_ser.loc[0]-1
+        if (not stop_ser.dropna().empty): 
+            stopLine = stop_ser.loc[0]-startLine-1
+        if (not skip_ser.dropna().empty):
+            skipLine = skip_ser.loc[0]
+        if (not transpose_ser.dropna().empty): 
+            transpose = transpose_ser.loc[0]
+
+        # Read the CSV into the dataframe         
+        df = self.read_csv_type(file, startLine, stopLine, skipLine, transpose) 
+  
+        if (transpose.upper() == 'YES'): 
+            #TODO: Ask if N/A marker is to be kept or if the cells that contain it be empty instead. 
+            df = self.transpose_df(df, startLine, skipLine)
+
+        '''        
+        for column in df: 
+            df[column].replace('', np.nan, inplace=True)
+            df[column] = df[column].dropna()
+            df[column].astype(float, errors = 'ignore')
+        '''
+        ## Minus 1 is added because old column of transposed df has been dropped 
+        if (not skipLine == None): 
+            df.drop(skipLine-startLine-1, inplace=True)
+
+        # Get rid of columns with all whitespace 
+        df = df.dropna('columns', how='all')
+
+        # Reset index to start at 0 after dropping column(s)
+        df = df.reset_index(drop=True)
+        
+        # Search for the columns that have a PM time. (Note: Excel convert str times with a PM time into 24 hour time). 
+        # For example, 1:27 PM is converted into 13:27.  
+        datetime_str_columns = self.search_for_pm_times(df)
+            
+        # Format the PM time columns into 12 hour time format. 
+        [self.date_parser(df[column_name]) for column_name in datetime_str_columns]        
+           
+        return df
+
     def read_csv_type(self, file, startLine, stopLine, skipLine, transpose):
+        """Returns the prototype dataframe of the CSV file 
+        
+        Parameters: 
+        file (str):  Name of CSV file to be processed
+        startLine (int): Row to begin processing CSV file
+        stopLine (int): Row to stop processing CSV file
+        skipLine (int): Line you want to skip when processing CSV file. Has to be between startLine and stopLine
+        transpose (str): Determines whether df is to be transposed 
+        """ 
 
         # Read to the very end of the file  
         if (stopLine == None and transpose == 'NO'): 
@@ -72,69 +143,15 @@ class Data_Processing:
                             keep_default_na = False, 
                             encoding = 'ISO-8859-1') 
 
-    def create_csv_dataframe(self, file, config_df_2): 
-        """Returns a dataframe of the CSV file 
+    def transpose_df(self, df, startLine, skipLine): 
+        """
+        Returns a transposed df 
 
         Parameters: 
-        file (str): Name of CSV file to be processed
-        config_df_2 (dataframe): 'General Settings' of the configuration file 
+        df (df): df that is to be transposed
+        startLine (int): Row to begin processing CSV file
+        skipLine (int): Line you want to skip when processing CSV file. Has to be between startLine and stopLine
         """
-
-        #TODO: Debug 
-        start_ser = config_df_2['Start Row']
-        stop_ser = config_df_2['Stop Row']
-        skip_ser = config_df_2['Skip Row']
-        transpose_ser = config_df_2['Transpose']
-        
-        
-        startLine = 0
-        stopLine = None
-        skipLine = None
-        transpose = "NO"
-
-        if (not start_ser.dropna().empty): 
-            startLine = start_ser.loc[0]-1
-        if (not stop_ser.dropna().empty): 
-            stopLine = stop_ser.loc[0]-startLine-1
-        if (not skip_ser.dropna().empty):
-            skipLine = skip_ser.loc[0]
-        if (not transpose_ser.dropna().empty): 
-            transpose = transpose_ser.loc[0]
-
-        # Read the CSV into the dataframe         
-        df = self.read_csv_type(file, startLine, stopLine, skipLine, transpose) 
-  
-        if (transpose.upper() == 'YES'): 
-            #TODO: Ask if N/A marker is to be kept or if the cells that contain it be empty instead. 
-            df = self.transpose_df(df, startLine, skipLine)
-
-        
-        for column in df: 
-            df[column].replace('', np.nan, inplace=True)
-            df[column] = df[column].dropna()
-            df[column].astype(float, errors = 'ignore')
-        
-        ## Minus 1 is added because old column of transposed df has been dropped 
-        if (not skipLine == None): 
-            df.drop(skipLine-startLine-1, inplace=True)
-
-        # Get rid of columns with all whitespace 
-        df = df.dropna('columns', how='all')
-
-        # Reset index to start at 0 after dropping column(s)
-        df = df.reset_index(drop=True)
-        
-        # Search for the columns that have a PM time. (Note: Excel convert str times with a PM time into 24 hour time). 
-        # For example, 1:27 PM is converted into 13:27.  
-        datetime_str_columns = self.search_for_pm_times(df)
-            
-        # Format the PM time columns into 12 hour time format. 
-        [self.date_parser(df[column_name]) for column_name in datetime_str_columns]        
-           
-        return df
-
-
-    def transpose_df(self, df, startLine, skipLine): 
         # Logic to set the actual columns and indices in the transposed data
         df = df.transpose()
         df.rename(df.iloc[0], axis = 'columns', inplace = True)
@@ -152,7 +169,8 @@ class Data_Processing:
         return df
     
     def search_for_pm_times(self, df):
-        # Create a list that stores all the titles of the columns that contain PM times. 
+        """ Returns a list that stores all the titles of the columns that contain PM times"""
+
         # Search the first row of every column in the dataframe, convert every value to strptime(%-m/%-d/%Y %H:%M:%S) or 
         # strptime(%-m/%d/%Y %H:%M). If a ValueError is NOT returned, then add the title of the column to the list. 
         datetime_str_column = []
@@ -169,7 +187,13 @@ class Data_Processing:
         return datetime_str_column
         
     
-    def date_parser(self, datetime_str_series): 
+    def date_parser(self, datetime_str_series):
+        """ Returns a series with its PM times formatted to look like AM times 
+        
+        Parameters: 
+        datetime_str_series (series): Contains PM times that needs to be reformatted  
+        """
+
         # Filter out AM time; they do not need to undergo re-formatting 
         datetime_str_pm = datetime_str_series[~datetime_str_series.str.contains('AM')]
     
@@ -219,8 +243,7 @@ class Data_Processing:
             data_df['Max'] = self.convert_to_float(data_df['Max'])
             data_df['Average'] = self.convert_to_float(data_df['Average'])
             data_df['Min'] = self.convert_to_float(data_df['Min'])
-        print('2')
-        print(data_df.dtypes)
+        
         '''
         print(data_df.dtypes)
         for column in data_df: 
@@ -364,21 +387,24 @@ class Data_Processing:
         """
 
         series = series.dropna()
-        
+
+        # Creating a copy of 'series' to be iterated over. That way even if two cells have the same datetime, 
+        # and both cells are replaced in the original 'series,' the for loop will not break when we iterate over the second copy.  
+        series_copy = series.copy()
+
         # If the time series is a datetime object....
         if (unit.upper() == 'D'): 
-            for cur_datetime in series: 
-
+            for cur_datetime in series_copy: 
                 # Split the datetime object into a list by a space delimiter and store the %H:%M:%S  
                 # portion into a variable 
                 cur_datetime_list = cur_datetime.split()
                 cur_time_list = cur_datetime_list[1].split('.')
                 cur_time = cur_time_list[0]
                 series.replace(cur_datetime, cur_time, inplace = True)
-
+            
         #If the time series is in hours, minutes, or seconds...
         else:
-            for time in series: 
+            for time in series_copy: 
                 time_list = self.get_hours_minutes_seconds(time, unit)
                 cur_time = str(time_list[0]) + ':' + str(time_list[1]) + ':' + str(time_list[2])
                 series.replace(time, cur_time, inplace = True)
@@ -513,7 +539,7 @@ class Data_Processing:
         
         x = 0
         for title in new_titles: 
-            if (title == 'nan'): 
+            if (pd.isnull(title)): 
                 new_titles.iat[x] = input_titles.iat[x]
             x += 1
         return new_titles
@@ -541,7 +567,7 @@ class Data_Processing:
         # Read in all the data 
         for j in range(new_titles.size): 
             self.read_in_values(ws, df, new_titles.iloc[j], outputs.iloc[j])
-        self.adjust_column_widths(ws, df, output_col_letters, new_titles)
+        #self.adjust_column_widths(ws, df, output_col_letters, new_titles)
         return wb
 
    
@@ -568,6 +594,7 @@ class Data_Processing:
             else: 
                 str_series = str_series.map(len)
                 series_length = str_series.max()
+            
             max_length = max(int(series_length), len(new_titles.iloc[i]))
             ws.column_dimensions[letters].width = max_length
             i += 1
@@ -590,6 +617,7 @@ class Data_Processing:
         header.font = Font(bold=True)
         #col_index = title_input
         
+       
         # Indices: i retrieves the data in the column 
         #          cellRow ensures that the data is being mapped to the current cell in the Excel worksheet
         cellRow = 2 
@@ -910,8 +938,28 @@ class Data_Processing:
         # Delete merged files 
         os.remove(paths[0])
         os.remove(paths[1])
-       
-        
+    
+    def make_txt(self, mapping_df, output_name, format): 
+        """Generates a text file of the processed results"""
+
+        mapping_array = mapping_df.to_numpy()
+        my_fmt = self.get_format(mapping_df.dtypes, format)
+
+        #TODO: tab delimiter looks weird on txt file
+        np.savetxt(output_name + '.txt', mapping_array, fmt = my_fmt, delimiter='\t', header = '\t'.join([str(column) for column in mapping_df.columns]), comments='')
+
+
+    def get_format(self,dtypes, format): 
+        fmt = []
+        for i in range(len(dtypes)):
+            type = dtypes[i] 
+            if (type == np.int64): 
+                fmt.append('%d')
+
+            # Parse floats as strings because %f truncates the length of the (very long!) floats 
+            else: 
+                fmt.append('%s')
+        return fmt
     @property
     def get_config_file(self): 
         return self.config_file

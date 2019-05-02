@@ -29,7 +29,6 @@ config_df_2 = df.create_excel_dataframe(config_title, config_file.sheetnames[1])
 raw_data_df = df.create_csv_dataframe(input_csv, config_df_2)
 raw_data_excel = df.create_raw_Excelbook(raw_data_df, data_choice)
 
-
 # Convert the 'Input' and 'Output' column letters into, respectively, column titles and numbers. 
 # Keep a standalone copy of the 'Output.'
 col_names = raw_data_df.columns
@@ -72,7 +71,7 @@ if (not time_unit.empty):
 excel_output = df.make_file(config_df_2['Excel'].loc[0])
 jpeg_output = df.make_file(config_df_2['JPEG'].loc[0])
 pdf_output = df.make_file(config_df_2['PDF'].loc[0])
-
+txt_output = df.make_file(config_df_2['TXT'].loc[0])
 # Grab the x-axis and y-axis and determine if a chart will be outputted 
 axis = df.make_chart(config_df_1['Axis'])
 create_chart = axis[0]
@@ -105,3 +104,7 @@ if ((jpeg_output or pdf_output) and create_chart):
 # Create the PDF file 
 if (pdf_output): 
     df.make_pdf(output_name, mapping_data_df, create_chart)
+
+# Create the text file 
+if (txt_output): 
+    df.make_txt(mapping_data_df, output_name, config_df_1['Format'])
