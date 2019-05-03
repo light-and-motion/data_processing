@@ -1,15 +1,10 @@
-
 from openpyxl import load_workbook
 class User_Interface:
-    def __init__(self, choice, config_file, input_csv, output_name):
-        self.choice = choice
-        self.config_file = config_file
-        self.input_csv = input_csv
-        self.output_name = output_name
+    """A class that serves as the text-based user interface"""
 
-# ENCAPSULATE INTO ANOTHER CLASS 
-#Prints program banner
 def banner():
+    """Prints a banner to indicate start of program"""
+
     print('*****************************')
     print('*  Data Processing Program  *')
     print('*****************************')
@@ -29,10 +24,11 @@ def choose_config(choice):
     #config_file = 'ColorMetricsConfig'
     return [load_workbook(config_file + '.xlsx'), config_file]
 
+    return [load_workbook(config_file + '.xlsx'), config_file]
 
-#Asks user for file name of CSV to process
-#default is original Lumensphere data (testing purposes)
 def choose_csv():
+    """Asks the user for file name of the CSV"""
+
     input_csv = None
     while input_csv == None:
         csv_choice = input('Enter name of CSV file to process: ')
@@ -44,10 +40,9 @@ def choose_csv():
     #input_csv = 'ColorMetrics_1'
     return input_csv
 
-
-##asks user for file name of final excel workbook
-#default is LumenData (testing purposes)
 def choose_output_name():
+    """Asks user to input the name of the output file"""
+
     output_name = None
     while output_name == None:
         output_choice = input('Enter name of Output file: ')

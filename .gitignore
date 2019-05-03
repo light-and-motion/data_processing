@@ -1,3 +1,7 @@
+#
+*.xlsx
+*.jpeg
+
 # Configuration files
 LumenConfig.xlsx
 MultiMeterConfig.xlsx
