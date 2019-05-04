@@ -74,12 +74,6 @@ class Data_Processing:
             #TODO: Ask if N/A marker is to be kept or if the cells that contain it be empty instead. 
             df = self.transpose_df(df, startLine, skipLine)
 
-        '''        
-        for column in df: 
-            df[column].replace('', np.nan, inplace=True)
-            df[column] = df[column].dropna()
-            df[column].astype(float, errors = 'ignore')
-        '''
         ## Minus 1 is added because old column of transposed df has been dropped 
         if (not skipLine == None): 
             df.drop(skipLine-startLine-1, inplace=True)
@@ -96,7 +90,29 @@ class Data_Processing:
             
         # Format the PM time columns into 12 hour time format. 
         [self.date_parser(df[column_name]) for column_name in datetime_str_columns]        
-           
+        
+        # As the transpose() function converts the dtypes of the transposed dataframe all into objects when the original dtypes 
+        # were mixed, the while loop converts the numeric values back into their proper dtype
+
+        """Returns a series with float datatypes, where the cells with empty Strings are dropped
+        
+        Parameters: 
+        series (series): A series with empty Strings in cells which prevent the series from being of float datatype
+        """
+
+        # Iterates through all the columns of the dataframe and converts the numeric values back into their proper datatype
+
+        # Used in particular for: 
+        #   a) transposed df: As the transpose() function converts the dtypes of the transposed dataframe all into 
+        #                     objects when the original dtypes were mixed, the while loop converts the 
+        #                     numeric values back into their proper dtype. 
+        #   b) Columns with empty Strings: The empty String values conver the entire column into an object dtype. By dropping the empty strings, 
+        #                     the column can be converted to numeric type.
+        for column in df: 
+            df[column].replace('', np.nan, inplace=True)
+            df[column] = df[column].dropna()
+            df[column] = pd.to_numeric(df[column], errors = 'ignore')
+        
         return df
 
     def read_csv_type(self, file, startLine, stopLine, skipLine, transpose):
@@ -161,11 +177,7 @@ class Data_Processing:
                 
         # As the transpose() function converts the dtypes of the transposed dataframe all into objects when the original dtypes 
         # were mixed, the while loop converts the numeric values back into their proper dtype
-        i = 0
-        while i < df.columns.size:  
-            #TODO: Research why df.iloc[:,i] = pd.to_numeric(df.iloc[:,], errors = 'ignore') did not work 
-            df.iloc[:,i] = df.iloc[:,i].apply(pd.to_numeric, errors = 'ignore')
-            i += 1
+        
         return df
     
     def search_for_pm_times(self, df):
@@ -237,21 +249,13 @@ class Data_Processing:
         wb = Workbook()
         ws = wb.active
         ws.title = 'Raw Data'
-
-        # Convert the datatype of these columns to allow them to be read as floats in Excel 
-        if (choice == 2): 
-            data_df['Max'] = self.convert_to_float(data_df['Max'])
-            data_df['Average'] = self.convert_to_float(data_df['Average'])
-            data_df['Min'] = self.convert_to_float(data_df['Min'])
         
         '''
-        print(data_df.dtypes)
         for column in data_df: 
             data_df[column].replace('', np.nan, inplace=True)
             data_df[column] = data_df[column].dropna()
-            data_df[column].apply(pd.to_numeric, errors = 'ignore')
-        '''
-
+            data_df[column] = pd.to_numeric(data_df[column], errors = 'ignore')
+        '''   
         for row in dataframe_to_rows(data_df, index = False, header = True):            
             ws.append(row)
         

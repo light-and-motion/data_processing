@@ -24,7 +24,6 @@ def choose_config(choice):
     #config_file = 'ColorMetricsConfig'
     return [load_workbook(config_file + '.xlsx'), config_file]
 
-    return [load_workbook(config_file + '.xlsx'), config_file]
 
 def choose_csv():
     """Asks the user for file name of the CSV"""
