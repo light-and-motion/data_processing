@@ -88,15 +88,6 @@ class Data_Processing:
         # Format the PM time columns into 12 hour time format. 
         [self.date_parser(df[column_name]) for column_name in datetime_str_columns]        
         
-        # As the transpose() function converts the dtypes of the transposed dataframe all into objects when the original dtypes 
-        # were mixed, the while loop converts the numeric values back into their proper dtype
-
-        """Returns a series with float datatypes, where the cells with empty Strings are dropped
-        
-        Parameters: 
-        series (series): A series with empty Strings in cells which prevent the series from being of float datatype
-        """
-
         # Iterates through all the columns of the dataframe and converts the numeric values back into their proper datatype
 
         # Used in particular for: 
@@ -935,7 +926,7 @@ class Data_Processing:
     
     def make_txt(self, mapping_df, output_name, format): 
         """Generates a text file of the processed results"""
-
+        #print(mapping_df.head())
         mapping_array = mapping_df.to_numpy()
         my_fmt = self.get_format(mapping_df.dtypes, format)
 
@@ -947,12 +938,14 @@ class Data_Processing:
         fmt = []
         for i in range(len(dtypes)):
             type = dtypes[i] 
+            print(type)
             if (type == np.int64): 
                 fmt.append('%d')
 
             # Parse floats as strings because %f truncates the length of the (very long!) floats 
             else: 
                 fmt.append('%s')
+        print(fmt)
         return fmt
     @property
     def get_config_file(self): 
