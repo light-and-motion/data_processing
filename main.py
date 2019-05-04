@@ -5,19 +5,14 @@ from data_processing import Data_Processing
 ### Main execution block ###
 user_interface.banner()
 
-# Asks user for type of data file to process based on numeric input. To be passed into choose_config. 
-data_choice = None
-while data_choice == None:
-    print('Which data file type would you like to process?\n1. Lumensphere\n2. Multimeter\n3. Serial Data\n')
-    data_choice = int(input('Enter a number: '))
 
-config_list = user_interface.choose_config(data_choice)
+config_list = user_interface.choose_config()
 config_file = config_list[0]
 config_title = config_list[1]
 input_csv = user_interface.choose_csv()
 output_name = user_interface.choose_output_name()
 
-df = Data_Processing(data_choice, config_file, input_csv, output_name)
+df = Data_Processing(config_file, input_csv, output_name)
 
 
 # Read the two sheets of the configuration file: 'Mapped' and 'General' Settings into two different dataframes
@@ -28,7 +23,7 @@ config_df_2 = df.create_excel_dataframe(config_title, config_file.sheetnames[1])
 # Create a dataframe to hold the raw CSV file and then read said dataframe into an Excel file 
 raw_data_df = df.create_csv_dataframe(input_csv, config_df_2)
 
-raw_data_excel = df.create_raw_Excelbook(raw_data_df, data_choice)
+raw_data_excel = df.create_raw_Excelbook(raw_data_df)
 
 # Convert the 'Input' and 'Output' column letters into, respectively, column titles and numbers. 
 # Keep a standalone copy of the 'Output.'

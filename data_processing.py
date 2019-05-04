@@ -17,22 +17,19 @@ class Data_Processing:
     A class used to process the data of a CSV file.  
 
     Attributes:
-    choice (int): The type of file that is being processed (lumensphere, multimeter, or serial)
     config_file (str): The name of the configuration file 
     input_csv (str): The name of the CSV file to be proccesed 
     output_name (str): The name the output file(s) will be saved as  
     """    
     
-    def __init__(self, choice, config_file, input_csv, output_name): 
+    def __init__(self, config_file, input_csv, output_name): 
         """
         Parameters: 
-        choice (int): The type of file that is being processed (lumensphere, multimeter, or serial)
         config_file (str): The name of the configuration file 
         input_csv (str): The name of the CSV file to be proccesed 
         output_name (str): The name the output file(s) will be saved as 
         """
 
-        self.choice = choice
         self.config_file = config_file
         self.input_csv = input_csv 
         self.output_name = output_name
@@ -238,24 +235,17 @@ class Data_Processing:
         df = pd.read_excel(file + '.xlsx', sheet_name = sheet, dtype = {'Title': str})
         return df    
 
-    def create_raw_Excelbook(self, data_df, choice):  
+    def create_raw_Excelbook(self, data_df):  
         """Returns an Excel workbook that holds the CSV file in a dataframe
 
         Parameters: 
         data_df (dataframe): CSV file to be be read into the Excel workbook 
-        choice (int): The type of file that is being read into Excel 
         """
 
         wb = Workbook()
         ws = wb.active
         ws.title = 'Raw Data'
         
-        '''
-        for column in data_df: 
-            data_df[column].replace('', np.nan, inplace=True)
-            data_df[column] = data_df[column].dropna()
-            data_df[column] = pd.to_numeric(data_df[column], errors = 'ignore')
-        '''   
         for row in dataframe_to_rows(data_df, index = False, header = True):            
             ws.append(row)
         
@@ -970,13 +960,6 @@ class Data_Processing:
     @get_config_file.setter
     def set_config_file(self, config_file): 
         self.config_file = config_file
-
-    @property
-    def get_choice(self):
-        return self.choice
-    @get_choice.setter
-    def set_choice(self, choice): 
-        self.choice = choice
 
     @property
     def get_input_csv(self): 
