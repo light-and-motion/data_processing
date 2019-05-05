@@ -12,6 +12,7 @@ from PyPDF2 import PdfFileReader, PdfFileWriter
 import os
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
+from Dataframe import DataFrame
 class Data_Processing: 
     """
     A class used to process the data of a CSV file.  
@@ -34,7 +35,7 @@ class Data_Processing:
         self.input_csv = input_csv 
         self.output_name = output_name
     
-    
+    '''
     def create_csv_dataframe(self, file, config_df_2): 
         """Returns a dataframe of the CSV file 
 
@@ -64,9 +65,11 @@ class Data_Processing:
         if (not transpose_ser.dropna().empty): 
             transpose = transpose_ser.loc[0]
 
-        # Read the CSV into the dataframe         
-        df = self.read_csv_type(file, startLine, stopLine, skipLine, transpose) 
-  
+        # Read the CSV into the dataframe  
+        new_df = DataFrame(self.get_input_csv, config_df_2)       
+        df = new_df.read_csv_type(file, startLine, stopLine, skipLine, transpose)
+        #df = self.read_csv_type(file, startLine, stopLine, skipLine, transpose) 
+
         if (transpose.upper() == 'YES'): 
             #TODO: Ask if N/A marker is to be kept or if the cells that contain it be empty instead. 
             df = self.transpose_df(df, startLine, skipLine)
@@ -103,6 +106,7 @@ class Data_Processing:
         
         return df
 
+    
     def read_csv_type(self, file, startLine, stopLine, skipLine, transpose):
         """Returns the prototype dataframe of the CSV file 
         
@@ -146,7 +150,7 @@ class Data_Processing:
                             nrows = stopLine,  
                             keep_default_na = False, 
                             encoding = 'ISO-8859-1') 
-
+    '''
     def transpose_df(self, df, startLine, skipLine): 
         """
         Returns a transposed df 
@@ -212,7 +216,7 @@ class Data_Processing:
             new_str = date + ' ' + hours + ':' +  minutes + ':' +  seconds + ' PM'   
             datetime_str_series.replace(datetime_str, new_str, inplace=True)
         return datetime_str_pm
-
+    '''
     def create_excel_dataframe(self, file, sheet): 
         """Returns a dataframe of an Excel file 
 
@@ -225,7 +229,7 @@ class Data_Processing:
 
         df = pd.read_excel(file + '.xlsx', sheet_name = sheet, dtype = {'Title': str})
         return df    
-
+    '''
     def create_raw_Excelbook(self, data_df):  
         """Returns an Excel workbook that holds the CSV file in a dataframe
 
@@ -243,18 +247,6 @@ class Data_Processing:
         wb.save(self.get_input_csv + '.xlsx')
         return wb
 
-    
-    def convert_to_float(self, series): 
-        """Returns a series with float datatypes, where the cells with empty Strings are dropped
-        
-        Parameters: 
-        series (series): A series with empty Strings in cells which prevent the series from being of float datatype
-        """
-        
-        series.replace('', np.nan,inplace=True)
-        series = series.dropna()
-        series = pd.to_numeric(series)#series.astype(float, errors = 'ignore')
-        return series
 
     def create_mapping_dataframe(self, raw_data_df, title_inputs, new_titles, range_inputs, format):
         """Returns a dataframe that contains only the CSV columns that are being processed 

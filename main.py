@@ -1,30 +1,32 @@
 import user_interface
 import pandas as pd
 from data_processing import Data_Processing
+from Dataframe import (DataFrame, ExcelDataFrame, CSVDataFrame)
 
 ### Main execution block ###
 user_interface.banner()
 
 
 config_list = user_interface.choose_config()
-config_file = config_list[0]
+config_sheet_list = config_list[0]
 config_title = config_list[1]
 input_csv = user_interface.choose_csv()
 output_name = user_interface.choose_output_name()
-
-df = Data_Processing(config_file, input_csv, output_name)
-
+df = pd.DataFrame()
 
 # Read the two sheets of the configuration file: 'Mapped' and 'General' Settings into two different dataframes
-config_df_1 = df.create_excel_dataframe(config_title, config_file.sheetnames[0])
-config_df_2 = df.create_excel_dataframe(config_title, config_file.sheetnames[1])
-
+mapped_df = ExcelDataFrame(config_title, df, config_sheet_list.sheetnames[0])
+mapped_df.create_dataframe()
+general_df = ExcelDataFrame(config_title, df, config_sheet_list.sheetnames[1])
+general_df.create_dataframe()
 
 # Create a dataframe to hold the raw CSV file and then read said dataframe into an Excel file 
-raw_data_df = df.create_csv_dataframe(input_csv, config_df_2)
+raw_data_df = CSVDataFrame(input_csv, df, general_df)
+raw_data_df.create_dataframe()
 
-raw_data_excel = df.create_raw_Excelbook(raw_data_df)
+#raw_data_excel = df.create_raw_Excelbook(raw_data_df)
 
+'''
 # Convert the 'Input' and 'Output' column letters into, respectively, column titles and numbers. 
 # Keep a standalone copy of the 'Output.'
 col_names = raw_data_df.columns
@@ -104,3 +106,4 @@ if (pdf_output):
 # Create the text file 
 if (txt_output): 
     df.make_txt(mapping_data_df, output_name, config_df_1['Format'])
+'''
