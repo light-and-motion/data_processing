@@ -1,7 +1,8 @@
 import user_interface
 import pandas as pd
 from data_processing import Data_Processing
-from Dataframe import (DataFrame, ExcelDataFrame, CSVDataFrame)
+from Dataframe import (DataFrame, ExcelDataFrame, MappedExcelDataFrame, CSVDataFrame)
+
 
 ### Main execution block ###
 user_interface.banner()
@@ -15,7 +16,7 @@ output_name = user_interface.choose_output_name()
 df = pd.DataFrame()
 
 # Read the two sheets of the configuration file: 'Mapped' and 'General' Settings into two different dataframes
-mapped_df = ExcelDataFrame(config_title, df, config_sheet_list.sheetnames[0])
+mapped_df = MappedExcelDataFrame(config_title, df, config_sheet_list.sheetnames[0])
 mapped_df.create_dataframe()
 general_df = ExcelDataFrame(config_title, df, config_sheet_list.sheetnames[1])
 general_df.create_dataframe()
@@ -26,13 +27,17 @@ raw_data_df.create_dataframe()
 
 #raw_data_excel = df.create_raw_Excelbook(raw_data_df)
 
-'''
+
 # Convert the 'Input' and 'Output' column letters into, respectively, column titles and numbers. 
 # Keep a standalone copy of the 'Output.'
-col_names = raw_data_df.columns
-output_columns = config_df_1['Output'].copy()
-config_df_1 = df.convert_columns(config_df_1, col_names)
+#col_names = raw_data_df.get_column_labels()
+output_columns = mapped_df.get_column('Output').copy()
 
+#config_df_1 = df.convert_columns(config_df_1, col_names)
+
+mapped_df.format(raw_data_df.get_column_labels)
+mapped_df.print_df()
+'''
 # Store the columns we want mapped into a new dataframe 
 mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'], config_df_1['Title'], config_df_1['Range'], config_df_1['Format'])
 
