@@ -1,7 +1,8 @@
 import user_interface
 import pandas as pd
 from data_processing import Data_Processing
-from Dataframe import (DataFrame, ExcelDataFrame, MappedExcelDataFrame, CSVDataFrame)
+from Dataframe import (DataFrame, ExcelDataFrame, MappedExcelDataFrame)
+from CSV_DataFrame import CSVDataFrame
 
 
 ### Main execution block ###
@@ -22,7 +23,7 @@ general_df = ExcelDataFrame(config_title, df, config_sheet_list.sheetnames[1])
 general_df.create_dataframe()
 
 # Create a dataframe to hold the raw CSV file and then read said dataframe into an Excel file 
-raw_data_df = CSVDataFrame(input_csv, df, general_df)
+raw_data_df = CSVDataFrame(input_csv, df, mapped_df, general_df)
 raw_data_df.create_dataframe()
 
 #raw_data_excel = df.create_raw_Excelbook(raw_data_df)
@@ -30,17 +31,12 @@ raw_data_df.create_dataframe()
 
 # Convert the 'Input' and 'Output' column letters into, respectively, column titles and numbers. 
 # Keep a standalone copy of the 'Output.'
-#col_names = raw_data_df.get_column_labels()
-output_columns = mapped_df.get_column('Output').copy()
-
-#config_df_1 = df.convert_columns(config_df_1, col_names)
-
 mapped_df.format(raw_data_df.get_column_labels)
-mapped_df.print_df()
-'''
-# Store the columns we want mapped into a new dataframe 
-mapping_data_df = df.create_mapping_dataframe(raw_data_df, config_df_1['Input'], config_df_1['Title'], config_df_1['Range'], config_df_1['Format'])
 
+# Store the columns we want mapped into a new dataframe 
+output_df = raw_data_df.map_columns()
+print(output_df.head())
+'''
 # Formatting time columns to be in 'Elapsed Time'
 time_unit = config_df_1['Time Unit'].dropna()
 
