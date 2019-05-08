@@ -8,25 +8,25 @@ class CSVDataFrame(DataFrame):
     A class used to read a CSV file into a pd.df 
 
     Attributes: 
-    config_df (pd.df): Contains the settings that will be used to configure csv df  
+    general_settings (pd.df): Contains the settings that will be used to configure csv df  
     """
-    def __init__(self,file_name, df, mapped_settings_df, config_df): 
+    def __init__(self,file_name, df, mapped_settings, general_settings): 
         super().__init__(file_name, df)
-        self.mapped_settings_df = mapped_settings_df
-        self.config_df = config_df
+        self.mapped_settings = mapped_settings
+        self.general_settings = general_settings
         
     def create_dataframe(self): 
         """Returns a dataframe of the CSV file 
 
         Parameters: 
         file (str): Name of CSV file to be processed
-        config_df_2 (dataframe): 'General Settings' of the configuration file 
+        general_settings_2 (dataframe): 'General Settings' of the configuration file 
         """
 
-        start_ser = self.config_df.get_column('Start Row')
-        stop_ser = self.config_df.get_column('Stop Row')
-        skip_ser = self.config_df.get_column('Skip Row')
-        transpose_ser = self.config_df.get_column('Transpose')
+        start_ser = self.general_settings.get_column('Start Row')
+        stop_ser = self.general_settings.get_column('Stop Row')
+        skip_ser = self.general_settings.get_column('Skip Row')
+        transpose_ser = self.general_settings.get_column('Transpose')
         
         # Default values         
         startLine = 0
@@ -204,10 +204,10 @@ class CSVDataFrame(DataFrame):
         title_inputs (series): Original titles of the processed CSV columns 
         range_inputs (series): Interval of data we want read in each processed CSV column
         """
-        title_inputs =  self.mapped_settings_df.get_column('Input')
-        new_titles = self.mapped_settings_df.get_column('Title')
-        range_inputs = self.mapped_settings_df.get_column('Range')
-        format = self.mapped_settings_df.get_column('Format')
+        title_inputs =  self.mapped_settings.get_column('Input')
+        new_titles = self.mapped_settings.get_column('Title')
+        range_inputs = self.mapped_settings.get_column('Range')
+        format = self.mapped_settings.get_column('Format')
         raw_data = self.df.copy()
     
         # Initialize an empty dataframe which will eventually store all mapped values 

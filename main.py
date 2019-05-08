@@ -35,29 +35,34 @@ mapped_df.format(raw_data_df.get_column_labels)
 
 # Store the columns we want mapped into a new dataframe 
 output_df = raw_data_df.map_columns()
-print(output_df.head())
-'''
+
 # Formatting time columns to be in 'Elapsed Time'
-time_unit = config_df_1['Time Unit'].dropna()
+#time_unit = config_df_1['Time Unit'].dropna()
+
+time_units = mapped_df.get_column('Time Unit').dropna()
+
 
 # Store the new time col in a new Series temporarily, 
 # so the NaNs in mapping_data[time_title] won't convert
 # the data type into object. 
-if (not time_unit.empty): 
-    index = time_unit.index.values
-    time_indices = df.letter2int(config_df_1['Input Column Numbers'])
-    for i in range(time_unit.size): 
-        unit = time_unit.iloc[i]
+if (not time_units.empty): 
+    index = time_units.index.values
+    time_indices = mapped_df.get_column('Input Column Numbers')
+    time_indices = mapped_df.letter2int(time_indices)
+    for i in range(time_units.size): 
+        unit = time_units.iloc[i]
         
         # Retrieve the column title of the 'time' column 
         time_index = time_indices.loc[index[i]]
-        time_title = raw_data_df.columns[time_index-1]
-        
+        time_title = raw_data_df.get_column_labels[time_index-1]
+
         # Retrieve the start time and convert it to a str in elapsed time format 
         # start_time is a series of length 1 
-        start_time = pd.Series(raw_data_df[time_title].loc[0])
+        
+        # START refactoring 
+        # --> start_time = pd.Series(raw_data_df.get_column(time_title).loc[0])
         start_time = df.convert_to_time_object(start_time, unit)
-
+'''
         new_time_col = pd.DataFrame()
         # Index of the new column title is different than the index of the old column title 
         new_time_title = config_df_1['Title'].loc[time_unit.index[i]]
