@@ -12,7 +12,8 @@ from PyPDF2 import PdfFileReader, PdfFileWriter
 import os
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
-
+#import csv
+#from Dataframe import DataFrame
 class Data_Processing: 
     """
     A class used to process the data of a CSV file.  
@@ -66,6 +67,8 @@ class Data_Processing:
             transpose = transpose_ser.loc[0]
 
         # Read the CSV into the dataframe  
+           
+        
         df = self.read_csv_type(file, startLine, stopLine, skipLine, transpose) 
 
         if (transpose.upper() == 'YES'): 
@@ -227,7 +230,7 @@ class Data_Processing:
 
         df = pd.read_excel(file + '.xlsx', sheet_name = sheet, dtype = {'Title': str})
         return df    
-
+    
     def create_raw_Excelbook(self, data_df):  
         """Returns an Excel workbook that holds the CSV file in a dataframe
 
@@ -544,7 +547,7 @@ class Data_Processing:
             self.read_in_values(ws, df, new_titles.iloc[j], outputs.iloc[j])
         #self.adjust_column_widths(ws, df, output_col_letters, new_titles)
         return wb
-    
+
    
     def adjust_column_widths(self, ws, mapping_df, output_col_letters, new_titles):
         """Adjust the column width of the Excel output file
@@ -862,7 +865,7 @@ class Data_Processing:
         x_axis = [ datetime.combine(datetime.now(), time) for time in time_obj]
         
         return x_axis
-
+    
     def make_pdf(self, output_name,  mapping_data_df, create_chart): 
         """Generates a pdf of the processed results 
 
@@ -889,6 +892,7 @@ class Data_Processing:
             pdfkit.from_string(mapping_data_df.to_html(), df_file, configuration = config)
             paths = [os.getcwd() + '\\' + output_name + '_chart.pdf' ,df_file]
             self.merge_pdfs(paths, output_name)
+        
 
     def merge_pdfs(self,paths, output_name): 
         """Merges two PDFs into a single PDF 
@@ -935,7 +939,6 @@ class Data_Processing:
             else: 
                 fmt.append('%s')
         return fmt
-
     @property
     def get_config_file(self): 
         return self.config_file
