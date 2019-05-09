@@ -6,11 +6,9 @@ The purpose of this project is to develop an automated processing program that w
 ## Running 
 User will need a CSV file and a configuration file. The configuration file should be an Excel file and contain two worksheets. There are no restrictions on the names of the sheets. 
 
-To run the program, run main.exe.
+To run the program, run main.exe. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file.  
 
 ## Background
-There are several libraries that need to be imported for this program to run: numpy, pandas, openpyxl, matplotlib, pdfkit, PyPDF2, and os. 
-
 'Sheet 1' of the configuration file gives the ‘Mapped Settings’ of the program. The columns should be titled: 
 > **Input | Output | Format | Time Unit | Axis | Title | Range**
 
