@@ -8,7 +8,6 @@ from CSV_DataFrame import CSVDataFrame
 ### Main execution block ###
 user_interface.banner()
 
-
 config_list = user_interface.choose_config()
 config_sheet_list = config_list[0]
 config_title = config_list[1]
@@ -26,9 +25,6 @@ general_df.create_dataframe()
 raw_data_df = CSVDataFrame(input_csv, df, mapped_df, general_df)
 raw_data_df.create_dataframe()
 
-#raw_data_excel = df.create_raw_Excelbook(raw_data_df)
-
-
 # Convert the 'Input' and 'Output' column letters into, respectively, column titles and numbers. 
 # Keep a standalone copy of the 'Output.'
 mapped_df.format(raw_data_df.get_column_labels)
@@ -36,21 +32,23 @@ mapped_df.format(raw_data_df.get_column_labels)
 # Store the columns we want mapped into a new dataframe 
 output_df = raw_data_df.map_columns()
 
-# Formatting time columns to be in 'Elapsed Time'
-#time_unit = config_df_1['Time Unit'].dropna()
+# Convert times into elapsed times 
+raw_data_df.convert_to_elapsed_time(output_df)
+print(output_df)
 
-time_units = mapped_df.get_column('Time Unit').dropna()
-
+'''
+time_units_df = raw_data_df.isFormat2ElapsedTime(mapped_df.get_column('Time Unit').dropna())
+print(time_units_df)
 
 # Store the new time col in a new Series temporarily, 
 # so the NaNs in mapping_data[time_title] won't convert
 # the data type into object. 
-if (not time_units.empty): 
-    index = time_units.index.values
+if (not time_units_df.empty): 
+    index = time_units_df.index.values
     time_indices = mapped_df.get_column('Input Column Numbers')
     time_indices = mapped_df.letter2int(time_indices)
-    for i in range(time_units.size): 
-        unit = time_units.iloc[i]
+    for i in range(time_units_df.size): 
+        unit = time_units_df.iloc[i]
         
         # Retrieve the column title of the 'time' column 
         time_index = time_indices.loc[index[i]]
@@ -62,7 +60,7 @@ if (not time_units.empty):
         # START refactoring 
         # --> start_time = pd.Series(raw_data_df.get_column(time_title).loc[0])
         start_time = df.convert_to_time_object(start_time, unit)
-'''
+
         new_time_col = pd.DataFrame()
         # Index of the new column title is different than the index of the old column title 
         new_time_title = config_df_1['Title'].loc[time_unit.index[i]]

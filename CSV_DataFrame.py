@@ -1,7 +1,7 @@
 from Dataframe import DataFrame
 import pandas as pd
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class CSVDataFrame(DataFrame): 
     """
@@ -306,4 +306,141 @@ class CSVDataFrame(DataFrame):
                     return [0, end] 
         return [start,end]
     
+    def convert_to_elapsed_time(self, output_df):
+        """ Returns output_df with the time values converted into elapsed times
+        
+        Parameters: 
+        output_df(df): df that contains the values to be converted 
+        """ 
+
+        # Grab the time units of the columns whose values is to be converted into elapsed times 
+        time_units_df = self.mapped_settings.get_column('Time Unit').dropna()
+
+        # If there are time values that need to be reformatted...
+        if (not time_units_df.empty): 
+            
+            # 'index' contains the indices of the time columns in mapped_settings ('Sheet 1' of the configuration file) 
+            all_time_indices = time_units_df.index.values
+            all_time_titles = self.mapped_settings.letter2int(self.mapped_settings.get_column('Input Column Numbers'))
+            
+            # Iterate through all the time columns 
+            for i in range(time_units_df.size): 
+                
+                # Grab the time unit of the column  
+                unit = time_units_df.iloc[i]
+                
+                # Retrieve the original column title of the 'time' column. This is needed to find the starting time, especially
+                # when the range of the mapped data set has been limited.  
+                time_index = all_time_titles.loc[all_time_indices[i]]
+                time_title = super().get_column_labels[time_index-1]
+                
+                # Retrieve the start time and convert it to a series of length 1 and type str in elapsed time format.  
+                start_time = self._convert_to_elapsed_time_str_series(pd.Series(super().get_column(time_title).loc[0]), unit)
+
+                # Create an empty df
+                new_time_col = pd.DataFrame()
+                
+                # Retrieve the new title of the time column so you can retrieve its data set in output_df 
+                new_time_title = self.mapped_settings.get_column('Title').loc[time_units_df.index[i]]
+            
+                # Convert the values in the column into elapsed times 
+                new_time_col = self._convert_to_elapsed_time_str_series(output_df[new_time_title], unit)
+                self._convert_to_timedelta(new_time_col, start_time.loc[0])
+                output_df[new_time_title] = new_time_col
+
+        return output_df
+
+    def _convert_to_elapsed_time_str_series(self, series, unit):
+        """Returns a series that contains a str representation of a time object in %H:%M:%S format 
+
+        Parameters: 
+        series (Series): The CSV column that is to be converted. Will either contain floats 
+                            or a datetime object in %m/%d/%Y %H:%M:%S AM/PM format. 
+        unit (str): The unit of time of the CSV column. D = datetime, H = hours, M = minutes, S = seconds 
+        """
+
+        series = series.dropna()
+
+        # Creating a copy of 'series' to be iterated over. That way even if two cells have the same datetime, 
+        # and both cells are replaced in the original 'series,' the for loop will not break when we iterate over the second copy.  
+        series_copy = series.copy()
+
+        # If the time series is a datetime object....
+        if (unit.upper() == 'D'): 
+            for cur_datetime in series_copy: 
+                
+                # Split the datetime object into a list by a space delimiter and store the %H:%M:%S  
+                # portion into a variable 
+                cur_datetime_list = cur_datetime.split()
+                cur_time_list = cur_datetime_list[1].split('.')
+                cur_time = cur_time_list[0]
+                series.replace(cur_datetime, cur_time, inplace = True)
+            
+        #If the time series is in hours, minutes, or seconds...
+        else:
+            for time in series_copy: 
+                time_list = self._get_hours_minutes_seconds(time, unit)
+                cur_time = str(time_list[0]) + ':' + str(time_list[1]) + ':' + str(time_list[2])
+                series.replace(time, cur_time, inplace = True)
+        return series
+    
+    def _get_hours_minutes_seconds(self, time, time_unit):
+        """Returns a list that holds the hours, minutes, and seconds of the given time. 
+
+        Takes in a float representation of a a single unit of time, converts it into an integer, and 
+        returns a list of the original time in %H:%M:%S format. 
+
+        Parameters: 
+        time (float): Given time to be converted
+        time_unit: The unit of time that the given time is in
+        """
+        
+        if (time_unit.upper() == 'H'): 
+            time = time * 3600
+        elif (time_unit.upper() == 'M'): 
+            time = time * 60    
+        time = int(time)
+        hours = time // 3600 
+        time = time % 3600
+        minutes = time // 60 
+        seconds = time % 60
+        
+        return [hours,minutes,seconds]
+
+    def _convert_to_timedelta(self, time_series, start_time): 
+        """Returns a series that contains timedelta objects. 
+
+        Takes in a str series in %H:%M:%S format and returns a time series that gives the elapsed time in the same format. 
+
+        Parameters: 
+        time_series (series): str representation of time in %H:%M:%S
+        """
+
+        time_series_modified = time_series.dropna()
+        start_time = pd.to_timedelta(start_time)
+
+        # Iterate through 'time_series_modified' which has the NaN values dropped but replace the str with the timedelta in 
+        # the original 'time_series.'
+        for current_time in time_series_modified: 
+            
+            # Convert the str 'current_time' into a timedelta object and find the difference between 'current_time' and 'start_time'
+            # to find the elapsed time. Convert the difference between the two times into a str and use the space 
+            # delimiter to split it into a list. 
+            difference= str(pd.to_timedelta(current_time)-start_time)
+            difference_list = difference.split()
+            
+            # Store the time portion of the str into 'elapsed_time' and use the colon delimiter to split the time into a list 
+            elapsed_time = difference_list[2]
+            elapsed_time_list = elapsed_time.split(':')
+            
+            # Convert each element in the list into an integer and use the elements to produce a timedelta object 
+            time = timedelta(hours = int(elapsed_time_list[0]), minutes = int(elapsed_time_list[1]), seconds = int(elapsed_time_list[2]))            
+            
+            # Replace 'current_time' with 'time' in 'time_series'
+            time_series.replace(current_time, time, inplace = True)
+    
+
+    
+            
+
    
