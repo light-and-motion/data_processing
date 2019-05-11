@@ -14,7 +14,32 @@ class CSVDataFrame(DataFrame):
         super().__init__(file_name, df)
         self.mapped_settings = mapped_settings
         self.general_settings = general_settings
-        
+
+    def get_startRow(self):  
+        start_ser = self.general_settings.get_column('Start Row')
+        if (not start_ser.dropna().empty): 
+            return start_ser.loc[0]-1
+        return 0
+
+    def get_stopRow(self): 
+        stop_ser =  self.general_settings.get_column('Stop Row')
+        if (not stop_ser.dropna().empty): 
+            return stop_ser.loc[0]-self.get_startRow()-1
+        return None
+    
+    def get_skipRow(self): 
+        skip_ser = self.general_settings.get_column('Skip Row')
+        if (not skip_ser.dropna().empty):
+            return skip_ser.loc[0]
+        return None
+    
+    def get_transpose(self): 
+        transpose_ser = self.general_settings.get_column('Transpose')
+        if (not transpose_ser.dropna().empty): 
+            return transpose_ser.loc[0]
+        return 'NO'
+
+
     def create_dataframe(self): 
         """Returns a dataframe of the CSV file 
 
@@ -23,26 +48,12 @@ class CSVDataFrame(DataFrame):
         general_settings_2 (dataframe): 'General Settings' of the configuration file 
         """
 
-        start_ser = self.general_settings.get_column('Start Row')
-        stop_ser = self.general_settings.get_column('Stop Row')
-        skip_ser = self.general_settings.get_column('Skip Row')
-        transpose_ser = self.general_settings.get_column('Transpose')
-        
         # Default values         
-        startLine = 0
-        stopLine = None
-        skipLine = None
-        transpose = "NO"
-
-
-        if (not start_ser.dropna().empty): 
-            startLine = start_ser.loc[0]-1
-        if (not stop_ser.dropna().empty): 
-            stopLine = stop_ser.loc[0]-startLine-1
-        if (not skip_ser.dropna().empty):
-            skipLine = skip_ser.loc[0]
-        if (not transpose_ser.dropna().empty): 
-            transpose = transpose_ser.loc[0]
+        startLine = self.get_startRow()
+        print(type(startLine))
+        stopLine = self.get_stopRow()
+        skipLine = self.get_skipRow()
+        transpose = self.get_transpose()
 
         # Read the CSV into the dataframe     
         self.df = self.df.append(self._read_csv_type(startLine, stopLine, skipLine, transpose)) 
@@ -288,6 +299,7 @@ class CSVDataFrame(DataFrame):
         
         start = 0 
         end = max_size-1
+
 
         # Range is calculated against the row indexes of the Excel worksheet. Thus, the first
         # cell in a column will be located in row 2.   
