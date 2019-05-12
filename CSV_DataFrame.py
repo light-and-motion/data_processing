@@ -50,7 +50,6 @@ class CSVDataFrame(DataFrame):
 
         # Default values         
         startLine = self.get_startRow()
-        print(type(startLine))
         stopLine = self.get_stopRow()
         skipLine = self.get_skipRow()
         transpose = self.get_transpose()
@@ -249,8 +248,9 @@ class CSVDataFrame(DataFrame):
             range_list = self._find_range(range_inputs.loc[i],max_size)
             start = range_list[0]
             end = range_list[1]
+            print('end = ', end)
             new_series = raw_data[title_inputs.loc[i]].iloc[start:end].reset_index(drop = True)
-
+            
             # Round numbers
             if (not pd.isnull(format.iloc[i]) and type(format.iloc[i]) == np.float64):
                 new_series = self._round_numbers(new_series, int(format.iloc[i]))
@@ -299,23 +299,30 @@ class CSVDataFrame(DataFrame):
         
         start = 0 
         end = max_size-1
-
-
+        print('end = ', end)
         # Range is calculated against the row indexes of the Excel worksheet. Thus, the first
         # cell in a column will be located in row 2.   
         if (pd.isnull(current_range)): 
             pass
         else: 
             range_list = current_range.split(':')
+            # Start at the very beginning and stop at a certain point 
             if (range_list[0] == ''):
-                end = int(range_list[1])-2
+                end = int(range_list[1])
+            
+            # Start at a certain point and go to the very end 
             elif (range_list[1] == ''): 
-                start = int(range_list[0])-2
+                start = int(range_list[0])-self.get_startRow()
+            
+            # Start and stop at certain points
             else: 
-                start = int(range_list[0])-2
-                end = int(range_list[1])-2
+                start = int(range_list[0])-self.get_startRow()
                 if (start < 0):
-                    return [0, end] 
+                    start = 0 
+                end = int(range_list[1])
+                if (end - 2 > max_size):
+                    print('end') 
+                    end = max_size-1
         return [start,end]
     
     def convert_to_elapsed_time(self, output_df):

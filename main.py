@@ -33,9 +33,10 @@ mapped_df.format(raw_data_df.get_column_labels)
 output_df = raw_data_df.map_columns()
 
 # Convert times into elapsed times 
+print(raw_data_df.get_df().tail())
 raw_data_df.convert_to_elapsed_time(output_df)
-print(output_df)
-
+print(output_df.head())
+print(output_df.tail())
 '''
 time_units_df = raw_data_df.isFormat2ElapsedTime(mapped_df.get_column('Time Unit').dropna())
 print(time_units_df)

@@ -23,7 +23,7 @@ def choose_csv():
     while input_csv == None:
         csv_choice = input('Enter name of CSV file to process: ')
         input_csv = csv_choice
-    input_csv = 'Lumen_1'
+    input_csv ='Lumen_1'
     return input_csv
 
 def choose_output_name():
