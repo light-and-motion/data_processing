@@ -5,6 +5,7 @@ from Dataframe import (DataFrame, ExcelDataFrame, MappedExcelDataFrame)
 from CSV_DataFrame import CSVDataFrame
 from File import (File, ChartFile, ExcelFile)
 from JPEGFile import JPEGFile
+from PDFFile import PDFFile
 
 ### Main execution block ###
 user_interface.banner()
@@ -42,6 +43,9 @@ excel_file.output_excel()
 
 jpeg_file = JPEGFile(mapped_df, general_df, output_df, output_name)
 jpeg_file.output_JPEG()
+
+pdf_file = PDFFile(mapped_df, general_df, output_df, output_name)
+pdf_file.output()
 
 #excel_output = df.make_file(config_df_2['Excel'].loc[0])
 #jpeg_output = df.make_file(config_df_2['JPEG'].loc[0])
