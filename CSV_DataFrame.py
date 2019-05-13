@@ -1,4 +1,4 @@
-from Dataframe import DataFrame
+from DataFrames import DataFrame
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
@@ -40,7 +40,7 @@ class CSVDataFrame(DataFrame):
         return 'NO'
 
 
-    def create_dataframe(self): 
+    def create(self): 
         """Returns a dataframe of the CSV file 
 
         Parameters: 
@@ -248,7 +248,6 @@ class CSVDataFrame(DataFrame):
             range_list = self._find_range(range_inputs.loc[i],max_size)
             start = range_list[0]
             end = range_list[1]
-            print('end = ', end)
             new_series = raw_data[title_inputs.loc[i]].iloc[start:end].reset_index(drop = True)
             
             # Round numbers
@@ -299,7 +298,7 @@ class CSVDataFrame(DataFrame):
         
         start = 0 
         end = max_size-1
-        print('end = ', end)
+
         # Range is calculated against the row indexes of the Excel worksheet. Thus, the first
         # cell in a column will be located in row 2.   
         if (pd.isnull(current_range)): 
@@ -321,7 +320,6 @@ class CSVDataFrame(DataFrame):
                     start = 0 
                 end = int(range_list[1])
                 if (end - 2 > max_size):
-                    print('end') 
                     end = max_size-1
         return [start,end]
     
@@ -340,7 +338,8 @@ class CSVDataFrame(DataFrame):
             
             # 'index' contains the indices of the time columns in mapped_settings ('Sheet 1' of the configuration file) 
             all_time_indices = time_units_df.index.values
-            all_time_titles = self.mapped_settings.letter2int(self.mapped_settings.get_column('Input Column Numbers'))
+            #all_time_titles = self.mapped_settings.letter2int(self.mapped_settings.get_column('Input Column Numbers'))
+            all_time_titles = self.mapped_settings.get_column('Input Column Numbers')
             
             # Iterate through all the time columns 
             for i in range(time_units_df.size): 

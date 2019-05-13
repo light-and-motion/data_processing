@@ -1,5 +1,5 @@
 from openpyxl import load_workbook
-class User_Interface:
+class UserInterface (object):
     """A class that serves as the text-based user interface"""
 
 def banner():
