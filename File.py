@@ -17,7 +17,8 @@ class File(object):
         if (pd.isnull(choice) or choice.upper() == 'YES'): 
             return True
         return False
-    
+
+class ChartFile(File): 
     def make_chart(self):
         """Returns a list that indicates whether there will be a chart and if so, which columns will serve as the x-axis 
         and y-axis 
@@ -48,10 +49,32 @@ class File(object):
         if (self.make_chart()): 
             axis = self.mapped_settings.get_column('Axis')
             y_axis = axis.loc[(axis == 'y') | (axis == 'Y')]
-        return y_axis
+        return y_axis        
+    
+    def chart_title(self, new_titles, chart_title, x_axis_index, y_axis_indices):
+        """Returns the chart title. 
+
+        If no title is given, then the chart title will default to the format '[All] y-axis vs x-axis'
+        
+        Parameters: 
+        new_titles (series): New titles of the processed CSV columns 
+        chart_title (series): Contain a manually given chart title or NaN
+        x_axis_row (series): Index location of the column to serve as the x_axis
+        y_axis_row (series): Index location(s) of the column(s) to serve as the y-axis 
+        """
+        
+        # Note: A column with 'NaNs' is not considered empty
+        if (chart_title.dropna().empty): 
+            title = ''
+            for i in range(y_axis_indices.size-1): 
+                title += new_titles.loc[y_axis_indices[i]] + ", "
+            title += new_titles.loc[y_axis_indices[y_axis_indices.size-1]] + " vs " + new_titles.loc[x_axis_index]
+        else: 
+            title = chart_title.loc[0]
+        return title
 
 
-class ExcelFile(File):
+class ExcelFile(ChartFile):
 
     def output_excel(self):
         if (self.make_file(self.general_settings.get_column('Excel').loc[0])): 
@@ -103,9 +126,7 @@ class ExcelFile(File):
 
         Parameters: 
         wb (workbook): Store the results of the data processing 
-        mapping_df (series): CSV columns to be processed 
-        new_title (str): New titles of the processed CSV columns  
-        title_inputs (str): Original titles of the processed CSV columns    
+        title (str): New titles of the processed CSV columns   
         col_num (int): Column number the data is being read into   
         """ 
 
@@ -133,11 +154,6 @@ class ExcelFile(File):
 
         Parameters: 
         wb (workbook): Excel workbook of the mapped data 
-        mapping_df (dataframe) - CSV columns to be processed
-        x_axis (Series): Indicate which column will serve as the x-axis 
-        y_axis (Series): Indicate which column(s) will serve as the y-axis
-        config_df_1 (dataframe): 'Mapped Settings' of the configuration file  
-        config_df_2 (dataframe): 'General Settings' of the configuration file 
         """
 
         ws = wb.active
@@ -192,7 +208,7 @@ class ExcelFile(File):
         else: 
             pass # a legend is the default 
             
-    
+    '''
     def chart_title(self, new_titles, chart_title, x_axis_index, y_axis_indices):
         """Returns the chart title. 
 
@@ -214,7 +230,7 @@ class ExcelFile(File):
         else: 
             title = chart_title.loc[0]
         return title
-    
+    '''
     def grid_lines(self, chart): 
         """Returns True if grid lines will be on chart, False otherwise"""
         

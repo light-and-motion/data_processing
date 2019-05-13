@@ -1,10 +1,10 @@
-from File import File
+from File import ChartFile
 import pandas as pd
 from datetime import (datetime, time)
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-class JPEGFile(File): 
+class JPEGFile(ChartFile): 
     def output_JPEG(self): 
         jpeg_choice = self.make_file(self.general_settings.get_column('JPEG').loc[0])
         pdf_choice = self.make_file(self.general_settings.get_column('PDF').loc[0])
@@ -35,6 +35,8 @@ class JPEGFile(File):
         #TODO: ReminderIf there are multiple y-axes, their dtypes have to be the same! 
         #TODO: Why does the data range have to be the same even columns that will not be plotted
         fig, ax = plt.subplots(1,1)
+
+        print(self.output_data)
         for y_axis_index in y_axis_indices: 
             y_axis_title = new_titles[y_axis_index]
             y_axis = self.output_data[y_axis_title]

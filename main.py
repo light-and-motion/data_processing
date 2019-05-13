@@ -3,7 +3,8 @@ import pandas as pd
 from data_processing import Data_Processing
 from Dataframe import (DataFrame, ExcelDataFrame, MappedExcelDataFrame)
 from CSV_DataFrame import CSVDataFrame
-from File import (File, ExcelFile)
+from File import (File, ChartFile, ExcelFile)
+from JPEGFile import JPEGFile
 
 ### Main execution block ###
 user_interface.banner()
@@ -39,6 +40,8 @@ raw_data_df.convert_to_elapsed_time(output_df)
 excel_file = ExcelFile(mapped_df,general_df,output_df, output_name)
 excel_file.output_excel()
 
+jpeg_file = JPEGFile(mapped_df, general_df, output_df, output_name)
+jpeg_file.output_JPEG()
 
 #excel_output = df.make_file(config_df_2['Excel'].loc[0])
 #jpeg_output = df.make_file(config_df_2['JPEG'].loc[0])
