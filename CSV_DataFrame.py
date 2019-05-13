@@ -27,12 +27,6 @@ class CSVDataFrame(DataFrame):
             return stop_ser.loc[0]-self.get_startRow()-1
         return None
     
-    def get_skipRow(self): 
-        skip_ser = self.general_settings.get_column('Skip Row')
-        if (not skip_ser.dropna().empty):
-            return skip_ser.loc[0]
-        return None
-    
     def get_transpose(self): 
         transpose_ser = self.general_settings.get_column('Transpose')
         if (not transpose_ser.dropna().empty): 
@@ -51,20 +45,16 @@ class CSVDataFrame(DataFrame):
         # Default values         
         startLine = self.get_startRow()
         stopLine = self.get_stopRow()
-        skipLine = self.get_skipRow()
         transpose = self.get_transpose()
 
         # Read the CSV into the dataframe     
-        self.df = self.df.append(self._read_csv_type(startLine, stopLine, skipLine, transpose)) 
+        self.df = self.df.append(self._read_csv_type(startLine, stopLine, transpose)) 
         
         ###
         if (transpose.upper() == 'YES'): 
             #TODO: Ask if N/A marker is to be kept or if the cells that contain it be empty instead. 
-            self.df = self._transpose(startLine, skipLine)
+            self.df = self._transpose(startLine)
         
-        ## Minus 1 is added because old column of transposed df has been dropped 
-        if (not skipLine == None): 
-            self.df.drop(skipLine-startLine-1, inplace=True)
 
         # Get rid of columns with all whitespace 
         self.df = self.df.dropna('columns', how='all')
@@ -94,14 +84,13 @@ class CSVDataFrame(DataFrame):
             self.df[column] = self.df[column].dropna()
             self.df[column] = pd.to_numeric(self.df[column], errors = 'ignore')
         
-    def _read_csv_type(self, startLine, stopLine, skipLine, transpose):
+    def _read_csv_type(self, startLine, stopLine, transpose):
         """Returns the prototype dataframe of the CSV file 
         
         Parameters: 
         file (str):  Name of CSV file to be processed
         startLine (int): Row to begin processing CSV file
         stopLine (int): Row to stop processing CSV file
-        skipLine (int): Line you want to skip when processing CSV file. Has to be between startLine and stopLine
         transpose (str): Determines whether df is to be transposed 
         """ 
 
@@ -139,14 +128,13 @@ class CSVDataFrame(DataFrame):
                             encoding = 'ISO-8859-1') 
 
     
-    def _transpose(self, startLine, skipLine): 
+    def _transpose(self, startLine): 
             """
             Returns a transposed df 
 
             Parameters: 
             df (df): df that is to be transposed
             startLine (int): Row to begin processing CSV file
-            skipLine (int): Line you want to skip when processing CSV file. Has to be between startLine and stopLine
             """
             # Logic to set the actual columns and indices in the transposed data
             self.df = self.df.transpose()

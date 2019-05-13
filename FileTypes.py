@@ -379,13 +379,11 @@ class TXTFile(File):
         fmt = []
         for i in range(len(dtypes)):
             type = dtypes[i] 
-            print(type)
             if (type == np.int64): 
                 fmt.append('%d')
             # Parse floats as strings because %f truncates the length of the (very long!) floats 
             else: 
                 fmt.append('%s')
-        print(fmt)
         return fmt
 
       
