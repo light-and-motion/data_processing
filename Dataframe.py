@@ -70,11 +70,13 @@ class MappedExcelDataFrame(ExcelDataFrame):
         
         # TODO: Research super() https://realpython.com/python-super/
         super().set_column('Input Column Numbers', super().get_column('Input').str.upper())
-        
+        data = self._letter2int(super().get_column('Input Column Numbers'))
+        super().set_column('Input Column Numbers', data)
+
         data = self._letter2title(super().get_column('Input'), col_labels)
         super().set_column('Input', data)
 
-        data = self.letter2int(super().get_column('Output'))
+        data = self._letter2int(super().get_column('Output'))
         super().set_column('Output', data)
 
         data = self._default_titles(super().get_column('Title'), super().get_column('Input'))
@@ -88,7 +90,7 @@ class MappedExcelDataFrame(ExcelDataFrame):
         names (series): CSV column titles 
         """
         col_title = []
-        indices = self.letter2int(letter_series)
+        indices = self._letter2int(letter_series)
         
         for x in range(letter_series.size): 
             index = indices.loc[x]      
@@ -97,7 +99,7 @@ class MappedExcelDataFrame(ExcelDataFrame):
         
         return pd.Series(col_title)
     
-    def letter2int(self, letter_series):
+    def _letter2int(self, letter_series):
         """Returns a series where column letters are being converted into their corresponding column number. 
 
         Source: https://www.geeksforgeeks.org/find-excel-column-number-column-title/

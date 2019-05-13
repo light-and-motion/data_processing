@@ -3,7 +3,7 @@ import pandas as pd
 from data_processing import Data_Processing
 from Dataframe import (DataFrame, ExcelDataFrame, MappedExcelDataFrame)
 from CSV_DataFrame import CSVDataFrame
-
+from File import (File, ExcelFile)
 
 ### Main execution block ###
 user_interface.banner()
@@ -33,49 +33,19 @@ mapped_df.format(raw_data_df.get_column_labels)
 output_df = raw_data_df.map_columns()
 
 # Convert times into elapsed times 
-print(raw_data_df.get_df().tail())
 raw_data_df.convert_to_elapsed_time(output_df)
-print(output_df.head())
-print(output_df.tail())
-'''
-time_units_df = raw_data_df.isFormat2ElapsedTime(mapped_df.get_column('Time Unit').dropna())
-print(time_units_df)
-
-# Store the new time col in a new Series temporarily, 
-# so the NaNs in mapping_data[time_title] won't convert
-# the data type into object. 
-if (not time_units_df.empty): 
-    index = time_units_df.index.values
-    time_indices = mapped_df.get_column('Input Column Numbers')
-    time_indices = mapped_df.letter2int(time_indices)
-    for i in range(time_units_df.size): 
-        unit = time_units_df.iloc[i]
-        
-        # Retrieve the column title of the 'time' column 
-        time_index = time_indices.loc[index[i]]
-        time_title = raw_data_df.get_column_labels[time_index-1]
-
-        # Retrieve the start time and convert it to a str in elapsed time format 
-        # start_time is a series of length 1 
-        
-        # START refactoring 
-        # --> start_time = pd.Series(raw_data_df.get_column(time_title).loc[0])
-        start_time = df.convert_to_time_object(start_time, unit)
-
-        new_time_col = pd.DataFrame()
-        # Index of the new column title is different than the index of the old column title 
-        new_time_title = config_df_1['Title'].loc[time_unit.index[i]]
-        new_time_col = df.convert_to_time_object(mapping_data_df[new_time_title], unit)
-        df.time_format(new_time_col, start_time.loc[0])
-        mapping_data_df[new_time_title] = new_time_col
-
 
 # Output files 
-excel_output = df.make_file(config_df_2['Excel'].loc[0])
-jpeg_output = df.make_file(config_df_2['JPEG'].loc[0])
-pdf_output = df.make_file(config_df_2['PDF'].loc[0])
-txt_output = df.make_file(config_df_2['TXT'].loc[0])
+excel_file = ExcelFile(mapped_df,general_df,output_df, output_name)
+excel_file.output_excel()
+
+
+#excel_output = df.make_file(config_df_2['Excel'].loc[0])
+#jpeg_output = df.make_file(config_df_2['JPEG'].loc[0])
+#pdf_output = df.make_file(config_df_2['PDF'].loc[0])
+#txt_output = df.make_file(config_df_2['TXT'].loc[0])
 # Grab the x-axis and y-axis and determine if a chart will be outputted 
+''''
 axis = df.make_chart(config_df_1['Axis'])
 create_chart = axis[0]
 x_axis = None
@@ -86,6 +56,7 @@ if (create_chart == True):
 
 
 output_data_wb = None
+
 
 # Creating an Excel file 
 if (excel_output):
