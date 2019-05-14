@@ -204,8 +204,8 @@ class JPEGFile(ChartFile):
         
         #TODO: ReminderIf there are multiple y-axes, their dtypes have to be the same! 
         #TODO: Why does the data range have to be the same even columns that will not be plotted
-        fig, ax = plt.subplots(1,1)
-
+        #fig, ax = plt.subplots(1,1)
+        fit = plt.figure(1)
         for y_axis_index in y_axis_indices: 
             y_axis_title = new_titles[y_axis_index]
             y_axis = self.output_data[y_axis_title]
@@ -230,10 +230,10 @@ class JPEGFile(ChartFile):
         # Save charts in stated formats
         
         if (jpeg_choice): 
-            plt.savefig(self.output_name + '.jpeg')
+            plt.savefig(self.output_name + '.jpeg', bbox_inches = 'tight')
         
         if (pdf_choice): 
-            plt.savefig(self.output_name + '_chart' + '.pdf') 
+            plt.savefig(self.output_name + '_chart' + '.pdf', bbox_inches = 'tight') 
         #return fig
         
 
@@ -271,7 +271,7 @@ class JPEGFile(ChartFile):
         new_titles = self.mapped_settings.get_column('Title') 
         plt.xlabel(new_titles[x_axis_index])
         if (len(y_axis_indices) > 1):
-            plt.legend(loc='best')
+            plt.legend(loc='upper left', bbox_to_anchor =(1.05,1))
         else: 
             plt.ylabel(new_titles[y_axis_indices[0]])
 
