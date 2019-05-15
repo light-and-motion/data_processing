@@ -1,5 +1,3 @@
-# **_Note: In the process of refactoring Blob class_**
-
 # Data Processing
 The purpose of this project is to develop an automated processing program that will streamline data formatting of routinely conducted experiments. The software will take in a lumensphere, multimeter, or serial CSV file and output an Excel, JPEG, PDF, and/or text file of the processed results. The Excel file will hold a spreadsheet and chart of the processed results. The JPEG file will consist of a chart made in matplotlib. The PDF will hold the table and the matplotlib chart. The text file will hold the table. 
 
