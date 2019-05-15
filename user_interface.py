@@ -12,7 +12,6 @@ def banner():
 def choose_config():
     """Returns a list that contains the workbook itself as well as the name of the configuration file"""
     config_file = input('Enter name of configuration file: ')
-
     return [load_workbook(config_file + '.xlsx'), config_file]
 
 
@@ -23,7 +22,6 @@ def choose_csv():
     while input_csv == None:
         csv_choice = input('Enter name of CSV file to process: ')
         input_csv = csv_choice
-
     return input_csv
 
 def choose_output_name():

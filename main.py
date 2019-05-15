@@ -5,7 +5,6 @@ from CSV_DataFrame import CSVDataFrame
 from File import (File, ChartFile)
 from FileTypes import (ExcelFile, JPEGFile, PDFFile, TXTFile)
 
-### Main execution block ###
 user_interface.banner()
 
 repeat = 'y'
