@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
-import pdfkit
-from PyPDF2 import PdfFileReader, PdfFileWriter
-import os
+#import pdfkit
+#from PyPDF2 import PdfFileReader, PdfFileWriter
+#import os
 import numpy as np
 import pandas as pd
 
@@ -243,8 +243,8 @@ class JPEGFile(ChartFile):
         if (jpeg_choice): 
             plt.savefig(self.output_name + '.jpeg', bbox_inches = 'tight')
         
-        if (pdf_choice): 
-            plt.savefig(self.output_name + '_chart' + '.pdf', bbox_inches = 'tight') 
+        #if (pdf_choice): 
+         #   plt.savefig(self.output_name + '_chart' + '.pdf', bbox_inches = 'tight') 
         #return fig
         
 
@@ -313,6 +313,7 @@ class JPEGFile(ChartFile):
         if (not pd.isnull(y_max)): 
             plt.ylim(top = y_max)
         
+'''
 class PDFFile (ChartFile): 
 
     def output(self): 
@@ -370,7 +371,7 @@ class PDFFile (ChartFile):
         # Delete merged files 
         os.remove(paths[0])
         os.remove(paths[1])
-
+'''
 class TXTFile(File): 
     def output(self): 
         text_choice = self.make_file(self.general_settings.get_column('TXT').loc[0])

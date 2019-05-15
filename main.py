@@ -3,7 +3,8 @@ import pandas as pd
 from DataFrames import (DataFrame, ExcelDataFrame, MappedExcelDataFrame)
 from CSV_DataFrame import CSVDataFrame
 from File import (File, ChartFile)
-from FileTypes import (ExcelFile, JPEGFile, PDFFile, TXTFile)
+from FileTypes import (ExcelFile, JPEGFile, TXTFile)
+#from FileTypes import (ExcelFile, JPEGFile, PDFFile, TXTFile)
 
 ### Main execution block ###
 user_interface.banner()
@@ -45,8 +46,8 @@ while (repeat.lower() == 'y'):
         jpeg_file = JPEGFile(mapped_df, general_df, output_df, output_name)
         jpeg_file.output()
 
-        pdf_file = PDFFile(mapped_df, general_df, output_df, output_name)
-        pdf_file.output()
+        #pdf_file = PDFFile(mapped_df, general_df, output_df, output_name)
+        #pdf_file.output()
 
         txt_file = TXTFile(mapped_df, general_df, output_df, output_name)
         txt_file.output()
