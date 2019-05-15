@@ -6,11 +6,9 @@ The purpose of this project is to develop an automated processing program that w
 ## Running 
 User will need a CSV file and a configuration file. The configuration file should be an Excel file and contain two worksheets. There are no restrictions on the names of the sheets. 
 
-To run the program, run main.py.
+To run the program, run main.exe. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file.  
 
 ## Background
-There are several libraries that need to be imported for this program to run: numpy, pandas, openpyxl, matplotlib, pdfkit, PyPDF2, and os. 
-
 'Sheet 1' of the configuration file gives the ‘Mapped Settings’ of the program. The columns should be titled: 
 > **Input | Output | Format | Time Unit | Axis | Title | Range**
 
@@ -23,7 +21,7 @@ Each row in the configuration file corresponds to a single column of data in the
 - **Time Unit** (str: 'D', 'M', 'H', 'S'): How time is represented. 'D' is datetime, 'H' is hours, 'M' is minutes, and 'S' is seconds. Corresponding CSV column will convert the time into elapsed time with format HH:MM:SS   
 - **Axis** (str: 'X', 'Y') Indicate whether CSV column will serve as an axis on the graph. 'X' for x-axis, 'Y' for y-axis. Can have multiple y-axis. 
 - **Title** (str): Title of the CSV column in the output files 
-- **Range** (str: '\[Start]:\[End]') : Interval of data in column that is to be processed. Indices will be based on the resulting Excel file 
+- **Range** (str: '\[Start]:\[End]') : Interval of data in column that is to be processed. Indices will be based on the resulting Excel file. Elapsed time will be based off of the first time value in the original dataset. 
 
 'Sheet 2' gives the 'General Settings' of the program. The columns should be titled: 
 > **Graph Title | Start Row | Stop Row | Skip Row | X Min | X Max | Y Min | Y Max | Grid Lines | Excel | JPEG | PDF | TXT 
@@ -34,13 +32,13 @@ Each row in the configuration file corresponds to a single column of data in the
 Each column will contain only 1 value. 
 
 - **ChartTitle** (str): Title of chart
-- **Start Row** (int): Row to begin processing CSV file. Index will be based on CSV file.  
+- **Start Row** (int): Row to begin processing CSV file. Index will be based on CSV file. Must start at column title row.  
 - **Stop Row** (int): Row to stop processing CSV file. 
-- **Skip Row** (int): Line you want to skip when processing CSV file. Has to be between startLine and stopLine
-- **X Min** (float): Minimum value on x-axis of chart
-- **X Max** (float): Maximum value on x-axis of chart
-- **Y Min** (float): Minimum value on y-axis of chart
-- **Y Max** (float): Maximum value on y-axis of chart 
+- **Skip First Row** (str: 'Yes', 'No'): Line you want to skip when processing CSV file. Has to be between startLine and stopLine. Prevents elapsed time from being based off of a time value from a previous experiment. 
+- **X Min** (float): Minimum value on x-axis of chart. Does not work on datetimes. 
+- **X Max** (float): Maximum value on x-axis of chart. Does not work on datetimes. 
+- **Y Min** (float): Minimum value on y-axis of chart. Does not work on datetimes. 
+- **Y Max** (float): Maximum value on y-axis of chart. Does not work on datetimes. 
 - **Grid Lines** (str: 'Yes', 'No'): Indicate whether grid lines on chart will be turned on or off
 - **Excel** (str: 'Yes', 'No'): Indicate whether an Excel file of processed results will be generated
 - **JPEG** (str: 'Yes', 'No'): Indicate whether a JPEG file of processed results will be generated
@@ -66,7 +64,7 @@ In 'Sheet 2':
 - **Graph Title**: Syntax will be '\[All] y-axes vs x-axis'
 - **Start Row**: 1
 - **Stop Row**: --
-- **Skip Row**: --
+- **Skip First Row**: No
 - **X Min**: --
 - **X Max**: --
 - **Y Min**: --
@@ -85,7 +83,8 @@ In 'Sheet 2':
 - Excel can graph axes with different lengths. For the most part, matplotlib cannot. (Exceptions do occur when the values stay constant throughout but the graphs of Excel and matplotlib do contain errors.) 
 - **Range** column must be formatted so it is read as 'Text,' otherwise it will be converted into time. 
 - Milliseconds will be removed when converting into elapsed time. 
-- A JPEG file will not be generated if a chart is not processed, even if **JPEG** is set to 'Yes.' An Excel and PDF file can still be generated without a chart addition. 
+- A JPEG file will not be generated if a chart is not processed, even if **JPEG** is set to 'Yes.' An Excel and PDF file can still be generated without a chart addition.
+
 
 ## Future Refinements
 - Format PDF so the page containing the table and the chart are the same size. Center the table. 
