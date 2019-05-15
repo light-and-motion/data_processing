@@ -32,7 +32,7 @@ Each column will contain only 1 value.
 - **ChartTitle** (str): Title of chart
 - **Start Row** (int): Row to begin processing CSV file. Index will be based on CSV file. Must start at column title row.  
 - **Stop Row** (int): Row to stop processing CSV file. 
-- **Skip First Row** (str: 'Yes', 'No'): Line you want to skip when processing CSV file. Has to be between startLine and stopLine. Prevents elapsed time from being based off of a time value from a previous experiment. 
+- **Skip First Row** (str: 'Yes', 'No'): Indicate whether you want to skip the first row of data. Prevents elapsed time from being based off of a time value from a previous experiment. 
 - **X Min** (float): Minimum value on x-axis of chart. Does not work on datetimes. 
 - **X Max** (float): Maximum value on x-axis of chart. Does not work on datetimes. 
 - **Y Min** (float): Minimum value on y-axis of chart. Does not work on datetimes. 
