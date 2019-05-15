@@ -193,26 +193,37 @@ class JPEGFile(ChartFile):
         chart_title = self.general_settings.get_column('Chart Title')
         x_axis_index = self.get_x_axis().index[0]
         y_axis_indices = self.get_y_axis().index
+        is_x_elapsed_time = False
+        is_y_elapsed_time = False
 
         # Plot multiple lines on a single chart. 
         # As matplotlib does not allow timedelta objects to be directly set as an axis, must convert to a 
         # datetime object to plot on chart. 
         x_axis = self.output_data[new_titles[x_axis_index]].dropna() #mapping_df[new_titles[x_axis_row.index[0]]].dropna() 
         if (not (pd.isnull(self.mapped_settings.get_column('Time Unit').loc[x_axis_index]))):
+            is_x_elapsed_time = True
             x_axis = pd.Series(self._convert_timedelta_to_datetime(x_axis))
             
         
         #TODO: ReminderIf there are multiple y-axes, their dtypes have to be the same! 
         #TODO: Why does the data range have to be the same even columns that will not be plotted
         #fig, ax = plt.subplots(1,1)
-        fit = plt.figure(1)
+        fig, ax = plt.subplots(1) #figure(1)
         for y_axis_index in y_axis_indices: 
             y_axis_title = new_titles[y_axis_index]
-            y_axis = self.output_data[y_axis_title]
+            y_axis = self.output_data[y_axis_title].dropna()
             if (not pd.isnull(self.mapped_settings.get_column('Time Unit').loc[y_axis_index])): 
+                is_y_elapsed_time = True
                 y_axis = pd.Series(self._convert_timedelta_to_datetime(y_axis))
             plt.plot(x_axis, y_axis, label = new_titles.iloc[y_axis_index])
        
+        
+        # Elapsed time formatting
+        if (is_x_elapsed_time): 
+            self._format_x_date(fig, ax)
+        
+        if (is_y_elapsed_time): 
+            self._format_y_date(fig, ax)
         
         # Set the x-label and the y-label/legend
         self._chart_legend(plt, x_axis_index, y_axis_indices)
@@ -280,10 +291,12 @@ class JPEGFile(ChartFile):
         if (pd.isnull(isGridLinesOn.loc[0]) or isGridLinesOn.loc[0].upper() == 'YES'): 
             plt.grid(b = True)
     
-    def _format_date(self, fig, ax): 
-        if (not self.mapped_settings.get_column('Time Unit').dropna().empty):
+    def _format_x_date(self, fig, ax): 
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
             fig.autofmt_xdate()
+    
+    def _format_y_date(self, fig, ax): 
+            ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
     
     def _chart_scaling(self, plt): 
         x_min = self.general_settings.get_column('X Min').loc[0]

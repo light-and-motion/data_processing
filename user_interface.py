@@ -12,7 +12,7 @@ def banner():
 def choose_config():
     """Returns a list that contains the workbook itself as well as the name of the configuration file"""
     config_file = input('Enter name of configuration file: ')
-    config_file = 'LumenConfig'
+
     return [load_workbook(config_file + '.xlsx'), config_file]
 
 
@@ -23,7 +23,7 @@ def choose_csv():
     while input_csv == None:
         csv_choice = input('Enter name of CSV file to process: ')
         input_csv = csv_choice
-    input_csv ='Lumen_1'
+
     return input_csv
 
 def choose_output_name():
@@ -34,5 +34,4 @@ def choose_output_name():
         output_choice = input('Enter name of Output file: ')
         output_name = output_choice
     
-    output_name = 'LumenData'
     return output_name

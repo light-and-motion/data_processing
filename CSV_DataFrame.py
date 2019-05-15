@@ -1,6 +1,8 @@
 from DataFrames import DataFrame
 import pandas as pd
 import numpy as np
+from openpyxl import Workbook
+from openpyxl.utils.dataframe import dataframe_to_rows
 from datetime import datetime, timedelta
 
 class CSVDataFrame(DataFrame): 
@@ -15,17 +17,23 @@ class CSVDataFrame(DataFrame):
         self.mapped_settings = mapped_settings
         self.general_settings = general_settings
 
-    def get_startRow(self):  
+    def get_start_row(self):  
         start_ser = self.general_settings.get_column('Start Row')
         if (not start_ser.dropna().empty): 
             return start_ser.loc[0]-1
         return 0
 
-    def get_stopRow(self): 
+    def get_stop_row(self): 
         stop_ser =  self.general_settings.get_column('Stop Row')
         if (not stop_ser.dropna().empty): 
-            return stop_ser.loc[0]-self.get_startRow()-1
+            return stop_ser.loc[0] - self.get_start_row() - 1 
         return None
+
+    def get_skip_first_row(self): 
+        skip_ser = self.general_settings.get_column('Skip First Row')
+        if (not skip_ser.dropna().empty and skip_ser.loc[0].upper() == 'YES'):
+            return True
+        return False
     
     def get_transpose(self): 
         transpose_ser = self.general_settings.get_column('Transpose')
@@ -43,18 +51,22 @@ class CSVDataFrame(DataFrame):
         """
 
         # Default values         
-        startLine = self.get_startRow()
-        stopLine = self.get_stopRow()
+        startLine = self.get_start_row()
+        stopLine = self.get_stop_row()
+        skipLine = self.get_skip_first_row()
         transpose = self.get_transpose()
 
         # Read the CSV into the dataframe     
         self.df = self.df.append(self._read_csv_type(startLine, stopLine, transpose)) 
-        
-        ###
+    
         if (transpose.upper() == 'YES'): 
             #TODO: Ask if N/A marker is to be kept or if the cells that contain it be empty instead. 
-            self.df = self._transpose(startLine)
+            stopLine 
+            self.df = self._transpose(startLine, skipLine)
         
+        if (skipLine): 
+           self.df.drop(1, inplace=True)
+          #  self.df.reset_index(drop = True)
 
         # Get rid of columns with all whitespace 
         self.df = self.df.dropna('columns', how='all')
@@ -83,7 +95,23 @@ class CSVDataFrame(DataFrame):
             self.df[column].replace('', np.nan, inplace=True)
             self.df[column] = self.df[column].dropna()
             self.df[column] = pd.to_numeric(self.df[column], errors = 'ignore')
+
+    def read_into_excel(self, input_name):  
+        """Returns an Excel workbook that holds the CSV file in a dataframe
+        Parameters: 
+        data_df (dataframe): CSV file to be be read into the Excel workbook 
+        choice (int): The type of file that is being read into Excel 
+        """
+
+        wb = Workbook()
+        ws = wb.active
+        ws.title = 'Raw Data'
+
+        for row in dataframe_to_rows(self.df, index = False, header = True):            
+            ws.append(row)
         
+        wb.save(input_name + '.xlsx')
+
     def _read_csv_type(self, startLine, stopLine, transpose):
         """Returns the prototype dataframe of the CSV file 
         
@@ -118,17 +146,18 @@ class CSVDataFrame(DataFrame):
                             keep_default_na = False, 
                             encoding = 'ISO-8859-1') 
         # Stop reading before the end and transpose df 
+        # TODO: Elaborate further. (Add +1 to stopLine b/c data technically starts on second line?)
         else: 
             return pd.read_csv(self.file_name + '.csv', 
                             header = None, 
                             index_col= None, 
                             skiprows= startLine,
-                            nrows = stopLine,  
+                            nrows = stopLine + 1,  
                             keep_default_na = False, 
                             encoding = 'ISO-8859-1') 
 
     
-    def _transpose(self, startLine): 
+    def _transpose(self, startLine, skipLine): 
             """
             Returns a transposed df 
 
@@ -140,7 +169,7 @@ class CSVDataFrame(DataFrame):
             self.df = self.df.transpose()
             self.df.rename(self.df.iloc[0], axis = 'columns', inplace = True)
             self.df.drop(0, inplace = True)
-
+            
             #TODO: Research how dataframes are passed into functions. (pass by value or reference)
                     
             # As the transpose() function converts the dtypes of the transposed dataframe all into objects when the original dtypes 
@@ -176,7 +205,6 @@ class CSVDataFrame(DataFrame):
 
         # Filter out AM time; they do not need to undergo re-formatting 
         datetime_str_pm = datetime_str_series[~datetime_str_series.str.contains('AM')]
-    
         # Return a date format equal to the AM times 
         for datetime_str in datetime_str_pm:  
             datetime_str_list = datetime_str.split()
@@ -285,8 +313,7 @@ class CSVDataFrame(DataFrame):
         """
         
         start = 0 
-        end = max_size-1
-
+        end = max_size
         # Range is calculated against the row indexes of the Excel worksheet. Thus, the first
         # cell in a column will be located in row 2.   
         if (pd.isnull(current_range)): 
@@ -299,16 +326,18 @@ class CSVDataFrame(DataFrame):
             
             # Start at a certain point and go to the very end 
             elif (range_list[1] == ''): 
-                start = int(range_list[0])-self.get_startRow()
+                start = int(range_list[0]) - 1 #- self.get_startRow()
             
             # Start and stop at certain points
             else: 
-                start = int(range_list[0])-self.get_startRow()
-                if (start < 0):
-                    start = 0 
+                start = int(range_list[0]) - 1 #- self.get_startRow()
                 end = int(range_list[1])
-                if (end - 2 > max_size):
-                    end = max_size-1
+            # Final check to make sure intervals are not out of bounds 
+            #if (self.get_start_row() - start < 0):
+             #   start = 0 
+            if (end - 2 > max_size):
+                    end = max_size
+        #print(start, end)
         return [start,end]
     
     def convert_to_elapsed_time(self, output_df):
