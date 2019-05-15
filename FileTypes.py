@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
-#import pdfkit
-#from PyPDF2 import PdfFileReader, PdfFileWriter
-#import os
+import pdfkit
+from PyPDF2 import PdfFileReader, PdfFileWriter
+import os
 import numpy as np
 import pandas as pd
 
@@ -215,7 +215,7 @@ class JPEGFile(ChartFile):
             if (not pd.isnull(self.mapped_settings.get_column('Time Unit').loc[y_axis_index])): 
                 is_y_elapsed_time = True
                 y_axis = pd.Series(self._convert_timedelta_to_datetime(y_axis))
-            plt.plot(x_axis, y_axis, label = new_titles.iloc[y_axis_index])
+            ax.plot(x_axis, y_axis, label = new_titles.iloc[y_axis_index])
        
         
         # Elapsed time formatting
@@ -226,26 +226,26 @@ class JPEGFile(ChartFile):
             self._format_y_date(fig, ax)
         
         # Set the x-label and the y-label/legend
-        self._chart_legend(plt, x_axis_index, y_axis_indices)
+        self._chart_legend(ax, x_axis_index, y_axis_indices)
         
         # Set the title 
         title = self.get_chart_title(new_titles, chart_title, x_axis_index, y_axis_indices)
-        plt.title(title)
+        ax.set_title(title)
         
         # Set gridlines 
-        self._grid_lines(plt)   
+        self._grid_lines(ax)   
 
         # Chart scaling 
-        self._chart_scaling(plt)
+        self._chart_scaling(ax)
         
         # Save charts in stated formats
         
         if (jpeg_choice): 
             plt.savefig(self.output_name + '.jpeg', bbox_inches = 'tight')
         
-        #if (pdf_choice): 
-         #   plt.savefig(self.output_name + '_chart' + '.pdf', bbox_inches = 'tight') 
-        #return fig
+        if (pdf_choice): 
+            plt.savefig(self.output_name + '_chart' + '.pdf', bbox_inches = 'tight') 
+        return fig
         
 
     #TODO: Faster way to acomplish this https://stackoverflow.com/questions/48294332/plot-datetime-timedelta-using-matplotlib-and-python
@@ -276,20 +276,20 @@ class JPEGFile(ChartFile):
         
         return x_axis
 
-    def _chart_legend(self, plt, x_axis_index, y_axis_indices): 
+    def _chart_legend(self, ax, x_axis_index, y_axis_indices): 
         # Set the labels and/or legend of the chart
         
         new_titles = self.mapped_settings.get_column('Title') 
-        plt.xlabel(new_titles[x_axis_index])
+        ax.set_xlabel(new_titles[x_axis_index])
         if (len(y_axis_indices) > 1):
-            plt.legend(loc='upper left', bbox_to_anchor =(1.05,1))
+            ax.legend(loc='upper left', bbox_to_anchor =(1.05,1))
         else: 
-            plt.ylabel(new_titles[y_axis_indices[0]])
+            ax.set_ylabel(new_titles[y_axis_indices[0]])
 
-    def _grid_lines(self, plt): 
+    def _grid_lines(self, ax): 
         isGridLinesOn = self.general_settings.get_column('Grid Lines') 
         if (pd.isnull(isGridLinesOn.loc[0]) or isGridLinesOn.loc[0].upper() == 'YES'): 
-            plt.grid(b = True)
+            ax.grid(b = True)
     
     def _format_x_date(self, fig, ax): 
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
@@ -298,22 +298,22 @@ class JPEGFile(ChartFile):
     def _format_y_date(self, fig, ax): 
             ax.yaxis.set_major_formatter(mdates.DateFormatter('%H:%M:%S'))
     
-    def _chart_scaling(self, plt): 
+    def _chart_scaling(self, ax): 
         x_min = self.general_settings.get_column('X Min').loc[0]
         x_max = self.general_settings.get_column('X Max').loc[0]
         y_min = self.general_settings.get_column('Y Min').loc[0]
         y_max = self.general_settings.get_column('Y Max').loc[0]
 
         if (not pd.isnull(x_min)): 
-            plt.xlim(left = x_min)
+            ax.set_xlim(left = x_min)
         if (not pd.isnull(x_max)): 
-            plt.xlim(right = x_max)
+            ax.set_xlim(right = x_max)
         if (not pd.isnull(y_min)): 
-            plt.ylim(bottom = y_min)
+            ax.set_ylim(bottom = y_min)
         if (not pd.isnull(y_max)): 
-            plt.ylim(top = y_max)
+            ax.set_ylim(top = y_max)
         
-'''
+
 class PDFFile (ChartFile): 
 
     def output(self): 
@@ -336,6 +336,11 @@ class PDFFile (ChartFile):
         
         # Replace NaN values with empty strings so the empty data cells do not look like they hold any values in the PDF file 
         mapping_df = self.output_data.fillna('')
+        
+        # Convert datetime into strings so 0 days portion doesn't show up in PDF
+        total_time_cols = self.mapped_settings.get_col('Time Units')
+    
+        mapping_df['Date/Time'] = [date[-8:] for date in mapping_df['Date/Time'].astype(str)]
         
         # If the PDF file is to contain a chart, then merge the dataframe and chart PDF into a single PDF. 
         # Otherwise, just save the dataframe PDF as is. 
@@ -371,7 +376,7 @@ class PDFFile (ChartFile):
         # Delete merged files 
         os.remove(paths[0])
         os.remove(paths[1])
-'''
+
 class TXTFile(File): 
     def output(self): 
         text_choice = self.make_file(self.general_settings.get_column('TXT').loc[0])
