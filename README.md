@@ -22,7 +22,7 @@ Each row in the configuration file corresponds to a single column of data in the
 - **Range** (str: '\[Start]:\[End]') : Interval of data in column that is to be processed. Indices will be based on the resulting Excel file. Elapsed time will be based off of the first time value in the original dataset. 
 
 'Sheet 2' gives the 'General Settings' of the program. The columns should be titled: 
-> **Graph Title | Start Row | Stop Row | Skip Row | X Min | X Max | Y Min | Y Max | Grid Lines | Excel | JPEG | PDF | TXT 
+> **Graph Title | Start Row | Stop Row | Skip First Row | X Min | X Max | Y Min | Y Max | Grid Lines | Excel | JPEG | PDF | TXT 
  Transpose** 
 
 **_All inputs are case insensitive._**
