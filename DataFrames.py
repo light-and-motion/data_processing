@@ -1,69 +1,79 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-class DataFrame(object): 
+class MyDataFrame(object): 
     """
-    A class used to read a file into a pd.df
+    A class used to read a file into a pandas dataframe 
 
     Attributes: 
     file_name (str): Name of file to be read into CSV 
-    df (pd.df): Stores file_name contents 
+    df (dataframe): Stores the data contained in the file 
     """
-    def __init__(self,file_name, df):
+    def __init__(self, file_name: str, df: pd.DataFrame) -> None:
         self.file_name = file_name
         self.df = pd.DataFrame()
 
-    def print_df(self): 
+    def print_df(self) -> None: 
+        """Prints the dataframe."""
+        
         print(self.df)
     
-    def print_dtypes(self): 
+    def print_dtypes(self) -> pd.Series: 
+        """Prints the data types of each column in the dataframe."""
+        
         print(self.df.dtypes)
     
-    def get_df(self): 
+    def get_df(self) -> pd.DataFrame: 
+        """Returns the dataframe."""
+        
         return self.df
 
-    def get_column(self, column_name): 
-        return self.df[column_name]
+    def get_column(self, column_label: str) -> pd.Series:
+        """Returns the column associated with the column label"""
+        
+        return self.df[column_label]
     
     #TODO: What does @property do???
     @property
-    def get_column_labels(self): 
+    def get_column_labels(self) -> pd.Index:
+        """Returns the column labels of the dataframe""" 
+        
         return self.df.columns
     
-    def set_column(self,column_name, data_list):
-        self.df[column_name] = data_list
+    def set_column(self,column_label: str, data_list: list) -> None:
+        """Sets the column in the dataframe associated with column label
+         equal to the given list"""
 
-class ExcelDataFrame (DataFrame): 
+        self.df[column_label] = data_list
+
+class ExcelDataFrame (MyDataFrame): 
     """ 
-    A class used to read an Excel file into a pd.df
+    Extends MyDataFrame to read in the Excel configuration file of the CSV into a pandas dataframe
 
     Attributes: 
-    sheet_name (str) = Name of sheet in file_name we want read into a pd.df
+    sheet_name (str) = Name of sheet in Excel file we want read into a dataframe
+
     """
-    def __init__(self, file_name, df, sheet_name): 
+    def __init__(self, file_name: str, df: pd.DataFrame, sheet_name: str) -> None: 
         super().__init__(file_name, df)
         self.sheet_name = sheet_name
     
-    def create(self): 
-        """Returns a dataframe of an Excel file 
+    def create(self) -> None: 
+        """Reads a sheet of the configuration file into a dataframe"""
 
-        Used to store configuration data into a dataframe. 
-
-        Parameters: 
-        file (str): Name of Excel file  
-        sheet (str): Name of Excel sheet from 'file'  
-        """
         self.df = self.df.append(pd.read_excel(self.file_name + '.xlsx', sheet_name = self.sheet_name, dtype = {'Title': str}))
     
 class MappedExcelDataFrame(ExcelDataFrame): 
-    """A class that processes the mapped settings of the configuration file"""
+    """Extends ExcelDataFrame to process the mapped settings of the configuration file"""
     
     def format(self, col_labels):
         """Alters several settings of the configuration dataframe. 
         Changes: 
-            a) Column letters in 'Input' have been replaced by column titles of the given CSV columns
-            b) Column letters in 'Output' have been replaced by column numbers of the given CSV columns 
-            c) Empty column titles in the 'title' column have been filled in with original titles of the CSV columns 
+            a) Create a new column labeled 'Input Column Numbers' that creates a copy of 'Input' column and coverts the column 
+                letters to column numbers.   
+            b) Column letters in 'Input' have been replaced by column labels.  
+            c) Column letters in 'Output' have been replaced by column numbers.  
+            d) Empty column titles in 'Title' have been filled in with the original column labels 
 
         Parameters:  
         col_labels (series): Original labels of the CSV columns 
@@ -84,12 +94,15 @@ class MappedExcelDataFrame(ExcelDataFrame):
         super().set_column('Title', data)
 
     def _letter2title(self, letter_series, names):
-        """Returns a series where column letters are converted into column titles.
-
+        """
         Parameters: 
         letter_series (series): Excel column letters
-        names (series): CSV column titles 
+        names (series): CSV column labels 
+
+        Returns: 
+        series: New series where column letters have been converted into their column labels 
         """
+
         col_title = []
         indices = self._letter2int(letter_series)
         
@@ -101,12 +114,14 @@ class MappedExcelDataFrame(ExcelDataFrame):
         return pd.Series(col_title)
     
     def _letter2int(self, letter_series):
-        """Returns a series where column letters are being converted into their corresponding column number. 
-
+        """Converts an Excel column letter to its correspodning column number 
         Source: https://www.geeksforgeeks.org/find-excel-column-number-column-title/
 
         Parameters: 
         letter_series (series): Excel column letters
+
+        Returns: 
+        series: Letter column values in letter_series have been replaced with their corresponding column number 
         """
         
         result = 0
