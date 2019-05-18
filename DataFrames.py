@@ -66,7 +66,7 @@ class ExcelDataFrame (MyDataFrame):
 class MappedExcelDataFrame(ExcelDataFrame): 
     """Extends ExcelDataFrame to process the mapped settings of the configuration file"""
     
-    def format(self, col_labels):
+    def format(self, col_labels: str) -> None:
         """Alters several settings of the configuration dataframe. 
         Changes: 
             a) Create a new column labeled 'Input Column Numbers' that creates a copy of 'Input' column and coverts the column 
@@ -93,10 +93,12 @@ class MappedExcelDataFrame(ExcelDataFrame):
         data = self._default_titles(super().get_column('Title'), super().get_column('Input'))
         super().set_column('Title', data)
 
-    def _letter2title(self, letter_series, names):
+    def _letter2title(self, letter_series: pd.Series, names: pd.Index) -> pd.Series:
         """
+        Converts a series that contains CSV column letters into its corresponding column labels 
+
         Parameters: 
-        letter_series (series): Excel column letters
+        letter_series (series): Column letters
         names (series): CSV column labels 
 
         Returns: 
@@ -105,7 +107,7 @@ class MappedExcelDataFrame(ExcelDataFrame):
 
         col_title = []
         indices = self._letter2int(letter_series)
-        
+        print(type(names))
         for x in range(letter_series.size): 
             index = indices.loc[x]      
             title = names[index-1]
@@ -113,8 +115,8 @@ class MappedExcelDataFrame(ExcelDataFrame):
         
         return pd.Series(col_title)
     
-    def _letter2int(self, letter_series):
-        """Converts an Excel column letter to its correspodning column number 
+    def _letter2int(self, letter_series: pd.Series) -> pd.Series:
+        """Converts a Series of Excel column letter into its corresponding column number 
         Source: https://www.geeksforgeeks.org/find-excel-column-number-column-title/
 
         Parameters: 
@@ -134,15 +136,23 @@ class MappedExcelDataFrame(ExcelDataFrame):
             letter_series.replace(col_letter, result, inplace=True)
         return letter_series
     
-    def _default_titles(self, new_titles, input_titles): 
-        """Returns a series where processed CSV columns that are not given a new title in output
-        now hold their original CSV column titles. 
+    def _default_titles(self, new_labels: pd.Series, original_labels: pd.Series) -> pd.Series: 
+        """
+        Provides a default title to processed CSV columns that were not given a new title in the 
+        configuration file. 
+
+        Parameters: 
+        new_labels (series): New labels of the processed columns
+        original_labels (series): Old labels of the processed columns 
+
+        Returns: 
+        series: Processed CSV columns that were not given a new label are now associated with their original label
         """
         
         x = 0
-        for title in new_titles: 
+        for title in new_labels: 
             if (pd.isnull(title)): 
-                new_titles.iat[x] = input_titles.iat[x]
+                new_labels.iat[x] = original_labels.iat[x]
             x += 1
-        return new_titles
+        return new_labels
 
