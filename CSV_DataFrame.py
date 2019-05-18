@@ -1,60 +1,67 @@
-from DataFrames import DataFrame
+from DataFrames import MyDataFrame, ExcelDataFrame, MappedExcelDataFrame
 import pandas as pd
 import numpy as np
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
 from datetime import datetime, timedelta
 
-class CSVDataFrame(DataFrame): 
+class CSVDataFrame(MyDataFrame): 
     """
-    A class used to read a CSV file into a pd.df 
+    Extends MyDataFrame to read a CSV into a pandas dataframe. 
 
     Attributes: 
-    general_settings (pd.df): Contains the settings that will be used to configure csv df  
+    mapped_settings (MappedExcelDataFrame): Contains the mapped settings in the configuration file
+    general_settings (ExcelDataFrame): Contains the general settings of the configuration file  
     """
-    def __init__(self,file_name, df, mapped_settings, general_settings): 
+
+    def __init__(self,file_name: str, df: pd.DataFrame, mapped_settings: MappedExcelDataFrame, general_settings: ExcelDataFrame) -> None: 
         super().__init__(file_name, df)
         self.mapped_settings = mapped_settings
         self.general_settings = general_settings
 
-    def get_start_row(self):  
+    def get_start_row(self) -> int:  
+        """Returns the first line number to be read from the CSV."""
+
         start_ser = self.general_settings.get_column('Start Row')
-        if (not start_ser.dropna().empty): 
+        if (not start_ser.dropna().empty):
+            # Minus 1 because pandas is zero-indexed  
             return start_ser.loc[0]-1
         return 0
 
-    def get_stop_row(self): 
+    def get_stop_row(self) -> int or None: 
+        """Returns the last line number to be read from the CSV."""
+
         stop_ser =  self.general_settings.get_column('Stop Row')
         if (not stop_ser.dropna().empty): 
             return stop_ser.loc[0] - self.get_start_row() - 1 
         return None
 
-    def get_skip_first_row(self): 
+    def is_first_row_skipped(self) -> bool : 
+        """Returns True if there is a line number you want to skip that is between the first and 
+        last line numbers."""
+
         skip_ser = self.general_settings.get_column('Skip First Row')
         if (not skip_ser.dropna().empty and skip_ser.loc[0].upper() == 'YES'):
             return True
         return False
     
-    def get_transpose(self): 
+    def is_df_transpose(self) -> str: 
+        """Returns "YES" if dataframe is to be transposed, "NO" otherwise."""
+        
         transpose_ser = self.general_settings.get_column('Transpose')
-        if (not transpose_ser.dropna().empty): 
-            return transpose_ser.loc[0]
+        if (not transpose_ser.dropna().empty and transpose_ser.loc[0].upper() == 'YES'): 
+            return 'YES'
         return 'NO'
 
 
     def create(self): 
-        """Returns a dataframe of the CSV file 
-
-        Parameters: 
-        file (str): Name of CSV file to be processed
-        general_settings_2 (dataframe): 'General Settings' of the configuration file 
-        """
+        """Returns a dataframe of the CSV."""
 
         # Default values         
         startLine = self.get_start_row()
         stopLine = self.get_stop_row()
-        skipLine = self.get_skip_first_row()
-        transpose = self.get_transpose()
+        skipLine = self.is_first_row_skipped()
+        transpose = self.is_df_transpose()
 
         # Read the CSV into the dataframe     
         self.df = self.df.append(self._read_csv_type(startLine, stopLine, transpose)) 
@@ -66,7 +73,6 @@ class CSVDataFrame(DataFrame):
         
         if (skipLine): 
            self.df.drop(1, inplace=True)
-          #  self.df.reset_index(drop = True)
 
         # Get rid of columns with all whitespace 
         self.df = self.df.dropna('columns', how='all')
@@ -74,33 +80,35 @@ class CSVDataFrame(DataFrame):
         # Reset index to start at 0 after dropping column(s)
         self.df = self.df.reset_index(drop=True)
         
-        # Search for the columns that have a PM time. (Note: Excel convert str times with a PM time into 24 hour time). 
-        # For example, 1:27 PM is converted into 13:27.  
+        # Search for the columns that have a PM time. (Note: Excel convert str times with a PM time into 
+        # military time. For example, 1:27 PM is converted into 13:27. 
         datetime_str_columns = self._search_for_pm_times()
-
            
-        # Format the PM time columns into 12 hour time format. 
+        # Format the PM time columns into 12 hour clock format
         [self._date_parser(self.df[column_name]) for column_name in datetime_str_columns]        
         
-        
-        # Iterates through all the columns of the dataframe and converts the numeric values back into their proper datatype
+        # Iterates through all the columns in the dataframe and converts the digit object values into their proper datatype
 
         # Used in particular for: 
         #   a) transposed df: As the transpose() function converts the dtypes of the transposed dataframe all into 
         #                     objects when the original dtypes were mixed, the while loop converts the 
-        #                     numeric values back into their proper dtype. 
-        #   b) Columns with empty Strings: The empty String values conver the entire column into an object dtype. By dropping the empty strings, 
-        #                     the column can be converted to numeric type.
+        #                     digit values into numeric dtype. 
+        #   b) Columns with empty Strings: The empty String values convert the entire column into an object dtype. 
+        #                     By dropping the empty strings, the column can be converted int numeric dtype.
         for column in self.df: 
             self.df[column].replace('', np.nan, inplace=True)
             self.df[column] = self.df[column].dropna()
             self.df[column] = pd.to_numeric(self.df[column], errors = 'ignore')
 
-    def read_into_excel(self, input_name):  
-        """Returns an Excel workbook that holds the CSV file in a dataframe
+    def read_into_excel(self, input_name: str) -> Workbook:  
+        """
+        Reads a CSV into an Excel workbook. 
+
         Parameters: 
-        data_df (dataframe): CSV file to be be read into the Excel workbook 
-        choice (int): The type of file that is being read into Excel 
+        input_name (str): Name of CSV 
+
+        Returns: 
+        workbook: Holds the CSV in an Excel file 
         """
 
         wb = Workbook()
@@ -112,24 +120,24 @@ class CSVDataFrame(DataFrame):
         
         wb.save(input_name + '.xlsx')
 
-    def _read_csv_type(self, startLine, stopLine, transpose):
-        """Returns the prototype dataframe of the CSV file 
+    def _read_csv_type(self, startLine: int, stopLine: int, transpose: int) -> pd.DataFrame:
+        """Reads the CSV into a prototype dataframe 
+        Returns the prototype dataframe of the CSV 
         
         Parameters: 
-        file (str):  Name of CSV file to be processed
-        startLine (int): Row to begin processing CSV file
-        stopLine (int): Row to stop processing CSV file
+        startLine (int): First line number read from CSV 
+        stopLine (int):  Last line number read from CSV
         transpose (str): Determines whether df is to be transposed 
         """ 
 
-        # Read to the very end of the file  
+        # Read to the very end of the file and do not transpose CSV 
         if (stopLine == None and transpose == 'NO'): 
             return pd.read_csv(self.file_name+ '.csv', 
                             skiprows= startLine, 
                             keep_default_na = False, 
                             encoding = 'ISO-8859-1')
 
-        # Stop reading before the end of a file 
+        # Read to a specific line number and do not transpose CSV 
         elif (transpose.upper() == 'NO'):
             return pd.read_csv(self.file_name + '.csv', 
                             skiprows= startLine, 
@@ -137,7 +145,7 @@ class CSVDataFrame(DataFrame):
                             keep_default_na = False, 
                             encoding = 'ISO-8859-1')
 
-        # Read to the very end and transpose df 
+        # Read to the very end and transpose CSV 
         elif (stopLine == None and transpose.upper() == 'YES'): 
             return pd.read_csv(self.file_name + '.csv', 
                             header = None, 
@@ -145,7 +153,7 @@ class CSVDataFrame(DataFrame):
                             skiprows= startLine, 
                             keep_default_na = False, 
                             encoding = 'ISO-8859-1') 
-        # Stop reading before the end and transpose df 
+        # Read to a specific line number and transpose CSV 
         # TODO: Elaborate further. (Add +1 to stopLine b/c data technically starts on second line?)
         else: 
             return pd.read_csv(self.file_name + '.csv', 
@@ -157,31 +165,35 @@ class CSVDataFrame(DataFrame):
                             encoding = 'ISO-8859-1') 
 
     
-    def _transpose(self, startLine, skipLine): 
+    def _transpose(self, startLine: int, skipLine: bool): 
             """
-            Returns a transposed df 
+            Transpose the dataframe  
 
             Parameters: 
-            df (df): df that is to be transposed
-            startLine (int): Row to begin processing CSV file
+            startLine (int): First line number read from CSV 
+            skipLine (bool): True if second line number (relative to startLine) is skipped
+
+            Returns: 
+            dataframe: transposed dataframe
             """
-            # Logic to set the actual columns and indices in the transposed data
+            # Logic to set the actual columns and indices in the transposed dataframe 
             self.df = self.df.transpose()
             self.df.rename(self.df.iloc[0], axis = 'columns', inplace = True)
             self.df.drop(0, inplace = True)
             
             #TODO: Research how dataframes are passed into functions. (pass by value or reference)
-                    
-            # As the transpose() function converts the dtypes of the transposed dataframe all into objects when the original dtypes 
-            # were mixed, the while loop converts the numeric values back into their proper dtype
             
             return self.df
        
     def _search_for_pm_times(self):
         """ Returns a list that stores all the titles of the columns that contain PM times"""
 
-        # Search the first row of every column in the dataframe, convert every value to strptime(%-m/%-d/%Y %H:%M:%S) or 
-        # strptime(%-m/%d/%Y %H:%M). If a ValueError is NOT returned, then add the title of the column to the list. 
+        # Search the first row of every column in the dataframe. If the data found is a string representation of 
+        # a datetime object, then there is the possibility that the time values in the columns are military time. 
+        # Try converting every string in the column value to a datetime object without an AM/PM, which 12 hour clock 
+        # formats possesses. If the conversion is successful, then add the label of the column to the list of 
+        # columns we need to reformat. 
+
         datetime_str_column = []
         
         for column in self.df: 
@@ -193,6 +205,7 @@ class CSVDataFrame(DataFrame):
                     datetime_str_column.append(column)
             except ValueError: 
                 pass 
+            
         return datetime_str_column
         
     
@@ -226,7 +239,7 @@ class CSVDataFrame(DataFrame):
         """Returns a dataframe that contains only the CSV columns that are being processed 
 
         Parameters: 
-        raw_data_df (dataframe): dataframe of CSV file 
+        raw_data_df (dataframe): dataframe of CSV 
         title_inputs (series): Original titles of the processed CSV columns 
         range_inputs (series): Interval of data we want read in each processed CSV column
         """
