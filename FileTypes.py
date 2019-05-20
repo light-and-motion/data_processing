@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
-import pdfkit
+from matplotlib.backends.backend_pdf import PdfPages
 from PyPDF2 import PdfFileReader, PdfFileWriter
 import os
 import numpy as np
@@ -178,6 +178,7 @@ class JPEGFile(ChartFile):
     def output(self): 
         jpeg_choice = self.make_file(self.general_settings.get_column('JPEG').loc[0])
         pdf_choice = self.make_file(self.general_settings.get_column('PDF').loc[0])
+        print(jpeg_choice)
         if ((jpeg_choice or pdf_choice) and self.make_chart()):
             self._make(jpeg_choice, pdf_choice) 
     
@@ -207,8 +208,9 @@ class JPEGFile(ChartFile):
         
         #TODO: ReminderIf there are multiple y-axes, their dtypes have to be the same! 
         #TODO: Why does the data range have to be the same even columns that will not be plotted
-        #fig, ax = plt.subplots(1,1)
-        fig, ax = plt.subplots(1) #figure(1)
+
+        fig = plt.figure(figsize = (8.5, 11))
+        ax = plt.subplot()
         for y_axis_index in y_axis_indices: 
             y_axis_title = new_titles[y_axis_index]
             y_axis = self.output_data[y_axis_title].dropna()
@@ -238,9 +240,12 @@ class JPEGFile(ChartFile):
         # Chart scaling 
         self._chart_scaling(ax)
         
+        # Set page number 
+        fig.text(4.25/8.5, 0.5/11., '1', ha='center', fontsize=12)
+
         # Save charts in stated formats
-        
         if (jpeg_choice): 
+            print("printing jpeg")
             plt.savefig(self.output_name + '.jpeg', bbox_inches = 'tight')
         
         if (pdf_choice): 
@@ -338,20 +343,75 @@ class PDFFile (ChartFile):
         mapping_df = self.output_data.fillna('')
         
         # Convert datetime into strings so 0 days portion doesn't show up in PDF
-        total_time_cols = self.mapped_settings.get_col('Time Units')
+        #total_time_cols = self.mapped_settings.get_col('Time Units')
     
-        mapping_df['Date/Time'] = [date[-8:] for date in mapping_df['Date/Time'].astype(str)]
+        #mapping_df['Date/Time'] = [date[-8:] for date in mapping_df['Date/Time'].astype(str)]
+        
+        self._make_table(mapping_df)
         
         # If the PDF file is to contain a chart, then merge the dataframe and chart PDF into a single PDF. 
-        # Otherwise, just save the dataframe PDF as is. 
-        if (not self.make_chart()): 
-            pdfkit.from_string(mapping_df.to_html(), df_file)
-    
-        else:  
+        # Otherwise, just save the dataframe PDF as is:
+        if (self.make_chart()):   
             df_file = os.getcwd() + '\\' + self.output_name + '_table.pdf'
-            pdfkit.from_string(mapping_df.to_html(), df_file)
+            #pdfkit.from_string(mapping_df.to_html(), df_file)
             paths = [os.getcwd() + '\\' + self.output_name + '_chart.pdf' ,df_file]
             self._merge_pdfs(paths)
+
+
+    def _make_table(self, mapping_df): 
+        """
+        Renders the output dataframe in PDF format. 
+
+        Source: https://stackoverflow.com/questions/19726663/how-to-save-the-pandas-dataframe-series-data-as-a-figure
+
+        Parameters: 
+        mapping_df (pd.DataFrame): Output dataframe with NaNs replaced with whitespace
+
+        Returns: 
+        None 
+        """
+        if (self.make_chart()): 
+            pp = PdfPages(self.output_name + '_table.pdf')
+        else: 
+            pp = PdfPages(self.output_name + '.pdf')
+        total_rows, total_cols = mapping_df.shape; #There were 3 columns in my df
+
+        rows_per_page = 40 # Assign a page cut off length
+        rows_printed = 0
+        if (self.make_chart()): 
+            page_number = 2
+        else: 
+            page_number = 1
+
+        while (total_rows >0): 
+
+            #put the table on a correctly sized figure    
+            fig = plt.figure(figsize=(8.5,11))
+            ax = plt.subplot()
+            ax.axis('off')
+            matplotlib_tab = pd.plotting.table(ax, mapping_df.iloc[rows_printed:rows_printed+rows_per_page], loc='upper center') #, colWidths=[0.2, 0.2, 0.2])    
+            
+            # Give you cells some styling 
+            table_props=matplotlib_tab.properties()
+            table_cells=table_props['child_artists'] # I have no clue why child_artists works
+            for cell in table_cells:
+                    cell.set_height(0.024)
+                    cell.set_fontsize(12)
+                    
+            # Add a header and footer with page number 
+            fig.text(4.25/8.5, 10.5/11., "Table", ha='center', fontsize=12)
+            fig.text(4.25/8.5, 0.5/11., str(page_number), ha='center', fontsize=12)
+
+            pp.savefig()
+            plt.close()
+
+            #Update variables
+            rows_printed += rows_per_page
+            total_rows -= rows_per_page
+            page_number+=1
+
+        pp.close()
+
 
     def _merge_pdfs(self,paths): 
         """Merges two PDFs into a single PDF 
@@ -386,7 +446,8 @@ class TXTFile(File):
     def _make(self): 
         """Generates a text file of the processed results"""
         #print(mapping_df.head())
-        mapping_array = self.output_data.to_numpy()
+        mapping_df = self.output_data.fillna(' ')
+        mapping_array = mapping_df.to_numpy()
         my_fmt = self._get_format()
 
         #TODO: tab delimiter looks weird on txt file
