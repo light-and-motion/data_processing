@@ -1,13 +1,22 @@
 import pandas as pd
 
 class File(object): 
+    """
+    A class used to output files of the processed CSV
+
+    Attributes: 
+    mapped_settings (MappedExcelDataFrame): Contains the mapped settings in the configuration file
+    general_settings (ExcelDataFrame): Contains the general settings of the configuration file  
+    output_data (pd.DataFrame): Dataframe of the processed CSV 
+    output_name(str): Name of the output files 
+    """
     def __init__(self, mapped_settings, general_settings, output_data, output_name): 
         self.mapped_settings = mapped_settings
         self.general_settings = general_settings
         self.output_data = output_data
         self.output_name = output_name
     
-    def make_file(self, choice): 
+    def make_file(self, choice) -> None: 
         """ Determines if an Excel, JPEG, or PDF file will be generated"""
 
         if (pd.isnull(choice) or choice.upper() == 'YES'): 

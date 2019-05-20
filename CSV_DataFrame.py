@@ -179,7 +179,7 @@ class CSVDataFrame(MyDataFrame):
             skipLine (bool): True if second line number (relative to startLine) is skipped
 
             Returns: 
-            dataframe: transposed dataframe
+            pd.DataFrame: Transposed dataframe
             """
             # Logic to set the actual columns and indices in the transposed dataframe 
             self.df = self.df.transpose()
@@ -190,7 +190,7 @@ class CSVDataFrame(MyDataFrame):
             
             return self.df
        
-    def _search_for_pm_times(self):
+    def _search_for_pm_times(self) -> pd.Series:
         """ Returns a list that stores all the titles of the columns that contain PM times"""
 
         # Search the first row of every column in the dataframe. If the data found is a string representation of 
@@ -222,11 +222,12 @@ class CSVDataFrame(MyDataFrame):
         return datetime_str_column
         
     
-    def _date_parser(self, datetime_str_series):
-        """ Returns a series with its PM times formatted to look like AM times 
-        
+    def _date_parser(self, datetime_str_series) -> pd.Series:
+        """Converts a series that holds string representations of military time into 
+        a series that holds string representations of standard time.   
+         
         Parameters: 
-        datetime_str_series (series): Contains PM times that needs to be reformatted  
+        datetime_str_series (pd.Series): Contains military times 
         """
         #datetime_str_pm = datetime_str_series[~datetime_str_series.str.contains('AM')]
 
@@ -250,28 +251,25 @@ class CSVDataFrame(MyDataFrame):
         return datetime_str_pm
 
 
-    def map_columns(self): 
-        """Returns a dataframe that contains only the CSV columns that are being processed 
-
-        Parameters: 
-        raw_data_df (dataframe): dataframe of CSV 
-        title_inputs (series): Original titles of the processed CSV columns 
-        range_inputs (series): Interval of data we want read in each processed CSV column
+    def map_columns(self) -> pd.DataFrame: 
+        """Returns a dataframe that contains only the CSV columns that will be mapped
+        to the output files. 
         """
+
         title_inputs =  self.mapped_settings.get_column('Input')
         new_titles = self.mapped_settings.get_column('Title')
         range_inputs = self.mapped_settings.get_column('Range')
         format = self.mapped_settings.get_column('Format')
         raw_data = self.df.copy()
     
-        # Initialize an empty dataframe which will eventually store all mapped values 
+        # Initialize the dataframe that store the mapped values 
         mapped_df = pd.DataFrame()
         
         # Find size of dataframe column  
         max_size = raw_data.iloc[:,0].size
         
         # Determine the column with the largest range interval, whose index will be used for the entire dataframe. 
-        interval_index = self._largest_range_interval(range_inputs, max_size)
+        interval_index = self._largest_interval(range_inputs, max_size)
         range_list = self._find_range(range_inputs.loc[interval_index],max_size)
         start = range_list[0]
         end = range_list[1]
@@ -304,17 +302,21 @@ class CSVDataFrame(MyDataFrame):
 
         return mapped_df
     
-    def _round_numbers(self, series, round_to): 
-        """ Round numbers in 'series' to the number of decimal places indiciated by 'round_to'"""
+    def _round_numbers(self, series, round_to) -> pd.Series: 
+        """ Round numbers in the series to the number of decimal places indiciated by 'round_to'"""
+
         series = series.round(round_to)
         return series
     
-    def _largest_range_interval(self, range_inputs, max_size):
-        """ Returns the row index of the largest range interval  
+    def _largest_interval(self, range_inputs, max_size):
+        """Determines the CSV column with the largest set interval. 
 
         Parameters: 
-        range_inputs (series): Interval of data we want read in each processed CSV column
+        range_inputs (pd.Series): Interval of data set we want read into each processed CSV column
         max_size (int) - Size of the CSV column 
+
+        Returns: 
+        int: Row label of the CSV column with the largest set interval 
         """ 
         
         max_interval = 0
@@ -331,35 +333,37 @@ class CSVDataFrame(MyDataFrame):
         return max_interval_index
     
     def _find_range(self, current_range, max_size): 
-        """Returns a list of the interval of data we want processed in a CSV column.
-
-        The first elment in the list is the starting row index, the second element is the ending row index. 
+        """Gives the starting and ending row index of the column's data interval. 
 
         Parameters: 
         current_range (float): The interval of the data to be read in 'start:end' format (inclusive)
         max_size (int) - Size of the CSV column 
+
+        Returns: 
+        list: First element gives the starting row index, second element gives the ending row index
         """
         
         start = 0 
         end = max_size
-        # Range is calculated against the row indexes of the Excel worksheet. Thus, the first
-        # cell in a column will be located in row 2.   
+ 
         if (pd.isnull(current_range)): 
             pass
         else: 
             range_list = current_range.split(':')
-            # Start at the very beginning and stop at a certain point 
+            
+            # Start at the very beginning and stop at a specific line number
             if (range_list[0] == ''):
                 end = int(range_list[1])
             
-            # Start at a certain point and go to the very end 
+            # Start at a specific line number and go to the very end 
             elif (range_list[1] == ''): 
                 start = int(range_list[0]) - 1 #- self.get_startRow()
             
-            # Start and stop at certain points
+            # Start and stop at specific line numbers
             else: 
                 start = int(range_list[0]) - 1 #- self.get_startRow()
                 end = int(range_list[1])
+
             # Final check to make sure intervals are not out of bounds 
             #if (self.get_start_row() - start < 0):
              #   start = 0 
@@ -369,10 +373,14 @@ class CSVDataFrame(MyDataFrame):
         return [start,end]
     
     def convert_to_elapsed_time(self, output_df):
-        """ Returns output_df with the time values converted into elapsed times
+        """Returns output_df with the str representations of datetime objects converted into 
+        timedelta objects. 
         
         Parameters: 
-        output_df(df): df that contains the values to be converted 
+        output_df(pd.DataFrame): Contains only the colums we want processed in the CSV  
+
+        Returns: 
+        pd.DataFrame: Time columns are converted into elapsed times
         """ 
 
         # Grab the time units of the columns whose values is to be converted into elapsed times 
@@ -383,7 +391,6 @@ class CSVDataFrame(MyDataFrame):
             
             # 'index' contains the indices of the time columns in mapped_settings ('Sheet 1' of the configuration file) 
             all_time_indices = time_units_df.index.values
-            #all_time_titles = self.mapped_settings.letter2int(self.mapped_settings.get_column('Input Column Numbers'))
             all_time_titles = self.mapped_settings.get_column('Input Column Numbers')
             
             # Iterate through all the time columns 
@@ -414,18 +421,25 @@ class CSVDataFrame(MyDataFrame):
         return output_df
 
     def _convert_to_elapsed_time_str_series(self, series, unit):
-        """Returns a series that contains a str representation of a time object in %H:%M:%S format 
+        """Converts the values in a series into str representations of timedelta objects.  
+
+        Helper function to convert_to_elapsed_time(). 
 
         Parameters: 
-        series (Series): The CSV column that is to be converted. Will either contain floats 
-                            or a datetime object in %m/%d/%Y %H:%M:%S AM/PM format. 
-        unit (str): The unit of time of the CSV column. D = datetime, H = hours, M = minutes, S = seconds 
+        series (pd.Series): The CSV column that is to be converted. Will either contain floats 
+                            or a str representation of a datetime object in %m/%d/%Y %H:%M:%S AM/PM format. 
+        unit (str): The unit of time of the CSV column. D = datetime, H = hours, M = minutes, S = seconds
+
+        Returns: 
+        pd.Series: Contains a str representation of a timedelta object in %H:%M:%S format 
         """
 
         series = series.dropna()
 
+        #FIXME: Takes up too much space 
         # Creating a copy of 'series' to be iterated over. That way even if two cells have the same datetime, 
-        # and both cells are replaced in the original 'series,' the for loop will not break when we iterate over the second copy.  
+        # and both cells are replaced in the original 'series,' the for loop will not break when we iterate 
+        # over the second copy.  
         series_copy = series.copy()
 
         # If the time series is a datetime object....
@@ -448,14 +462,19 @@ class CSVDataFrame(MyDataFrame):
         return series
     
     def _get_hours_minutes_seconds(self, time, time_unit):
-        """Returns a list that holds the hours, minutes, and seconds of the given time. 
+        """Splits a single time unit into its hours, minutes, and seconds. 
 
         Takes in a float representation of a a single unit of time, converts it into an integer, and 
         returns a list of the original time in %H:%M:%S format. 
 
+        Helper function to convert_to_elapsed_times(). 
+
         Parameters: 
         time (float): Given time to be converted
-        time_unit: The unit of time that the given time is in
+        time_unit (str): The unit of time that the given 'time' is in
+
+        Returns: 
+        list: Holds the hours, minutes, and seconds of the given 'time' 
         """
         
         if (time_unit.upper() == 'H'): 
@@ -471,19 +490,24 @@ class CSVDataFrame(MyDataFrame):
         return [hours,minutes,seconds]
 
     def _convert_to_timedelta(self, time_series, start_time): 
-        """Returns a series that contains timedelta objects. 
+        """Converts values in a series into timedelta objects. 
 
-        Takes in a str series in %H:%M:%S format and returns a time series that gives the elapsed time in the same format. 
+        Helper function to convert_to_elapsed_times(). 
 
         Parameters: 
-        time_series (series): str representation of time in %H:%M:%S
+        time_series (pd.Series): Contains str representations of timedelta objects.  
+        start_time(str): Str representation of starting time in the original dataframe
+
+        Returns: 
+        None  
         """
 
         time_series_modified = time_series.dropna()
         start_time = pd.to_timedelta(start_time)
 
-        # Iterate through 'time_series_modified' which has the NaN values dropped but replace the str with the timedelta in 
-        # the original 'time_series.'
+        # Iterate through 'time_series_modified' which has the NaN values dropped. 
+        # Should still replace the str representation with the timedelta object in 
+        # the original 'time_series'
         for current_time in time_series_modified: 
             
             # Convert the str 'current_time' into a timedelta object and find the difference between 'current_time' and 'start_time'
@@ -492,7 +516,8 @@ class CSVDataFrame(MyDataFrame):
             difference= str(pd.to_timedelta(current_time)-start_time)
             difference_list = difference.split()
             
-            # Store the time portion of the str into 'elapsed_time' and use the colon delimiter to split the time into a list 
+            # Store the time portion of the str into 'elapsed_time' and use the colon delimiter to 
+            # split the time into a list.  
             elapsed_time = difference_list[2]
             elapsed_time_list = elapsed_time.split(':')
             

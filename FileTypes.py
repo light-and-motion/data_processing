@@ -374,10 +374,11 @@ class PDFFile (ChartFile):
             pp = PdfPages(self.output_name + '_table.pdf')
         else: 
             pp = PdfPages(self.output_name + '.pdf')
-        total_rows, total_cols = mapping_df.shape; #There were 3 columns in my df
+        total_rows, total_cols = mapping_df.shape
 
         rows_per_page = 40 # Assign a page cut off length
         rows_printed = 0
+
         if (self.make_chart()): 
             page_number = 2
         else: 
@@ -389,14 +390,17 @@ class PDFFile (ChartFile):
             fig = plt.figure(figsize=(8.5,11))
             ax = plt.subplot()
             ax.axis('off')
-            matplotlib_tab = pd.plotting.table(ax, mapping_df.iloc[rows_printed:rows_printed+rows_per_page], loc='upper center') #, colWidths=[0.2, 0.2, 0.2])    
-            
+            try: 
+                matplotlib_tab = pd.plotting.table(ax, mapping_df.iloc[rows_printed:rows_printed+rows_per_page], loc='upper center', colWidths=[0.2, 0.2, 0.2])    
+            except IndexError:
+                matplotlib_tab = pd.plotting.table(ax, mapping_df.iloc[rows_printed:rows_printed+rows_per_page], loc='upper center')
+
             # Give you cells some styling 
             table_props=matplotlib_tab.properties()
             table_cells=table_props['child_artists'] # I have no clue why child_artists works
             for cell in table_cells:
                     cell.set_height(0.024)
-                    cell.set_fontsize(12)
+                    cell.set_fontsize(14)
                     
             # Add a header and footer with page number 
             fig.text(4.25/8.5, 10.5/11., "Table", ha='center', fontsize=12)
