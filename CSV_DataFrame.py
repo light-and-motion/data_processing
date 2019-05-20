@@ -9,12 +9,14 @@ class CSVDataFrame(MyDataFrame):
     """
     Extends MyDataFrame to read a CSV into a pandas dataframe. 
 
-    Attributes: 
+    Attributes:
+    file_name (str): Name of file to be read into CSV 
+    df (dataframe): Stores the data contained in the file 
     mapped_settings (MappedExcelDataFrame): Contains the mapped settings in the configuration file
     general_settings (ExcelDataFrame): Contains the general settings of the configuration file  
     """
 
-    def __init__(self,file_name: str, df: pd.DataFrame, mapped_settings: MappedExcelDataFrame, general_settings: ExcelDataFrame) -> None: 
+    def __init__(self,file_name, df, mapped_settings, general_settings): 
         super().__init__(file_name, df)
         self.mapped_settings = mapped_settings
         self.general_settings = general_settings
@@ -100,7 +102,7 @@ class CSVDataFrame(MyDataFrame):
             self.df[column] = self.df[column].dropna()
             self.df[column] = pd.to_numeric(self.df[column], errors = 'ignore')
 
-    def read_into_excel(self, input_name: str) -> Workbook:  
+    def read_into_excel(self, input_name):  
         """
         Reads a CSV into an Excel workbook. 
 
@@ -108,7 +110,7 @@ class CSVDataFrame(MyDataFrame):
         input_name (str): Name of CSV 
 
         Returns: 
-        workbook: Holds the CSV in an Excel file 
+        openpyxl.Workbook: Holds the CSV in an Excel file 
         """
 
         wb = Workbook()
@@ -120,7 +122,7 @@ class CSVDataFrame(MyDataFrame):
         
         wb.save(input_name + '.xlsx')
 
-    def _read_csv_type(self, startLine: int, stopLine: int, transpose: int) -> pd.DataFrame:
+    def _read_csv_type(self, startLine, stopLine, transpose):
         """Reads the CSV into a prototype dataframe 
         Returns the prototype dataframe of the CSV 
         
@@ -128,6 +130,9 @@ class CSVDataFrame(MyDataFrame):
         startLine (int): First line number read from CSV 
         stopLine (int):  Last line number read from CSV
         transpose (str): Determines whether df is to be transposed 
+
+        Returns: 
+        pd.DataFrame: Prototype dataframe of the CSV 
         """ 
 
         # Read to the very end of the file and do not transpose CSV 
@@ -165,7 +170,7 @@ class CSVDataFrame(MyDataFrame):
                             encoding = 'ISO-8859-1') 
 
     
-    def _transpose(self, startLine: int, skipLine: bool): 
+    def _transpose(self, startLine, skipLine): 
             """
             Transpose the dataframe  
 
@@ -194,8 +199,14 @@ class CSVDataFrame(MyDataFrame):
         # formats possesses. If the conversion is successful, then add the label of the column to the list of 
         # columns we need to reformat. 
 
+        #FIXME: Some columsn are in 24 hour time format without AM/PM. Others aren't.
+        # The ones that have AM/PM appended to them when you open the CSV in Google Sheets
+        # are good to go. Those that are in military time when you open in Google Sheets
+        # are the ones that need to be reformatted. 
         datetime_str_column = []
         
+        i = 0
+ 
         for column in self.df: 
             series = self.df[column]
             try: 
@@ -203,9 +214,11 @@ class CSVDataFrame(MyDataFrame):
                     datetime_str = str(series.loc[0])
                     datetime.strptime(datetime_str, format)
                     datetime_str_column.append(column)
+                    i += 1
             except ValueError: 
+                i += 1
                 pass 
-            
+    
         return datetime_str_column
         
     
@@ -215,9 +228,11 @@ class CSVDataFrame(MyDataFrame):
         Parameters: 
         datetime_str_series (series): Contains PM times that needs to be reformatted  
         """
+        #datetime_str_pm = datetime_str_series[~datetime_str_series.str.contains('AM')]
 
-        # Filter out AM time; they do not need to undergo re-formatting 
-        datetime_str_pm = datetime_str_series[~datetime_str_series.str.contains('AM')]
+        # Drop empty columns so you don't get an index out of range error 
+        datetime_str_pm = datetime_str_series.replace('', np.nan).dropna()
+        
         # Return a date format equal to the AM times 
         for datetime_str in datetime_str_pm:  
             datetime_str_list = datetime_str.split()

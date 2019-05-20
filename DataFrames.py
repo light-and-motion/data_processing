@@ -9,7 +9,7 @@ class MyDataFrame(object):
     file_name (str): Name of file to be read into CSV 
     df (dataframe): Stores the data contained in the file 
     """
-    def __init__(self, file_name: str, df: pd.DataFrame) -> None:
+    def __init__(self, file_name, df):
         self.file_name = file_name
         self.df = pd.DataFrame()
 
@@ -50,11 +50,14 @@ class ExcelDataFrame (MyDataFrame):
     """ 
     Extends MyDataFrame to read in the Excel configuration file of the CSV into a pandas dataframe
 
-    Attributes: 
+    Attributes:
+    file_name (str): Name of file to be read into CSV 
+    df (pd.DataFrame): Stores the data contained in the file  
     sheet_name (str) = Name of sheet in Excel file we want read into a dataframe
 
+
     """
-    def __init__(self, file_name: str, df: pd.DataFrame, sheet_name: str) -> None: 
+    def __init__(self, file_name, df, sheet_name): 
         super().__init__(file_name, df)
         self.sheet_name = sheet_name
     
@@ -66,7 +69,7 @@ class ExcelDataFrame (MyDataFrame):
 class MappedExcelDataFrame(ExcelDataFrame): 
     """Extends ExcelDataFrame to process the mapped settings of the configuration file"""
     
-    def format(self, col_labels: str) -> None:
+    def format(self, col_labels):
         """Alters several settings of the configuration dataframe. 
         Changes: 
             a) Create a new column labeled 'Input Column Numbers' that creates a copy of 'Input' column and coverts the column 
@@ -76,7 +79,10 @@ class MappedExcelDataFrame(ExcelDataFrame):
             d) Empty column titles in 'Title' have been filled in with the original column labels 
 
         Parameters:  
-        col_labels (series): Original labels of the CSV columns 
+        col_labels (pd.Series): Original labels of the CSV columns 
+
+        Returns: 
+        None 
         """
         
         # TODO: Research super() https://realpython.com/python-super/
@@ -93,21 +99,21 @@ class MappedExcelDataFrame(ExcelDataFrame):
         data = self._default_titles(super().get_column('Title'), super().get_column('Input'))
         super().set_column('Title', data)
 
-    def _letter2title(self, letter_series: pd.Series, names: pd.Index) -> pd.Series:
+    def _letter2title(self, letter_series, names) -> pd.Series:
         """
         Converts a series that contains CSV column letters into its corresponding column labels 
 
         Parameters: 
-        letter_series (series): Column letters
-        names (series): CSV column labels 
+        letter_series (pd.Series): Column letters
+        names (pd.Index): CSV column labels 
 
         Returns: 
-        series: New series where column letters have been converted into their column labels 
+        (pd.Series): New series where column letters have been converted into their column labels 
         """
 
         col_title = []
         indices = self._letter2int(letter_series)
-        print(type(names))
+        
         for x in range(letter_series.size): 
             index = indices.loc[x]      
             title = names[index-1]
@@ -115,15 +121,15 @@ class MappedExcelDataFrame(ExcelDataFrame):
         
         return pd.Series(col_title)
     
-    def _letter2int(self, letter_series: pd.Series) -> pd.Series:
+    def _letter2int(self, letter_series):
         """Converts a Series of Excel column letter into its corresponding column number 
         Source: https://www.geeksforgeeks.org/find-excel-column-number-column-title/
 
         Parameters: 
-        letter_series (series): Excel column letters
+        letter_series (pd.Series): Excel column letters
 
         Returns: 
-        series: Letter column values in letter_series have been replaced with their corresponding column number 
+        pd.Series: Letter column values in letter_series have been replaced with their corresponding column number 
         """
         
         result = 0
@@ -136,7 +142,7 @@ class MappedExcelDataFrame(ExcelDataFrame):
             letter_series.replace(col_letter, result, inplace=True)
         return letter_series
     
-    def _default_titles(self, new_labels: pd.Series, original_labels: pd.Series) -> pd.Series: 
+    def _default_titles(self, new_labels, original_labels): 
         """
         Provides a default title to processed CSV columns that were not given a new title in the 
         configuration file. 
@@ -146,7 +152,7 @@ class MappedExcelDataFrame(ExcelDataFrame):
         original_labels (series): Old labels of the processed columns 
 
         Returns: 
-        series: Processed CSV columns that were not given a new label are now associated with their original label
+        pd.Series: Processed CSV columns that were not given a new label are now associated with their original label
         """
         
         x = 0
