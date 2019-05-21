@@ -14,8 +14,13 @@ import numpy as np
 import pandas as pd
 
 class ExcelFile(ChartFile):
+    """
+    Extends ChartFile to output an Excel file of the processed CSV results. 
+    """
+    
+    def output(self) -> None:
+        """ Outputs an Excel file"""
 
-    def output(self):
         if (self.make_file(self.general_settings.get_column('Excel').loc[0])): 
             
             # Create workbook to hold output data 
@@ -28,9 +33,10 @@ class ExcelFile(ChartFile):
             
             wb.save(self.output_name + '.xlsx')
             
-    def _create_plotted_workbook(self): 
-        """Returns an empty Excel workbook of the data to be plotted with the title of the
-        default worksheet labeled as "Output Data."
+    def _create_plotted_workbook(self) -> Workbook: 
+        """Returns an empty Excel workbook that will later hold the processed CSV data.
+        
+        Helper function to output(). 
         """
 
         wb = Workbook()
@@ -39,13 +45,19 @@ class ExcelFile(ChartFile):
         return wb
     
     def _process_data(self, wb):
-        """Returns a Workbook object where the input data is mapped into the desired columns in the output Excel file 
+        """Map the input data into the specified columns in the Excel workbook.   
+        
+        Helper function to output(). 
 
-        Parameters: 
-        wb (Workbook object): Store results of data processing 
-        df (dataframe): Data to be mapped 
-        config_df (dataframe): 'Mapped Settings' of the configuration file  
-        output_col_letters (series): Output column letters 
+        Parameters
+        ----------
+        wb : Workbook 
+            Empty workbook to store input data 
+
+        Returns
+        ------- 
+        Workbook
+            Filled with extracted CSV data 
         """
         
         new_titles = new_titles = self.mapped_settings.get_column('Title')
@@ -54,23 +66,33 @@ class ExcelFile(ChartFile):
         # Grab active Worksheet
         ws = wb.active
 
-        # Read in all the data 
+        # Write in all the data from the extracted CSV columns  
         for j in range(output_numbers.size): 
-            self._read_in_values(ws, new_titles.iloc[j], output_numbers.iloc[j])
+            self._write_in_values(ws, new_titles.iloc[j], output_numbers.iloc[j])
         return wb
     
     
-    def _read_in_values(self, ws, title, col_num):
-        """Reads in the data of 1 to-be processed CSV column into the Excel workbook 
+    def _write_in_values(self, ws, label, col_num):
+        """Writes the data of a CSV column into an Excel worksheet. 
 
-        Parameters: 
-        wb (workbook): Store the results of the data processing 
-        title (str): New titles of the processed CSV columns   
-        col_num (int): Column number the data is being read into   
+        Helper function to _process_data(). 
+
+        Parameters
+        ----------
+        ws : Worksheet
+            Worksheet that CSV column is writing into 
+        label : str
+            Column labels of the CSV columns in the new worksheet      
+        col_num : int
+            Column number the input data is being written into in the new worksheet   
+
+        Returns
+        ------ 
+        None 
         """ 
 
         header = ws.cell(row=1, column = col_num) 
-        header.value = title
+        header.value = label
         header.font = Font(bold=True)
         #col_index = title_input
         
@@ -81,18 +103,23 @@ class ExcelFile(ChartFile):
         i = 0
 
         # Determine the size of the current column 
-        size = self.output_data[title].size
+        size = self.output_data[label].size
 
         while (i < size):   
-            ws.cell(row = cellRow, column = col_num).value = self.output_data.loc[i,title]
+            ws.cell(row = cellRow, column = col_num).value = self.output_data.loc[i,label]
             cellRow += 1
             i += 1
     
     def _create_chart(self,wb): 
-        """Creates a chart sheet of the plotted data in the output Excel workbook
+        """Creates a chart sheet of the processed CSV data in the Excel workbook. 
 
-        Parameters: 
+        Parameters
+        ----------
         wb (workbook): Excel workbook of the mapped data 
+
+        Returns 
+        -------
+        None 
         """
 
         ws = wb.active
@@ -100,25 +127,27 @@ class ExcelFile(ChartFile):
         outputs = self.mapped_settings.get_column('Output')  
         new_titles = self.mapped_settings.get_column('Title')
         chart_title = self.general_settings.get_column('Chart Title')
-        row_size = self.output_data[new_titles.loc[0]].size # get the row number of the last cell 
+        row_size = self.output_data[new_titles.loc[0]].size # Get the row number of the last cell 
         
         # Create a ScatterChart chart sheet 
         cs = wb.create_chartsheet()
         chart = ScatterChart()
 
-        # Store the index of the x_axis column in mapped_settings
+        # Store the row indices of the x-axis and y-axis column labels in the configuration 
+        # file mapped_settings.  
         x_axis_index= self.get_x_axis().index[0] 
+        y_axis_indices = self.get_y_axis().index
 
-        # Store the column number where the x_axis is located 
+        # Set x-axis 
         x = Reference(ws, min_col=outputs.loc[x_axis_index], min_row = 2, max_row = row_size)
                
-        # Plot as many y-axis as indicated in the configuration file 
-        y_axis_indices = self.get_y_axis().index
+        # Plot multiple graphs in a single chart  
         for row in y_axis_indices: 
             y = Reference(ws, min_col = outputs.loc[row], min_row = 2, max_row = row_size)
             s = Series(y,x,title=new_titles.loc[row])
             chart.append(s)
         
+        # Set the x-axis label
         chart.x_axis.title = new_titles.loc[x_axis_index]
         
         # Situate x-axis below negative numbers 
@@ -136,29 +165,29 @@ class ExcelFile(ChartFile):
         # Set the scaling limits of the x and y axis
         self._chart_scaling(chart)
 
+        # Add chart to the workbook 
         cs.add_chart(chart)
 
     
-    def _chart_legend(self, chart, y_label, y_axis_indices):
-        """Returns True if a legend is needed, False otherwise. """
+    def _chart_legend(self, chart, y_label, y_axis_indices) -> None:
+        """Sets the chart legend. If there is only 1 plotted line, set the y-label."""
+
         if (len(y_axis_indices) == 1):
             chart.y_axis.title = y_label
             chart.legend = None  
         else: 
             pass # a legend is the default 
             
-    def _grid_lines(self, chart): 
-        """Returns True if grid lines will be on chart, False otherwise"""
+    def _grid_lines(self, chart) -> None: 
+        """Set the chart grid lines on or off."""
         
         isGridLinesOn = self.general_settings.get_column('Grid Lines').loc[0]
         if (not pd.isnull(isGridLinesOn) and isGridLinesOn.upper() == 'NO'): 
             chart.x_axis.majorGridlines = None 
             chart.y_axis.majorGridlines = None
-
-        return False 
     
-    def _chart_scaling(self,chart): 
-        """Returns a list of the settings for the minimum and maximum of the x and y axis"""
+    def _chart_scaling(self,chart) -> None: 
+        """Set the scales on the x and y axis"""
         
         x_min = self.general_settings.get_column('X Min').loc[0]
         x_max = self.general_settings.get_column('X Max').loc[0]
@@ -174,7 +203,9 @@ class ExcelFile(ChartFile):
         if (not pd.isnull(y_max)): 
             chart.y_axis.scaling.max = y_max
 
+# TODO: 5/21 stopping point 
 class JPEGFile(ChartFile): 
+
     def output(self): 
         jpeg_choice = self.make_file(self.general_settings.get_column('JPEG').loc[0])
         pdf_choice = self.make_file(self.general_settings.get_column('PDF').loc[0])

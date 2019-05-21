@@ -4,12 +4,18 @@ class File(object):
     """
     A class used to output files of the processed CSV
 
-    Attributes: 
-    mapped_settings (MappedExcelDataFrame): Contains the mapped settings in the configuration file
-    general_settings (ExcelDataFrame): Contains the general settings of the configuration file  
-    output_data (pd.DataFrame): Dataframe of the processed CSV 
-    output_name(str): Name of the output files 
+    Attributes
+    ---------- 
+    mapped_settings: MappedExcelDataFrame 
+        Contains the mapped settings in the configuration file
+    general_settings: ExcelDataFrame
+        Contains the general settings of the configuration file  
+    output_data: pd.DataFrame 
+        Dataframe of the processed CSV 
+    output_name: str 
+        Name of the output files 
     """
+
     def __init__(self, mapped_settings, general_settings, output_data, output_name): 
         self.mapped_settings = mapped_settings
         self.general_settings = general_settings
@@ -24,32 +30,37 @@ class File(object):
         return False
 
 class ChartFile(File): 
-    def make_chart(self):
-        """Returns a list that indicates whether there will be a chart and if so, which columns will serve as the x-axis 
-        and y-axis 
+    """
+    Extends File to output files that contain a chart. 
+    """
 
-        Parameters: 
-        axis (series): Indicates which CSV columns will serve as the x-axis and the y-axis
+    def make_chart(self) -> bool:
+        """Returns True if a chart will be generated, False if not.""" 
 
-        Returns:
-        List: 
-            a) If first element is False, no chart will be generated
-            b) If first element is True, second element will be a one-element series of the column that will serve as the x-axis 
-                and third element will be a series of the column(s) that will serve as the y-axis
-        """ 
         axis = self.mapped_settings.get_column('Axis')
         if (axis.dropna().empty or not ((axis == 'x').any() or (axis == 'X').any()) or not ((axis == 'y').any() or (axis == 'Y').any())):  
             return False
         return True
  
-    def get_x_axis(self): 
+    #TODO: Determine if get_x_axis() and get_y_axis() return the indices only? 
+    def get_x_axis(self) -> pd.Series: 
+        """
+        Returns a series of length 1 that contains the row index of the 
+        x-axis column label in the configuration file mapped_settings. 
+        """
+        
         x_axis = None
         if (self.make_chart()): 
             axis = self.mapped_settings.get_column('Axis')
             x_axis = axis.loc[(axis == 'x') | (axis == 'X')]
         return x_axis
     
-    def get_y_axis(self): 
+    def get_y_axis(self) -> pd.Series: 
+        """
+        Returns a series that contains the row indices of the
+        y-axis column labels in the configuration file mapped_settings. 
+        """ 
+        
         y_axis = None
         if (self.make_chart()): 
             axis = self.mapped_settings.get_column('Axis')
@@ -57,15 +68,23 @@ class ChartFile(File):
         return y_axis        
     
     def get_chart_title(self, new_titles, chart_title, x_axis_index, y_axis_indices):
-        """Returns the chart title. 
+        """Determines the chart title. 
 
         If no title is given, then the chart title will default to the format '[All] y-axis vs x-axis'
         
-        Parameters: 
-        new_titles (series): New titles of the processed CSV columns 
-        chart_title (series): Contain a manually given chart title or NaN
-        x_axis_row (series): Index location of the column to serve as the x_axis
-        y_axis_row (series): Index location(s) of the column(s) to serve as the y-axis 
+        Parameters
+        ---------- 
+        new_titles : series 
+            New titles of the processed CSV columns 
+        chart_title : series
+            Contains a manually given chart title or NaN
+        x_axis_row : series 
+            Row index of the x-axis column label in the configuration file
+        y_axis_row : series 
+            Row indices of the y-axis column labels in the configuration file
+
+        Returns: 
+        str: Title of the chart  
         """
         
         # Note: A column with 'NaNs' is not considered empty

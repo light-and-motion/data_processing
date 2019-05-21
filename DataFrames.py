@@ -5,9 +5,12 @@ class MyDataFrame(object):
     """
     A class used to read a file into a pandas dataframe 
 
-    Attributes: 
-    file_name (str): Name of file to be read into CSV 
-    df (dataframe): Stores the data contained in the file 
+    Attributes
+    ---------- 
+    file_name : str
+        Name of file to be read into CSV 
+    df : pd.Dataframe
+        Stores the data contained in the file 
     """
     def __init__(self, file_name, df):
         self.file_name = file_name
@@ -50,12 +53,14 @@ class ExcelDataFrame (MyDataFrame):
     """ 
     Extends MyDataFrame to read in the Excel configuration file of the CSV into a pandas dataframe
 
-    Attributes:
-    file_name (str): Name of file to be read into CSV 
-    df (pd.DataFrame): Stores the data contained in the file  
-    sheet_name (str) = Name of sheet in Excel file we want read into a dataframe
-
-
+    Attributes
+    ----------
+    file_name : str 
+        Name of file to be read into CSV 
+    df : pd.DataFrame
+        Stores the data contained in the file  
+    sheet_name : str 
+        Name of sheet in Excel file we want read into a dataframe
     """
     def __init__(self, file_name, df, sheet_name): 
         super().__init__(file_name, df)
@@ -78,10 +83,13 @@ class MappedExcelDataFrame(ExcelDataFrame):
             c) Column letters in 'Output' have been replaced by column numbers.  
             d) Empty column titles in 'Title' have been filled in with the original column labels 
 
-        Parameters:  
-        col_labels (pd.Series): Original labels of the CSV columns 
+        Parameters
+        ---------- 
+        col_labels : pd.Series
+            Original labels of the CSV columns 
 
-        Returns: 
+        Returns
+        ------- 
         None 
         """
         
