@@ -1,19 +1,26 @@
-from DataFrames import MyDataFrame, ExcelDataFrame, MappedExcelDataFrame
+from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
 from openpyxl import Workbook
 from openpyxl.utils.dataframe import dataframe_to_rows
-from datetime import datetime, timedelta
+from DataFrames import MyDataFrame, ExcelDataFrame, MappedExcelDataFrame
+
+
 
 class CSVDataFrame(MyDataFrame): 
     """
     Extends MyDataFrame to read a CSV into a pandas dataframe. 
 
-    Attributes:
-    file_name (str): Name of file to be read into CSV 
-    df (dataframe): Stores the data contained in the file 
-    mapped_settings (MappedExcelDataFrame): Contains the mapped settings in the configuration file
-    general_settings (ExcelDataFrame): Contains the general settings of the configuration file  
+    Attributes
+    ----------
+    file_name : str
+        Name of file to be read into CSV 
+    df : pd.DataFrame
+        Stores the data contained in the file 
+    mapped_settings : MappedExcelDataFrame
+        Contains the mapped settings in the configuration file
+    general_settings : ExcelDataFrame
+        Contains the general settings of the configuration file  
     """
 
     def __init__(self,file_name, df, mapped_settings, general_settings): 
@@ -106,11 +113,15 @@ class CSVDataFrame(MyDataFrame):
         """
         Reads a CSV into an Excel workbook. 
 
-        Parameters: 
-        input_name (str): Name of CSV 
+        Parameters
+        ----------
+        input_name : str
+            Name of CSV 
 
-        Returns: 
-        openpyxl.Workbook: Holds the CSV in an Excel file 
+        Returns
+        ------- 
+        openpyxl.Workbook
+            Holds the CSV in an Excel file 
         """
 
         wb = Workbook()
@@ -123,16 +134,22 @@ class CSVDataFrame(MyDataFrame):
         wb.save(input_name + '.xlsx')
 
     def _read_csv_type(self, startLine, stopLine, transpose):
-        """Reads the CSV into a prototype dataframe 
-        Returns the prototype dataframe of the CSV 
+        """Reads the CSV into a prototype dataframe. 
+        Returns the prototype dataframe of the CSV. 
         
-        Parameters: 
-        startLine (int): First line number read from CSV 
-        stopLine (int):  Last line number read from CSV
-        transpose (str): Determines whether df is to be transposed 
+        Parameters
+        ----------
+        startLine : int
+            First line number read from CSV 
+        stopLine : int
+            Last line number read from CSV
+        transpose : str
+            Determines whether df is to be transposed 
 
-        Returns: 
-        pd.DataFrame: Prototype dataframe of the CSV 
+        Returns
+        ------- 
+        pd.DataFrame
+            Prototype dataframe of the CSV 
         """ 
 
         # Read to the very end of the file and do not transpose CSV 
@@ -172,14 +189,19 @@ class CSVDataFrame(MyDataFrame):
     
     def _transpose(self, startLine, skipLine): 
             """
-            Transpose the dataframe  
+            Transpose the dataframe.  
 
-            Parameters: 
-            startLine (int): First line number read from CSV 
-            skipLine (bool): True if second line number (relative to startLine) is skipped
+            Parameters
+            -----------
+            startLine : int
+                First line number read from CSV 
+            skipLine : bool
+                True if second line number (relative to startLine) is skipped
 
-            Returns: 
-            pd.DataFrame: Transposed dataframe
+            Returns
+            ------- 
+            pd.DataFrame
+                Transposed dataframe
             """
             # Logic to set the actual columns and indices in the transposed dataframe 
             self.df = self.df.transpose()
@@ -191,7 +213,7 @@ class CSVDataFrame(MyDataFrame):
             return self.df
        
     def _search_for_pm_times(self) -> pd.Series:
-        """ Returns a list that stores all the titles of the columns that contain PM times"""
+        """Returns a list that stores all the titles of the columns that contain PM times."""
 
         # Search the first row of every column in the dataframe. If the data found is a string representation of 
         # a datetime object, then there is the possibility that the time values in the columns are military time. 
@@ -226,8 +248,10 @@ class CSVDataFrame(MyDataFrame):
         """Converts a series that holds string representations of military time into 
         a series that holds string representations of standard time.   
          
-        Parameters: 
-        datetime_str_series (pd.Series): Contains military times 
+        Parameters
+        ---------- 
+        datetime_str_series : pd.Series
+            Contains military times 
         """
         #datetime_str_pm = datetime_str_series[~datetime_str_series.str.contains('AM')]
 
@@ -303,7 +327,7 @@ class CSVDataFrame(MyDataFrame):
         return mapped_df
     
     def _round_numbers(self, series, round_to) -> pd.Series: 
-        """ Round numbers in the series to the number of decimal places indiciated by 'round_to'"""
+        """ Round numbers in the series to the number of decimal places indiciated by 'round_to.'"""
 
         series = series.round(round_to)
         return series
@@ -311,12 +335,17 @@ class CSVDataFrame(MyDataFrame):
     def _largest_interval(self, range_inputs, max_size):
         """Determines the CSV column with the largest set interval. 
 
-        Parameters: 
-        range_inputs (pd.Series): Interval of data set we want read into each processed CSV column
-        max_size (int) - Size of the CSV column 
+        Parameters
+        ---------- 
+        range_inputs : pd.Series
+            Interval of data set we want read into each processed CSV column
+        max_size : int 
+            Size of the CSV column 
 
-        Returns: 
-        int: Row label of the CSV column with the largest set interval 
+        Returns
+        ------- 
+        int
+            Row label of the CSV column with the largest set interval 
         """ 
         
         max_interval = 0
@@ -335,12 +364,18 @@ class CSVDataFrame(MyDataFrame):
     def _find_range(self, current_range, max_size): 
         """Gives the starting and ending row index of the column's data interval. 
 
-        Parameters: 
-        current_range (float): The interval of the data to be read in 'start:end' format (inclusive)
-        max_size (int) - Size of the CSV column 
+        Parameters
+        ---------- 
+        current_range : float
+            The interval of the data to be read in 'start:end' format (inclusive)
+        max_size : int
+            Size of the CSV column 
 
-        Returns: 
-        list: First element gives the starting row index, second element gives the ending row index
+        Returns
+        ------- 
+        list
+            First element gives the starting row index, second element gives the ending row 
+            index
         """
         
         start = 0 
@@ -376,11 +411,15 @@ class CSVDataFrame(MyDataFrame):
         """Returns output_df with the str representations of datetime objects converted into 
         timedelta objects. 
         
-        Parameters: 
-        output_df(pd.DataFrame): Contains only the colums we want processed in the CSV  
+        Parameters
+        ---------- 
+        output_df : pd.DataFrame
+            Contains only the colums we want processed in the CSV  
 
-        Returns: 
-        pd.DataFrame: Time columns are converted into elapsed times
+        Returns
+        ------- 
+        pd.DataFrame
+            Time columns are converted into elapsed times
         """ 
 
         # Grab the time units of the columns whose values is to be converted into elapsed times 
@@ -425,13 +464,19 @@ class CSVDataFrame(MyDataFrame):
 
         Helper function to convert_to_elapsed_time(). 
 
-        Parameters: 
-        series (pd.Series): The CSV column that is to be converted. Will either contain floats 
-                            or a str representation of a datetime object in %m/%d/%Y %H:%M:%S AM/PM format. 
-        unit (str): The unit of time of the CSV column. D = datetime, H = hours, M = minutes, S = seconds
+        Parameters
+        ---------- 
+        series : pd.Series
+            The CSV column that is to be converted. Will either contain floats 
+            or a str representation of a datetime object in %m/%d/%Y %H:%M:%S AM/PM format. 
+        unit : str
+            The unit of time of the CSV column. D = datetime, H = hours, M = minutes, 
+            S = seconds
 
-        Returns: 
-        pd.Series: Contains a str representation of a timedelta object in %H:%M:%S format 
+        Returns
+        ------- 
+        pd.Series 
+            Contains a str representation of a timedelta object in %H:%M:%S format 
         """
 
         series = series.dropna()
@@ -469,12 +514,16 @@ class CSVDataFrame(MyDataFrame):
 
         Helper function to convert_to_elapsed_times(). 
 
-        Parameters: 
-        time (float): Given time to be converted
-        time_unit (str): The unit of time that the given 'time' is in
+        Parameters
+        ---------- 
+        time : float 
+            Given time to be converted
+        time_unit : str
+            The unit of time that the given 'time' is in
 
         Returns: 
-        list: Holds the hours, minutes, and seconds of the given 'time' 
+        list
+            Holds the hours, minutes, and seconds of the given 'time' 
         """
         
         if (time_unit.upper() == 'H'): 
@@ -494,11 +543,15 @@ class CSVDataFrame(MyDataFrame):
 
         Helper function to convert_to_elapsed_times(). 
 
-        Parameters: 
-        time_series (pd.Series): Contains str representations of timedelta objects.  
-        start_time(str): Str representation of starting time in the original dataframe
+        Parameters
+        ----------
+        time_series : pd.Series
+            Contains str representations of timedelta objects.  
+        start_time : str
+            Str representation of starting time in the original dataframe
 
-        Returns: 
+        Returns
+        ------- 
         None  
         """
 

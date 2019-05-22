@@ -1,9 +1,8 @@
-import user_interface
 import pandas as pd
+import user_interface
 from DataFrames import (MyDataFrame, ExcelDataFrame, MappedExcelDataFrame)
 from CSV_DataFrame import CSVDataFrame
 from File import (File, ChartFile)
-#from FileTypes import (ExcelFile, JPEGFile, TXTFile)
 from FileTypes import (ExcelFile, JPEGFile, PDFFile, TXTFile)
 
 ### Main execution block ###

@@ -1,6 +1,6 @@
+from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
-from datetime import datetime, timedelta
 class MyDataFrame(object): 
     """
     A class used to read a file into a pandas dataframe 
@@ -111,12 +111,17 @@ class MappedExcelDataFrame(ExcelDataFrame):
         """
         Converts a series that contains CSV column letters into its corresponding column labels 
 
-        Parameters: 
-        letter_series (pd.Series): Column letters
-        names (pd.Index): CSV column labels 
+        Parameters
+        ---------- 
+        letter_series: pd.Series
+            Column letters
+        names : pd.IndexCSV 
+            Column labels 
 
-        Returns: 
-        (pd.Series): New series where column letters have been converted into their column labels 
+        Returns
+        ------- 
+        pd.Series 
+            New series where column letters have been converted into their column labels 
         """
 
         col_title = []
@@ -133,11 +138,15 @@ class MappedExcelDataFrame(ExcelDataFrame):
         """Converts a Series of Excel column letter into its corresponding column number 
         Source: https://www.geeksforgeeks.org/find-excel-column-number-column-title/
 
-        Parameters: 
-        letter_series (pd.Series): Excel column letters
+        Parameters
+        ---------- 
+        letter_series: pd.Series
+            Excel column letters
 
-        Returns: 
-        pd.Series: Letter column values in letter_series have been replaced with their corresponding column number 
+        Returns
+        ------ 
+        pd.Series
+            Letter column values in letter_series have been replaced with their corresponding column number 
         """
         
         result = 0
@@ -155,12 +164,18 @@ class MappedExcelDataFrame(ExcelDataFrame):
         Provides a default title to processed CSV columns that were not given a new title in the 
         configuration file. 
 
-        Parameters: 
-        new_labels (series): New labels of the processed columns
-        original_labels (series): Old labels of the processed columns 
+        Parameters
+        ---------- 
+        new_labels : series
+            New labels of the processed columns
+        original_labels : series
+            Old labels of the processed columns 
 
-        Returns: 
-        pd.Series: Processed CSV columns that were not given a new label are now associated with their original label
+        Returns
+        ------- 
+        pd.Series
+            Processed CSV columns that were not given a new label are now associated 
+            with their original label
         """
         
         x = 0
