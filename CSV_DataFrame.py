@@ -213,6 +213,7 @@ class CSVDataFrame(MyDataFrame):
             return self.df
        
     def _search_for_pm_times(self) -> pd.Series:
+        #FIXME: Change method head to _search_for_military_times
         """Returns a list that stores all the titles of the columns that contain PM times."""
 
         # Search the first row of every column in the dataframe. If the data found is a string representation of 
