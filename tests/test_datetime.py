@@ -1,13 +1,13 @@
 import unittest
 import pandas as pd
-from fixtures.functions import search_for_military_times, date_parser
+from fixtures.datetime.functions import search_for_military_times, date_parser
 import numpy.testing as npt
 
 class TestZeroSeconds(unittest.TestCase): 
     def setUp(self): 
         # Load test data
         #self.df = pd.read_csv(r'C:\Users\Cathy Hsu\Light and Motion\data_processing\tests\fixtures\test_datetime_zero.csv')
-        self.df = pd.read_csv('fixtures/test_datetime_zero.csv')
+        self.df = pd.read_csv('fixtures/datetime/test_datetime_zero.csv')
     def test_count(self): 
         self.assertEqual(self.df.size, 6)
     def test_type(self): 
@@ -21,7 +21,7 @@ class TestZeroSeconds(unittest.TestCase):
     
 class TestNonzeroSeconds(unittest.TestCase): 
     def setUp(self): 
-        self.df = pd.read_csv('fixtures/test_datetime_nonzero.csv')
+        self.df = pd.read_csv('fixtures/datetime/test_datetime_nonzero.csv')
     def test_search_for_military_times(self): 
         self.assertEqual(search_for_military_times(self.df), ['StartTime1'])
     def test_date_parser(self): 
@@ -30,7 +30,7 @@ class TestNonzeroSeconds(unittest.TestCase):
 
 class TestMicroSeconds(unittest.TestCase): 
     def setUp(self): 
-        self.df = pd.read_csv('fixtures/test_datetime_microseconds.csv')
+        self.df = pd.read_csv('fixtures/datetime/test_datetime_microseconds.csv')
     def test_search_for_military_times(self): 
             self.assertEqual(search_for_military_times(self.df), ['StartTime1'])
     def test_date_parser(self): 

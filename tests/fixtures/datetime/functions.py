@@ -60,8 +60,6 @@ def date_parser(datetime_str_series) -> pd.Series:
             datetime_str_series.replace(datetime_str, new_str, inplace=True)
         return datetime_str_series
     
-
-
 # df = pd.read_csv('test_datetime_microseconds.csv')
 # # date_parser(df['StartTime1'])
 # print(date_parser(df['StartTime1']))
