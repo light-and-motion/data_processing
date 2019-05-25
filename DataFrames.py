@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import pandas as pd
 import numpy as np
+
 class MyDataFrame(object): 
     """
     A class used to read a file into a pandas dataframe 

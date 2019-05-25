@@ -91,7 +91,7 @@ class CSVDataFrame(MyDataFrame):
         
         # Search for the columns that have a PM time. (Note: Excel convert str times with a PM time into 
         # military time. For example, 1:27 PM is converted into 13:27. 
-        datetime_str_columns = self._search_for_pm_times()
+        datetime_str_columns = self._search_for_military_times()
            
         # Format the PM time columns into 12 hour clock format
         [self._date_parser(self.df[column_name]) for column_name in datetime_str_columns]        
@@ -212,69 +212,84 @@ class CSVDataFrame(MyDataFrame):
             
             return self.df
        
-    def _search_for_pm_times(self) -> pd.Series:
-        #FIXME: Change method head to _search_for_military_times
-        """Returns a list that stores all the titles of the columns that contain PM times."""
+    def _search_for_military_times(self): 
+        """
+        Goes through the self.df and searches for series whose values are 
+        str representations of miltiary datetimes 
 
-        # Search the first row of every column in the dataframe. If the data found is a string representation of 
-        # a datetime object, then there is the possibility that the time values in the columns are military time. 
-        # Try converting every string in the column value to a datetime object without an AM/PM, which 12 hour clock 
-        # formats possesses. If the conversion is successful, then add the label of the column to the list of 
-        # columns we need to reformat. 
-
-        #FIXME: Some columsn are in 24 hour time format without AM/PM. Others aren't.
-        # The ones that have AM/PM appended to them when you open the CSV in Google Sheets
-        # are good to go. Those that are in military time when you open in Google Sheets
-        # are the ones that need to be reformatted. 
-        datetime_str_column = []
+        Parameters 
+        ----------
+        None 
         
+        Returns
+        -------
+        list
+            Contains the column labels of the columns with str representations of military datetimes
+        """
+
+        datetime_str_column = []
         i = 0
- 
         for column in self.df: 
             series = self.df[column]
-            try: 
-                for format in ('%m/%d/%Y %H:%M', '%m/%d/%Y %H:%M:%S'): 
-                    datetime_str = str(series.loc[0])
+            for format in ('%m/%d/%Y %H:%M', '%m/%d/%Y %H:%M:%S', '%m/%d/%Y %H:%M:%S.%f'): 
+                datetime_str = str(series.loc[0])
+                try: 
                     datetime.strptime(datetime_str, format)
                     datetime_str_column.append(column)
-                    i += 1
-            except ValueError: 
+                except ValueError: 
+                    continue
                 i += 1
-                pass 
     
         return datetime_str_column
         
     
     def _date_parser(self, datetime_str_series) -> pd.Series:
-        """Converts a series that holds string representations of military time into 
-        a series that holds string representations of standard time.   
+        """
+        Converts a series that holds string representations of military datetime into 
+        a series that holds string representations of standard datetime.   
          
         Parameters
         ---------- 
         datetime_str_series : pd.Series
             Contains military times 
+        
+        Returns
+        -------
+        pd.Series
+            Str representation of standard datetime 
         """
-        #datetime_str_pm = datetime_str_series[~datetime_str_series.str.contains('AM')]
-
+        
         # Drop empty columns so you don't get an index out of range error 
         datetime_str_pm = datetime_str_series.replace('', np.nan).dropna()
         
-        # Return a date format equal to the AM times 
+        period = 'AM'
         for datetime_str in datetime_str_pm:  
+            
             datetime_str_list = datetime_str.split()
             date = datetime_str_list[0]
             time = datetime_str_list[1]
             time_list = time.split(':')
-            hours = str(int(time_list[0])-12)
+            
+            # Grab the hours
+            hours = int(time_list[0])
+            if (hours == 12): 
+                period = 'PM'
+            if (hours > 12): 
+                hours = str(hours-12)
+            
+            # Grab the minutes
             minutes = time_list[1]
+
+            # Grab the seconds 
             if (len(time_list) == 3): 
                 seconds = time_list[2]
             else: 
                 seconds = '00'
-            new_str = date + ' ' + hours + ':' +  minutes + ':' +  seconds + ' PM'   
+            
+            # Replace
+            new_str = date + ' ' + str(hours) + ':' +  minutes + ':' +  seconds + ' ' + period  
             datetime_str_series.replace(datetime_str, new_str, inplace=True)
-        return datetime_str_pm
-
+        return datetime_str_series
 
     def map_columns(self) -> pd.DataFrame: 
         """Returns a dataframe that contains only the CSV columns that will be mapped

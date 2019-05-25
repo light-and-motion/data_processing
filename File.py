@@ -2,7 +2,7 @@ import pandas as pd
 
 class File(object): 
     """
-    A class used to output files of the processed CSV
+    A class used to output files of the processed CSV. 
 
     Attributes
     ---------- 
@@ -28,6 +28,16 @@ class File(object):
         if (pd.isnull(choice) or choice.upper() == 'YES'): 
             return True
         return False
+    
+    def get_str_timedelta(self): 
+        """Convert timedelta objects into str representations."""
+
+        new_df = self.output_data.fillna(' ')
+        indices = self.mapped_settings.get_column('Time Unit').dropna().index
+        for i in indices: 
+            label = self.mapped_settings.get_column('Title').loc[i]
+            new_df[label] = [time[7:15] for time in new_df[label].astype(str)]
+        return new_df
 
 class ChartFile(File): 
     """
@@ -70,7 +80,7 @@ class ChartFile(File):
     def get_chart_title(self, new_titles, chart_title, x_axis_index, y_axis_indices):
         """Determines the chart title. 
 
-        If no title is given, then the chart title will default to the format '[All] y-axis vs x-axis'
+        If no title is given, then the chart title will default to the format '[All] y-axis vs x-axis.'
         
         Parameters
         ---------- 
@@ -83,8 +93,10 @@ class ChartFile(File):
         y_axis_row : series 
             Row indices of the y-axis column labels in the configuration file
 
-        Returns: 
-        str: Title of the chart  
+        Returns
+        -------
+        str
+            Title of the chart  
         """
         
         # Note: A column with 'NaNs' is not considered empty

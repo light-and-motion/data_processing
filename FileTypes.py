@@ -404,12 +404,9 @@ class PDFFile (ChartFile):
         
         # Replace NaN values with empty strings so the empty data cells do not 
         # look like they hold any values in the PDF file. 
-        mapping_df = self.output_data.fillna('')
-        
         # Convert datetime into strings so 0 days portion doesn't show up in PDF
-        # total_time_cols = self.mapped_settings.get_col('Time Units')
-        # mapping_df['Date/Time'] = [date[-8:] for date in mapping_df['Date/Time'].astype(str)]
-        
+        mapping_df = self.get_str_timedelta()
+
         # Output the table in a PDF. 
         self._make_table(mapping_df)
         
@@ -420,6 +417,13 @@ class PDFFile (ChartFile):
             paths = [os.getcwd() + '\\' + self.output_name + '_chart.pdf' ,df_file]
             self._merge_pdfs(paths)
 
+    # def timedelta_to_string(self,mapping_df): 
+        
+    #     indices = self.mapped_settings.get_column('Time Unit').dropna().index
+    #     for i in indices: 
+    #         label = self.mapped_settings.get_column('Title').loc[i]
+    #         mapping_df[label] = [time[7:15] for time in mapping_df[label].astype(str)]
+    #     return mapping_df
 
     def _make_table(self, mapping_df): 
         """
@@ -528,7 +532,7 @@ class TXTFile(File):
         Helper function to output(). Converts the DataFrame into a NumPy array 
         and uses Numpy functionality to save the array as a text file. 
         """
-        mapping_df = self.output_data.fillna(' ')
+        mapping_df = self.get_str_timedelta()
         mapping_array = mapping_df.to_numpy()
         my_fmt = self._get_format()
 
