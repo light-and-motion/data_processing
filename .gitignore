@@ -1,6 +1,8 @@
-#
+# Output files 
 *.xlsx
 *.jpeg
+*.pdf
+*.txt
 
 # Configuration files
 LumenConfig.xlsx
@@ -13,3 +15,6 @@ Lumen_2.csv
 
 # Multimeter temperature files
 Temp_1.csv
+
+__pycache__
+
