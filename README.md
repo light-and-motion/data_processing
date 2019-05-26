@@ -1,10 +1,16 @@
 # Data Processing
-The purpose of this project is to develop an automated processing program that will streamline data formatting of routinely conducted experiments. The software will take in a lumensphere, multimeter, or serial CSV file and output an Excel, JPEG, PDF, and/or text file of the processed results. The Excel file will hold a spreadsheet and chart of the processed results. The JPEG file will consist of a chart made in matplotlib. The PDF will hold the table and the matplotlib chart. The text file will hold the table. 
+The purpose of this project is to develop an automated processing program that will streamline data formatting of routinely conducted experiments. The software will take in a CSV file and output an Excel, JPEG, PDF, and/or text file of the processed results. The Excel file will contain a spreadsheet and chart, the JPEG file will contain a matplotlib chart, the PDF will contain the table and the matplotlib chart, and the text file will contain the table. 
 
-## Running 
-User will need a CSV file and a configuration file. The configuration file should be an Excel file and contain two worksheets. There are no restrictions on the names of the sheets. 
+## Getting Started
 
-To run the program, run main.exe. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file.  
+### Prerequisites 
+
+Dependencies: `numpy`, `pandas`, `matplotlib`
+
+User will also need an Excel configuration file, which should contain two worksheets. The two sheets can be named anything. 
+
+### Running 
+To run the program, run `main.exe`. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file.  
 
 ## Background
 'Sheet 1' of the configuration file gives the ‘Mapped Settings’ of the program. The columns should be titled: 
@@ -19,7 +25,7 @@ Each row in the configuration file corresponds to a single column of data in the
 - **Time Unit** (str: 'D', 'M', 'H', 'S'): How time is represented. 'D' is datetime, 'H' is hours, 'M' is minutes, and 'S' is seconds. Corresponding CSV column will convert the time into elapsed time with format HH:MM:SS   
 - **Axis** (str: 'X', 'Y') Indicate whether CSV column will serve as an axis on the graph. 'X' for x-axis, 'Y' for y-axis. Can have multiple y-axis. 
 - **Title** (str): Title of the CSV column in the output files 
-- **Range** (str: '\[Start]:\[End]') : Interval of data in column that is to be processed. Indices will be based on the resulting Excel file. Elapsed time will be based off of the first time value in the original dataset. 
+- **Range** (str: '\[Start]:\[End]') : Interval of data in column that is to be processed. Indices will be based off of the data itself, not the Excel row numbers. 
 
 'Sheet 2' gives the 'General Settings' of the program. The columns should be titled: 
 > **Graph Title | Start Row | Stop Row | Skip First Row | X Min | X Max | Y Min | Y Max | Grid Lines | Excel | JPEG | PDF | TXT 
@@ -33,10 +39,10 @@ Each column will contain only 1 value.
 - **Start Row** (int): Row to begin processing CSV file. Index will be based on CSV file. Must start at column title row.  
 - **Stop Row** (int): Row to stop processing CSV file. 
 - **Skip First Row** (str: 'Yes', 'No'): Indicate whether you want to skip the first row of data. Prevents elapsed time from being based off of a time value from a previous experiment. 
-- **X Min** (float): Minimum value on x-axis of chart. Does not work on datetimes. 
-- **X Max** (float): Maximum value on x-axis of chart. Does not work on datetimes. 
-- **Y Min** (float): Minimum value on y-axis of chart. Does not work on datetimes. 
-- **Y Max** (float): Maximum value on y-axis of chart. Does not work on datetimes. 
+- **X Min** (float): Minimum value on x-axis of chart. Does not work on datetimes or timedeltas. 
+- **X Max** (float): Maximum value on x-axis of chart. Does not work on datetimes or timedeltas. 
+- **Y Min** (float): Minimum value on y-axis of chart. Does not work on datetimes or timedeltas. 
+- **Y Max** (float): Maximum value on y-axis of chart. Does not work on datetimes or timedeltas. 
 - **Grid Lines** (str: 'Yes', 'No'): Indicate whether grid lines on chart will be turned on or off
 - **Excel** (str: 'Yes', 'No'): Indicate whether an Excel file of processed results will be generated
 - **JPEG** (str: 'Yes', 'No'): Indicate whether a JPEG file of processed results will be generated
@@ -85,10 +91,7 @@ In 'Sheet 2':
 
 
 ## Future Refinements
-- Format PDF so the page containing the table and the chart are the same size. Center the table. 
 - Replace text interface with a GUI. 
-- Improve algorithm for adjusting column widths. 
-- Look into creating a Time class.
 
 For most columns in the configuration file, it does not matter whether user bases the settings off of the CSV or Excel file. There are two exceptions: **Range** and **Start Row**. **Range** is based off of the Excel file, and **Start Row** is based off of the CSV file. The logic in future versions should resolve the discrepancy between **Range** and **Start Row** by dividing the interface into two, separate components that do not execute altogether in a single run.  
 
