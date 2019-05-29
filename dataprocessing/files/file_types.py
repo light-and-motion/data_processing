@@ -18,10 +18,18 @@ class ExcelFile(ChartFile):
     Extends ChartFile to output an Excel file of the processed CSV results. 
     """
     
+    def get_name(self): 
+        return self.output_name + '.xlsx'
+
+    def will_output_file(self): 
+        if (self.make_file(self.general_settings.get_column('Excel').loc[0])): 
+            return True 
+        return False 
+    
     def output(self) -> None:
         """ Outputs an Excel file"""
 
-        if (self.make_file(self.general_settings.get_column('Excel').loc[0])): 
+        if (self.will_output_file()): 
             
             # Create workbook to hold output data 
             wb = self._create_plotted_workbook()
@@ -31,7 +39,7 @@ class ExcelFile(ChartFile):
             if (self.make_chart()): 
                self._create_chart(wb)
             
-            wb.save(self.output_name + '.xlsx')
+            wb.save(self.get_name())
             
     def _create_plotted_workbook(self) -> Workbook: 
         """Returns an empty Excel workbook that will later hold the processed CSV data.
@@ -203,11 +211,19 @@ class ExcelFile(ChartFile):
         if (not pd.isnull(y_max)): 
             chart.y_axis.scaling.max = y_max
 
-# TODO: 5/21 stopping point 
 class JPEGFile(ChartFile): 
     """
     Extends ChartFile to output a JPEG file fo the processed CSV results.
     """
+
+    def get_name(self): 
+        return self.output_name + '.jpeg'
+    
+    def will_output_file(self): 
+        if (self.make_file(self.general_settings.get_column('JPEG').loc[0]) 
+            and self.make_chart()): 
+            return True 
+        return False 
 
     def output(self) -> None: 
         """Outputs an JPEG file."""
@@ -288,7 +304,7 @@ class JPEGFile(ChartFile):
 
         # Save charts in stated formats
         if (jpeg_choice): 
-            plt.savefig(self.output_name + '.jpeg', bbox_inches = 'tight')
+            plt.savefig(self.get_name(), bbox_inches = 'tight')
         
         if (pdf_choice): 
             plt.savefig(self.output_name + '_chart' + '.pdf', bbox_inches = 'tight') 
@@ -386,11 +402,18 @@ class PDFFile (ChartFile):
     Extends ChartFile to output a PDF file of the processed CSV results. 
     """
 
+    def get_name(self): 
+        return self.output_name + '.pdf'
+
+    def will_output_file(self): 
+        if (self.make_file(self.general_settings.get_column('PDF').loc[0])): 
+            return True
+        return False 
+
     def output(self) -> None: 
         """Outputs a PDF file."""
 
-        pdf_choice = self.make_file(self.general_settings.get_column('PDF').loc[0])
-        if (pdf_choice): 
+        if (self.will_output_file()): 
             self._make()
     
     def _make(self) -> None: 
@@ -441,7 +464,7 @@ class PDFFile (ChartFile):
         if (self.make_chart()): 
             pp = PdfPages(self.output_name + '_table.pdf')
         else: 
-            pp = PdfPages(self.output_name + '.pdf')
+            pp = PdfPages(self.get_name())
         total_rows, total_cols = mapping_df.shape
 
         rows_per_page = 40 # Assign a page cut off length
@@ -507,7 +530,7 @@ class PDFFile (ChartFile):
             for page in range(pdf_reader.getNumPages()):
                 pdf_writer.addPage(pdf_reader.getPage(page))
         
-        with open(self.output_name + '.pdf', 'wb') as out: 
+        with open(self.get_name(), 'wb') as out: 
             pdf_writer.write(out)
         
         # Delete merged files 
@@ -519,11 +542,18 @@ class TXTFile(File):
     Extends File to output a text file of the processed CSV results. 
     """
 
+    def get_name(self): 
+        return self.output_name + '.txt'
+
+    def will_output_file(self): 
+        if (self.make_file(self.general_settings.get_column('TXT').loc[0])):
+            return True
+        return False 
+
     def output(self): 
         """Outputs a text file."""
 
-        text_choice = self.make_file(self.general_settings.get_column('TXT').loc[0])
-        if(text_choice): 
+        if(self.will_output_file()): 
             self._make()
 
     def _make(self) -> None: 
@@ -537,7 +567,7 @@ class TXTFile(File):
         my_fmt = self._get_format()
 
         #FIXME: tab delimiter looks weird on txt file
-        np.savetxt(self.output_name + '.txt', mapping_array, fmt = my_fmt, delimiter='\t', header = '\t'.join([str(column) for column in self.output_data.columns]), comments='')
+        np.savetxt(self.get_name(), mapping_array, fmt = my_fmt, delimiter='\t', header = '\t'.join([str(column) for column in self.output_data.columns]), comments='')
 
 
     def _get_format(self) -> list: 
