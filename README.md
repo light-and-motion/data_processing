@@ -27,7 +27,12 @@ To run the program, run `main.exe`. Make sure the CSV and the configuration file
 ## Background
 'Sheet 1' of the configuration file gives the ‘Mapped Settings’ of the program. The sheet should look like: 
 
-![alt text](Config1.PNG)
+<p align="center">
+  <height="250" src="Config1.PNG" title = "Mapped Settings">
+</p>
+  
+ <img src="Config1.PNG"
+	title="Mapped Settings" height="250"  align = "center"/>
 
 **_Except for 'Title' all inputs are case insensitive._**
 
@@ -41,8 +46,13 @@ Each row in the configuration file corresponds to a single column of data in the
 - **Range** (str: '\[Start]:\[End]') : Interval of data in column that is to be processed. Indices will be based off of the data itself, not the Excel row numbers. 
 
 'Sheet 2' gives the 'General Settings' of the program. The sheet should look like: 
-![alt text](Config2.PNG)
 
+<p align="center">
+  <height="250" src="Config2.PNG" title = "General Settings">
+</p>
+
+<img src="Config2.PNG"
+	title="General Settings" height="250"  align = "center"/>
 
 **_All inputs are case insensitive._**
 
