@@ -18,23 +18,19 @@ All the output files will be stored in a subdirectory titled `filename_of_output
 
 The application code is built with Python 3.7. Package Dependencies: `numpy`, `pandas`, `matplotlib`, `openpyxl`, `PyPDF2` **_However, the software that you need to run is a standalone executable_**
 
-Users will need an Excel file to serve as the configuration file. 
+Users will need an Excel file with two sheets to serve as the configuration file. 
 
 ### Running 
 To run the program, run `main.exe`. Make sure the CSV and the configuration file are in the same directory as the executable. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file. 
 
 
 ## Background
-'Sheet 1' of the configuration file gives the ‘Mapped Settings’ of the program. The sheet should look like: 
+'Sheet 1' of the configuration file gives the 'mapped settings' of the program. This sheet will extract only the data that the users want and import it to the output files. The sheet should look like: 
 
-<p align="center">
-  <height="250" src="Config1.PNG" title = "Mapped Settings">
-</p>
-  
- <img src="Config1.PNG"
-	title="Mapped Settings" height="250"  align = "center"/>
-
-**_Except for 'Title' all inputs are case insensitive._**
+<img src="Config1.PNG"
+	title="General Settings" height="250" />
+	
+**_Except for inputs for the 'Title' column, all inputs are case insensitive._**
 
 Each row in the configuration file corresponds to a single column of data in the CSV file. 
 - **Input** (str): Column letters of the columns we want mapped
@@ -45,18 +41,15 @@ Each row in the configuration file corresponds to a single column of data in the
 - **Title** (str): Title of the CSV column in the output files 
 - **Range** (str: '\[Start]:\[End]') : Interval of data in column that is to be processed. Indices will be based off of the data itself, not the Excel row numbers. 
 
-'Sheet 2' gives the 'General Settings' of the program. The sheet should look like: 
+'Sheet 2' gives the 'general settings' of the program. The sheet should look like: 
 
-<p align="center">
-  <height="250" src="Config2.PNG" title = "General Settings">
-</p>
 
 <img src="Config2.PNG"
-	title="General Settings" height="250"  align = "center"/>
+	title="General Settings" height="250"/>
 
 **_All inputs are case insensitive._**
 
-Each column will contain only 1 value. 
+There will be 1 input for every column; each input should be inserted right underneath the column titles.  
 
 - **ChartTitle** (str): Title of chart
 - **Start Row** (int): Row to begin processing CSV file. Index will be based on CSV file. Must start at column title row.  
