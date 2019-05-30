@@ -20,13 +20,20 @@ class CSVDataFrame(MyDataFrame):
     mapped_settings : MappedExcelDataFrame
         Contains the mapped settings in the configuration file
     general_settings : ExcelDataFrame
-        Contains the general settings of the configuration file  
+        Contains the general settings of the configuration file 
+    input_name : str
+        Name of CSV 
+
     """
 
-    def __init__(self,file_name, df, mapped_settings, general_settings): 
+    def __init__(self,file_name, df, mapped_settings, general_settings, input_name): 
         super().__init__(file_name, df)
         self.mapped_settings = mapped_settings
         self.general_settings = general_settings
+        self.input_name = input_name
+
+    def get_name(self): 
+        return self.input_name + '.xlsx'
 
     def get_start_row(self) -> int:  
         """Returns the first line number to be read from the CSV."""
@@ -109,14 +116,13 @@ class CSVDataFrame(MyDataFrame):
             self.df[column] = self.df[column].dropna()
             self.df[column] = pd.to_numeric(self.df[column], errors = 'ignore')
 
-    def read_into_excel(self, input_name):  
+    def read_into_excel(self):  
         """
         Reads a CSV into an Excel workbook. 
 
         Parameters
         ----------
-        input_name : str
-            Name of CSV 
+        None 
 
         Returns
         ------- 
@@ -131,7 +137,7 @@ class CSVDataFrame(MyDataFrame):
         for row in dataframe_to_rows(self.df, index = False, header = True):            
             ws.append(row)
         
-        wb.save(input_name + '.xlsx')
+        wb.save(self.input_name + '.xlsx')
 
     def _read_csv_type(self, startLine, stopLine, transpose):
         """Reads the CSV into a prototype dataframe. 
