@@ -30,6 +30,9 @@ To run the program, run `main.exe`. Make sure the CSV and the configuration file
 <p align="center">
   <height="250" src="Config1.PNG" title = "Mapped Settings">
 </p>
+  
+ <img src="Config1.PNG"
+	title="Mapped Settings" height="250"  align = "center"/>
 
 **_Except for 'Title' all inputs are case insensitive._**
 
@@ -48,6 +51,8 @@ Each row in the configuration file corresponds to a single column of data in the
   <height="250" src="Config2.PNG" title = "General Settings">
 </p>
 
+<img src="Config2.PNG"
+	title="General Settings" height="250"  align = "center"/>
 
 **_All inputs are case insensitive._**
 
