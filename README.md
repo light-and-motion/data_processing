@@ -1,20 +1,33 @@
 # Data Processing
-The purpose of this project is to develop an automated processing program that will streamline data formatting of routinely conducted experiments. The software will take in a CSV file and output an Excel, JPEG, PDF, and/or text file of the processed results. The Excel file will contain a spreadsheet and chart, the JPEG file will contain a matplotlib chart, the PDF will contain the table and the matplotlib chart, and the text file will contain the table. 
+
+A data processing Python executable that will take in a CSV file and 
+
+>1) create an Excel version of the CSV file 
+>2) import only the desired data into an Excel, JPEG, PDF, and text file 
+>3) create a plot of the processed results with Excel and matplotlib 
+
+## General Info
+
+The purpose of this project is to develop an automated processing program that will streamline data formatting of routinely conducted experiments. The software will take in a CSV file and output an Excel version of the CSV file as well as a Excel, JPEG, PDF, and/or text file of the processed results. The Excel, JPEG, and PDF files will contain a chart of the processed results. 
+
+All the output files will be stored in a subdirectory titled `filename_of_output_files`. 
 
 ## Getting Started
 
 ### Prerequisites 
 
-Dependencies: `numpy`, `pandas`, `matplotlib`
+The application code is built with Python 3.7. Package Dependencies: `numpy`, `pandas`, `matplotlib`, `openpyxl`, `PyPDF2` **_However, the software that you need to run is a standalone executable_**
 
-User will also need an Excel configuration file, which should contain two worksheets. The two sheets can be named anything. 
+Users will need an Excel file to serve as the configuration file. 
 
 ### Running 
-To run the program, run `main.exe`. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file.  
+To run the program, run `main.exe`. Make sure the CSV and the configuration file are in the same directory as the executable. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file. 
+
 
 ## Background
-'Sheet 1' of the configuration file gives the ‘Mapped Settings’ of the program. The columns should be titled: 
-> **Input | Output | Format | Time Unit | Axis | Title | Range**
+'Sheet 1' of the configuration file gives the ‘Mapped Settings’ of the program. The sheet should look like: 
+
+![alt text](Config1.PNG)
 
 **_Except for 'Title' all inputs are case insensitive._**
 
@@ -27,9 +40,9 @@ Each row in the configuration file corresponds to a single column of data in the
 - **Title** (str): Title of the CSV column in the output files 
 - **Range** (str: '\[Start]:\[End]') : Interval of data in column that is to be processed. Indices will be based off of the data itself, not the Excel row numbers. 
 
-'Sheet 2' gives the 'General Settings' of the program. The columns should be titled: 
-> **Graph Title | Start Row | Stop Row | Skip First Row | X Min | X Max | Y Min | Y Max | Grid Lines | Excel | JPEG | PDF | TXT 
- Transpose** 
+'Sheet 2' gives the 'General Settings' of the program. The sheet should look like: 
+![alt text](Config2.PNG)
+
 
 **_All inputs are case insensitive._**
 
@@ -80,23 +93,17 @@ In 'Sheet 2':
 - **TXT**: Yes
 - **Transpose**: No
 
-## Restrictions: 
+
+## Warnings: 
 - Cannot set scale limits on elapsed times, as Excel and matplotlib cannot scale datetime or timedelta objects. 
 - matplotlib limits may not be scaled according to exact specifications. 
 - matplotlib scales break down when the minimum and maximum are too far apart, i.e. 20 and 1000 
-- Excel can graph axes with different lengths. For the most part, matplotlib cannot. (Exceptions do occur when the values stay constant throughout but the graphs of Excel and matplotlib do contain errors.) 
+- Excel can graph axes with different lengths. For the most part, matplotlib cannot. (Exceptions do occur when the values stay constant throughout but the graphs of Excel and matplotlib will contain errors.) 
 - **Range** column must be formatted so it is read as 'Text,' otherwise it will be converted into time. 
 - Milliseconds will be removed when converting into elapsed time. 
 - A JPEG file will not be generated if a chart is not processed, even if **JPEG** is set to 'Yes.' An Excel and PDF file can still be generated without a chart addition.
 
 
 ## Future Refinements
-- Replace text interface with a GUI. 
+- Replace text interface with a GUI using PyQt5. 
 
-For most columns in the configuration file, it does not matter whether user bases the settings off of the CSV or Excel file. There are two exceptions: **Range** and **Start Row**. **Range** is based off of the Excel file, and **Start Row** is based off of the CSV file. The logic in future versions should resolve the discrepancy between **Range** and **Start Row** by dividing the interface into two, separate components that do not execute altogether in a single run.  
-
-Components: 
-1. Process the CSV file into an Excel file
-2. Use the Excel file to configure the settings and produce an Excel, JPEG, and/or PDF of the processed results. 
-
-There should also be an option that allows users who have already had their CSV files read into an Excel file to skip processing their CSV files again. 
