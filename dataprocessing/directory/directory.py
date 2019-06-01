@@ -25,7 +25,7 @@ class Directory(object):
     """ 
 
     def __init__(self, output_name, raw_data_file, excel_file, jpeg_file, pdf_file, txt_file): 
-        self.directory_path = os.path.join(os.getcwd(), output_name + '_output') 
+        self.directory_path = os.path.join(os.getcwd(), output_name) 
         self.raw_data_src = os.path.join(os.getcwd(), raw_data_file)
         self.excel_src = os.path.join(os.getcwd(), excel_file)
         self.jpeg_src = os.path.join(os.getcwd(), jpeg_file)
