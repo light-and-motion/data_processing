@@ -8,30 +8,30 @@ A data processing Python executable that will take in a CSV file and
 
 ## Table of Contents 
 
-[General Info](https://github.com/light-and-motion/data_processing/tree/feat/refactor#general-info)
-[Getting Started](https://github.com/light-and-motion/data_processing/tree/feat/refactor#getting-started)
-*[Prerequisites](https://github.com/light-and-motion/data_processing/tree/feat/refactor#prerequisites)
-*[Running](https://github.com/light-and-motion/data_processing/tree/feat/refactor#running)
-[Background](https://github.com/light-and-motion/data_processing/tree/feat/refactor#background)
-*[Default Options](https://github.com/light-and-motion/data_processing/tree/feat/refactor#default-options)
-[Warnings](https://github.com/light-and-motion/data_processing/tree/feat/refactor#warnings)
-[Future Refinements](https://github.com/light-and-motion/data_processing/tree/feat/refactor#future-refinements)
+1. [General Info](https://github.com/light-and-motion/data_processing/tree/feat/refactor#general-info)
+2. [Getting Started](https://github.com/light-and-motion/data_processing/tree/feat/refactor#getting-started)
+	1. [Prerequisites](https://github.com/light-and-motion/data_processing/tree/feat/refactor#prerequisites)
+	2. [Running](https://github.com/light-and-motion/data_processing/tree/feat/refactor#running)
+3. [Background](https://github.com/light-and-motion/data_processing/tree/feat/refactor#background)
+	1. [Default Options](https://github.com/light-and-motion/data_processing/tree/feat/refactor#default-options)
+4. [Warnings](https://github.com/light-and-motion/data_processing/tree/feat/refactor#warnings)
+5. [Future Refinements](https://github.com/light-and-motion/data_processing/tree/feat/refactor#future-refinements)
 ## General Info
 
 The purpose of this project is to develop an automated processing program that will streamline data formatting of routinely conducted experiments. The software will take in a CSV file and output an Excel version of the CSV file as well as a Excel, JPEG, PDF, and/or text file of the processed results. The Excel, JPEG, and PDF files will contain a chart of the processed results. 
 
-All the output files will be stored in a subdirectory titled `filename_of_output_files`. 
+All the output files will be stored in a subdirectory titled `output_filename`. 
 
 ## Getting Started
 
 ### Prerequisites 
 
-The application code is built with Python 3.7. Package Dependencies: `numpy`, `pandas`, `matplotlib`, `openpyxl`, `PyPDF2` **_However, the software that you need to run is a standalone executable_**
+The application code is built with Python 3.7. Package Dependencies: `numpy`, `pandas`, `matplotlib`, `openpyxl`, `PyPDF2` **_However, the software that you need to run is a standalone executable._** The application code is for reference. 
 
-Users will need an Excel file with two sheets to serve as the configuration file. 
+Users will need an Excel file with two sheets to serve as the configuration file. Make sure the CSV and the configuration file are in the same directory as the executable.
 
 ### Running 
-To run the program, run `main.exe`. Make sure the CSV and the configuration file are in the same directory as the executable. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file. 
+To run the program, download and run `main.exe`. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file. 
 
 
 ## Background
@@ -49,7 +49,7 @@ Each row in the configuration file corresponds to a single column of data in the
 - **Time Unit** (`str: 'D', 'M', 'H', 'S'`): How time is represented. 'D' is datetime, 'H' is hours, 'M' is minutes, and 'S' is seconds. Corresponding CSV column will convert the time into elapsed time with format HH:MM:SS   
 - **Axis** (`str: 'X', 'Y'`) Indicate whether CSV column will serve as an axis on the graph. 'X' for x-axis, 'Y' for y-axis. Can have multiple y-axis. 
 - **Title** (`str`): Title of the CSV column in the output files 
-- **Range** (`str: \[Start]:\[End]`) : Interval of data in column that is to be processed. Indices will be based off of the data itself, not the Excel row numbers.  
+- **Range** (`str: [Start]:[End]`) : Interval of data in column that is to be processed. Indices will be based off of the data itself, not the Excel row numbers.  
     * `:[End]` : Start at the beginning of the file and stop at a specific point 
     * `[Start]:`: Start at a specific point and read until the very end
 
@@ -93,7 +93,7 @@ In 'Sheet 1':
 - **Range**: All 
 
 In 'Sheet 2': 
-- **Graph Title**: Syntax will be `\[All] y-axes vs x-axis`
+- **Graph Title**: Syntax will be `[All y-axis column labels vs x-axis column label]`
 - **Start Row**: 1
 - **Stop Row**: --
 - **Skip First Row**: No
