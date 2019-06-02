@@ -89,7 +89,7 @@ class MappedExcelDataFrame(ExcelDataFrame):
     
     def __init__(self, file_name, df, sheet_name, transpose_col): 
         super().__init__(file_name, df, sheet_name)
-        self.transpose_col = transpose_col.loc[0]
+        self.transpose_col = transpose_col
 
     def format(self, col_labels):
         """Alters several settings of the configuration dataframe. 
@@ -112,7 +112,8 @@ class MappedExcelDataFrame(ExcelDataFrame):
         """
         
         # TODO: Research super() https://realpython.com/python-super/
-        if self.transpose_col.upper() == 'YES': 
+        
+        if (not self.transpose_col.dropna().empty and self.transpose_col.loc[0].upper() == 'YES'): 
             super().set_column('Input Column Numbers', super().get_column('Input'))
         else: 
             super().set_column('Input Column Numbers', super().get_column('Input').str.upper())
@@ -146,7 +147,7 @@ class MappedExcelDataFrame(ExcelDataFrame):
         """
 
         col_title = []
-        if (not self.transpose_col.upper() == 'YES'): 
+        if (self.transpose_col.dropna().empty or self.transpose_col.loc[0].upper() == 'NO'): 
             indices = self._letter2int(indices)
         
         for x in range(indices.size):
