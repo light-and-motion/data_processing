@@ -43,7 +43,8 @@ To run the program, download and run `dataprocessing.exe`. The program will cont
 **_Except for inputs for the 'Title' column, all inputs are case insensitive._**
 
 Each row in the configuration file corresponds to a single column of data in the CSV file. 
-- **Input** (`str`): Column letters of the CSV columns we want mapped
+- **Input** (`str` or `'int`): Column letters of the CSV columns we want mapped
+    * If transposing rows to columns, enter the column numbers we want mapped
 - **Output** (`str`): Column letters of the Excel columns we want the CSV data to be mapped to 
 - **Format** (`int`): Sig figs we want the data to be rounded to
 - **Time Unit** (`str: 'D', 'M', 'H', 'S'`): How time is represented. 'D' is datetime, 'H' is hours, 'M' is minutes, and 'S' is seconds. Corresponding CSV column will convert the time into elapsed time with format HH:MM:SS   
@@ -115,7 +116,7 @@ In 'Sheet 2':
 - **Range** column in the Excel configuration file must be formatted so it is read as 'Text,' otherwise it will be converted into time. 
 - Milliseconds will be removed when converting into elapsed time. 
 - A JPEG file will not be generated if a chart is not processed, even if **JPEG** is set to 'Yes.'
-
+- Formatting for PDF and txt file can become imprecise 
 
 ## Future Refinements
 - Replace text interface with a GUI using PyQt5. 
