@@ -16,11 +16,11 @@ if __name__ == '__main__':
             input_csv = user_interface.choose_csv()
             output_name = user_interface.choose_output_name()
 
-            # Read the two sheets of the configuration file: 'Mapped' and 'General' Settings into two different dataframes
-            mapped_df = dataframes.MappedExcelDataFrame(config_title, pd.DataFrame(), config_sheet_list.sheetnames[0])
-            mapped_df.create()
+            # Read the two sheets of the configuration file: 'General' and 'Mapped' Settings into two different dataframes
             general_df = dataframes.ExcelDataFrame(config_title, pd.DataFrame(), config_sheet_list.sheetnames[1])
             general_df.create()
+            mapped_df = dataframes.MappedExcelDataFrame(config_title, pd.DataFrame(), config_sheet_list.sheetnames[0], general_df.get_column('Transpose'))
+            mapped_df.create()
 
             # Create a dataframe to hold the raw CSV file and then read said dataframe into an Excel file 
             raw_data_df = dataframes.CSVDataFrame(input_csv, pd.DataFrame(), mapped_df, general_df, input_csv)

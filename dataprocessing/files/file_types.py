@@ -482,10 +482,10 @@ class PDFFile (ChartFile):
             ax = plt.subplot()
             ax.axis('off')
             
-            try: 
-                matplotlib_tab = pd.plotting.table(ax, mapping_df.iloc[rows_printed:rows_printed+rows_per_page], loc='upper center', colWidths=[0.2, 0.2, 0.2])    
-            except IndexError:
-                matplotlib_tab = pd.plotting.table(ax, mapping_df.iloc[rows_printed:rows_printed+rows_per_page], loc='upper center')
+            #try: 
+             #   matplotlib_tab = pd.plotting.table(ax, mapping_df.iloc[rows_printed:rows_printed+rows_per_page], loc='upper center', colWidths=[0.2, 0.2, 0.2])    
+            #except IndexError:
+            matplotlib_tab = pd.plotting.table(ax, mapping_df.iloc[rows_printed:rows_printed+rows_per_page], loc='upper center')
 
             # Style the cells  
             table_props=matplotlib_tab.properties()

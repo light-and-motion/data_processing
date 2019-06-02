@@ -73,14 +73,31 @@ class ExcelDataFrame (MyDataFrame):
         self.df = self.df.append(pd.read_excel(self.file_name + '.xlsx', sheet_name = self.sheet_name, dtype = {'Title': str}))
     
 class MappedExcelDataFrame(ExcelDataFrame): 
-    """Extends ExcelDataFrame to process the mapped settings of the configuration file"""
+    """Extends ExcelDataFrame to process the mapped settings of the configuration file
     
+     Attributes
+    ----------
+    file_name : str 
+        Name of file to be read into CSV 
+    df : pd.DataFrame
+        Stores the data contained in the file  
+    sheet_name : str 
+        Name of sheet in Excel file we want read into a dataframe
+    transpose_col: str
+        Indicates whether data is to be transposed
+    """
+    
+    def __init__(self, file_name, df, sheet_name, transpose_col): 
+        super().__init__(file_name, df, sheet_name)
+        self.transpose_col = transpose_col.loc[0]
+
     def format(self, col_labels):
         """Alters several settings of the configuration dataframe. 
         Changes: 
-            a) Create a new column labeled 'Input Column Numbers' that creates a copy of 'Input' column and coverts the column 
-                letters to column numbers.   
-            b) Column letters in 'Input' have been replaced by column labels.  
+            a) Create a new column labeled 'Input Column Numbers' that creates a copy of 'Input' column 
+                i)  If data is NOT transposed: coverts the column letters to column numbers.
+                ii) If data is transposed: stores a copy of the column numbers   
+            b) Column letters/numbers in 'Input' have been replaced by column labels   
             c) Column letters in 'Output' have been replaced by column numbers.  
             d) Empty column titles in 'Title' have been filled in with the original column labels 
 
@@ -95,11 +112,14 @@ class MappedExcelDataFrame(ExcelDataFrame):
         """
         
         # TODO: Research super() https://realpython.com/python-super/
-        super().set_column('Input Column Numbers', super().get_column('Input').str.upper())
-        data = self._letter2int(super().get_column('Input Column Numbers'))
-        super().set_column('Input Column Numbers', data)
+        if self.transpose_col.upper() == 'YES': 
+            super().set_column('Input Column Numbers', super().get_column('Input'))
+        else: 
+            super().set_column('Input Column Numbers', super().get_column('Input').str.upper())
+            data = self._letter2int(super().get_column('Input Column Numbers'))
+            super().set_column('Input Column Numbers', data)
 
-        data = self._letter2title(super().get_column('Input'), col_labels)
+        data = self._convert2title(super().get_column('Input'), col_labels)
         super().set_column('Input', data)
 
         data = self._letter2int(super().get_column('Output'))
@@ -108,15 +128,15 @@ class MappedExcelDataFrame(ExcelDataFrame):
         data = self._default_titles(super().get_column('Title'), super().get_column('Input'))
         super().set_column('Title', data)
 
-    def _letter2title(self, letter_series, names) -> pd.Series:
+    def _convert2title(self, indices, names) -> pd.Series:
         """
-        Converts a series that contains CSV column letters into its corresponding column labels 
+        Converts a series that contains CSV column letters or numbers into its corresponding column labels 
 
         Parameters
         ---------- 
-        letter_series: pd.Series
-            Column letters
-        names : pd.IndexCSV 
+        indices: pd.Series
+            Column letters or numbers
+        names : pd.Index
             Column labels 
 
         Returns
@@ -126,9 +146,10 @@ class MappedExcelDataFrame(ExcelDataFrame):
         """
 
         col_title = []
-        indices = self._letter2int(letter_series)
+        if (not self.transpose_col.upper() == 'YES'): 
+            indices = self._letter2int(indices)
         
-        for x in range(letter_series.size): 
+        for x in range(indices.size):
             index = indices.loc[x]      
             title = names[index-1]
             col_title.append(title)
