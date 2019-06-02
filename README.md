@@ -116,7 +116,7 @@ In 'Sheet 2':
 - **Range** column in the Excel configuration file must be formatted so it is read as 'Text,' otherwise it will be converted into time. 
 - Milliseconds will be removed when converting into elapsed time. 
 - A JPEG file will not be generated if a chart is not processed, even if **JPEG** is set to 'Yes.'
-- Formatting for PDF and txt file can become imprecise 
+- Formatting for PDF and txt file get...wonky.  
 
 ## Future Refinements
 - Replace text interface with a GUI using PyQt5. 
