@@ -1,3 +1,5 @@
+# **_Note: In the process of refactoring Blob class_**
+
 # Data Processing
 
 A data processing Python executable that will take in a CSV file and 
