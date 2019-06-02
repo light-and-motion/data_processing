@@ -1,5 +1,3 @@
-# **_Note: In the process of refactoring Blob class_**
-
 # Data Processing
 
 A data processing Python executable that will take in a CSV file and 
@@ -30,10 +28,10 @@ All the output files will be stored in a subdirectory titled `output_filename`.
 
 The application code is built with Python 3.7. Package Dependencies: `numpy`, `pandas`, `matplotlib`, `openpyxl`, `PyPDF2` **_However, the software that you need to run is a standalone executable._** The application code is for reference. 
 
-Users will need an Excel file with two sheets to serve as the configuration file. Make sure the CSV and the configuration file are in the same directory as the executable.
+In addition to the exectuable `dataprocessing.exe`, users will need an Excel file with two sheets to serve as the configuration file. **_Make sure the CSV and the configuration file are in the same directory as the executable._**
 
 ### Running 
-To run the program, download and run `main.exe`. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file. 
+To run the program, download and run `dataprocessing.exe`. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file. 
 
 
 ## Background
@@ -45,15 +43,15 @@ To run the program, download and run `main.exe`. The program will continue to re
 **_Except for inputs for the 'Title' column, all inputs are case insensitive._**
 
 Each row in the configuration file corresponds to a single column of data in the CSV file. 
-- **Input** (`str`): Column letters of the columns we want mapped
-- **Output** (`str`): Column letters of the columns we want the processed data to be mapped to in the output Excel file 
+- **Input** (`str`): Column letters of the CSV columns we want mapped
+- **Output** (`str`): Column letters of the Excel columns we want the CSV data to be mapped to 
 - **Format** (`int`): Sig figs we want the data to be rounded to
 - **Time Unit** (`str: 'D', 'M', 'H', 'S'`): How time is represented. 'D' is datetime, 'H' is hours, 'M' is minutes, and 'S' is seconds. Corresponding CSV column will convert the time into elapsed time with format HH:MM:SS   
-- **Axis** (`str: 'X', 'Y'`) Indicate whether CSV column will serve as an axis on the graph. 'X' for x-axis, 'Y' for y-axis. Can have multiple y-axis. 
+- **Axis** (`str: 'X', 'Y'`) Indicate whether CSV column will serve as an axis on the graph. 'X' for x-axis, 'Y' for y-axis. Can have multiple y-axis. _A plot will only be generated if the axis are indicated!_ 
 - **Title** (`str`): Title of the CSV column in the output files 
-- **Range** (`str: [Start]:[End]`) : Interval of data in column that is to be processed. Indices will be based off of the data itself, not the Excel row numbers.  
-    * `:[End]` : Start at the beginning of the file and stop at a specific point 
-    * `[Start]:`: Start at a specific point and read until the very end
+- **Range** (`str: Start:End`) : Interval of data in column that is to be processed. Indices will be based off of the data itself, not the Excel row numbers. i.e. The first cell of data is _1_. 
+    * `:End` : Start at the beginning of the file and stop at a specific data cell
+    * `Start:`: Start at a specific data cell and read until the very end
 
 'Sheet 2' gives the 'general settings' of the program. The sheet should look like: 
 
@@ -95,7 +93,7 @@ In 'Sheet 1':
 - **Range**: All 
 
 In 'Sheet 2': 
-- **Graph Title**: Syntax will be `[All y-axis column labels vs x-axis column label]`
+- **Graph Title**: Syntax will be `All y-axis column labels vs x-axis column label`
 - **Start Row**: 1
 - **Stop Row**: --
 - **Skip First Row**: No
