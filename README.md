@@ -31,7 +31,7 @@ The application code is built with Python 3.7. Package Dependencies: `numpy`, `p
 In addition to the exectuable `dataprocessing.exe`, users will need an Excel file with two sheets to serve as the configuration file. **_Make sure the CSV and the configuration file are in the same directory as the executable._**
 
 ### Running 
-To run the program, download and run `dataprocessing.exe`. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file. 
+To run the program, download and run `data_processing.exe`. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file. 
 
 
 ## Background
