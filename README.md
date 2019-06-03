@@ -28,7 +28,7 @@ All the output files will be stored in a subdirectory titled `output_filename`.
 
 The application code is built with Python 3.7. Package Dependencies: `numpy`, `pandas`, `matplotlib`, `openpyxl`, `PyPDF2` **_However, the software that you need to run is a standalone executable._** The application code is for reference. 
 
-In addition to the exectuable `dataprocessing.exe`, users will need an Excel file with two sheets to serve as the configuration file. **_Make sure the CSV and the configuration file are in the same directory as the executable._**
+In addition to the exectuable `data_processing.exe`, users will need an Excel file with two sheets to serve as the configuration file. **_Make sure the CSV and the configuration file are in the same directory as the executable._**
 
 ### Running 
 To run the program, download and run `data_processing.exe`. The program will continue to repeat as long as the user enters 'Y' or 'y' when prompted if they want to process another file. 
