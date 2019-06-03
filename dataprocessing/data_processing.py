@@ -66,5 +66,6 @@ if __name__ == '__main__':
         except PermissionError as per_error: 
             print('Cannot access', per_error.filename, 'as it is currently being used.')
             repeat = input('Do you want to process another CSV? (y/n): ')
-        
-
+        except TypeError: 
+            print('Type mismatch! Please make sure your configuration file is compatible with the CSV.')
+            repeat = input('Do you want to process another CSV? (y/n): ')
