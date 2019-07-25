@@ -9,13 +9,13 @@ A data processing Python executable that will take in a CSV file and
 ## Table of Contents 
 
 1. [General Info](#general-info)
-2. [Getting Started](https://github.com/light-and-motion/data_processing#getting-started)
-	1. [Prerequisites](https://github.com/light-and-motion/data_processing#prerequisites)
-	2. [Running](https://github.com/light-and-motion/data_processing#running)
-3. [Background](https://github.com/light-and-motion/data_processing#background)
-	1. [Default Options](https://github.com/light-and-motion/data_processing#default-options)
-4. [Warnings](https://github.com/light-and-motion/data_processing#warnings)
-5. [Future Refinements](https://github.com/light-and-motion/data_processing#future-refinements)
+2. [Getting Started](#getting-started)
+	1. [Prerequisites](#prerequisites)
+	2. [Running](#running)
+3. [Background](#background)
+	1. [Default Options](#default-options)
+4. [Warnings](#warnings)
+5. [Future Refinements](#future-refinements)
 ## General Info
 
 The purpose of this project is to develop an automated processing program that will streamline data formatting of routinely conducted experiments. The software will take in a CSV file and output an Excel version of the CSV file as well as a Excel, JPEG, PDF, and/or text file of the processed results. The Excel, JPEG, and PDF files will contain a chart of the processed results. 
