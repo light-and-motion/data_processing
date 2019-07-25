@@ -8,7 +8,7 @@ A data processing Python executable that will take in a CSV file and
 
 ## Table of Contents 
 
-1. [General Info](https://github.com/light-and-motion/data_processing#general-info)
+1. [General Info](#general-info)
 2. [Getting Started](https://github.com/light-and-motion/data_processing#getting-started)
 	1. [Prerequisites](https://github.com/light-and-motion/data_processing#prerequisites)
 	2. [Running](https://github.com/light-and-motion/data_processing#running)
